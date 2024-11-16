@@ -1,0 +1,2 @@
+add_executable(nes_emulator main.cpp)
+target_link_libraries(nes_emulator PRIVATE MemoryMapper)

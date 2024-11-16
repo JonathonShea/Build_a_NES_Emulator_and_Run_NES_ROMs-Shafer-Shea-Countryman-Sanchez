@@ -1,0 +1,15 @@
+/cmake-build-debug/
+/.idea/Build_a_NES_Emulator_and_Run_NES_ROMs-Shafer-Shea-Countryman-Sanchez.iml
+/.idea/.name
+/.idea/editor.xml
+# Default ignored files
+/shelf/
+/workspace.xml
+# Editor-based HTTP Client requests
+/httpRequests/
+# Datasource local storage ignored files
+/dataSources/
+/dataSources.local.xml
+/misc.xml
+/modules.xml
+/vcs.xml
