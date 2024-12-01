@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.29)
 project(nes_emulator)
 
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 20)
 enable_testing()
 include_directories(src)
 add_subdirectory(src)
