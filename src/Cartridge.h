@@ -15,7 +15,6 @@ public:
 	 *
 	 * @param rom Path to the ROM file to load
 	 */
-	Cartridge(std::filesystem::path rom);
 	Cartridge(std::vector<uint8_t> &romData);
 	~Cartridge();
 	inline int prgRomEnd() const { return prgRomStart + prgRomSize; }
