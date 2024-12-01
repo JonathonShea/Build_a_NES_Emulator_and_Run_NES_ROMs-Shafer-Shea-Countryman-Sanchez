@@ -5,4 +5,9 @@
 #include "MemoryMapper.h"
 
 namespace memoryMapper {
+
+	MemoryMapper::MemoryMapper() {
+	}
+	MemoryMapper::~MemoryMapper() {
+	}
 } // memoryMapper

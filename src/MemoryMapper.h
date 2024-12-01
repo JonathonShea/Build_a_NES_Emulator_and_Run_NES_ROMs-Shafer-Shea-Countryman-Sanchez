@@ -5,9 +5,19 @@
 #ifndef MEMORYMAPPER_H
 #define MEMORYMAPPER_H
 
+#include <vector>
+
 namespace memoryMapper {
 
 class MemoryMapper {
+public:
+	MemoryMapper();
+	~MemoryMapper();
+
+private:
+
+	std::vector<std::vector<uint8_t>> prgRomBanks;
+	std::vector<std::vector<uint8_t>> chrRomBanks;
 
 };
 
