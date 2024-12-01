@@ -12,8 +12,8 @@ std::string OpenFileDialog();
 
 int main(int argc, const char * argv[]){
 	Clock clock;
-	std::ifstream romData; 
-	std::vector<uint8_t> data;
+	std::ifstream romFile; 
+	std::vector<uint8_t> romData;
 	std::string filePath;
     if (argc > 1) {
         filePath = argv[1];
@@ -21,10 +21,10 @@ int main(int argc, const char * argv[]){
     else{
         filePath = OpenFileDialog();
     }
-	romData.open(filePath, std::ios::binary);
-	if (romData.is_open()) {
+	romFile.open(filePath, std::ios::binary);
+	if (romFile.is_open()) {
 		std::cout << "Opened file: " << filePath << std::endl;
-		data = std::vector<uint8_t>(std::istreambuf_iterator<char>(romData), std::istreambuf_iterator<char>());
+		romData = std::vector<uint8_t>(std::istreambuf_iterator<char>(romFile), std::istreambuf_iterator<char>());
 	}
 	else {
 		std::cout << "Failed to open file: " << filePath << std::endl;
@@ -32,16 +32,12 @@ int main(int argc, const char * argv[]){
 	}
 	// Check for valid NES ROM file header
 	for (int i = 0; i < magicNumbers.size(); i++) {
-		if (data[i] != magicNumbers[i]) {
+		if (romData[i] != magicNumbers[i]) {
 			std::cout << "Invalid NES ROM file" << std::endl;
 			return(0);
 		}
 	}
-	while (clock.getTicks() < data.size()) {
-		clock.tick();
-		std::cout << "char:" << clock.getTicks() - 1 << data[clock.getTicks()- 1] << std::endl;
-	}
-	romData.close();
+	romFile.close();
   return 0;
 }
 
