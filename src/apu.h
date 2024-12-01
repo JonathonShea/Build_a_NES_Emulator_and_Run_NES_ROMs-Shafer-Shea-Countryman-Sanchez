@@ -6,15 +6,21 @@
 #define APU_H
 
 #include <cstdint>
+#define SDL_MAIN_HANDLED
+#include <C:/SDL2/include/SDL.h>
 
 class APU
 {
 public:
-	APU(){
-		
-	}
+    APU();
+    ~APU();
+    void test();
+    void sdlAudioTest();
 
-	void test();
+private:
+    static void audioCallback(void* userdata, Uint8* stream, int len);
+    SDL_AudioSpec want, have;
+    SDL_AudioDeviceID dev;
 };
 
 #endif
