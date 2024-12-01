@@ -2,7 +2,7 @@
 // Last updated: 12/1/2024
 
 #ifndef CPU_H
-#define PPU_H
+#define CPU_H
 
 #include <cstdint>
 
