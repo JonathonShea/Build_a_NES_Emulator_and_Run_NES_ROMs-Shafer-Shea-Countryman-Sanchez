@@ -3,8 +3,8 @@
 
 #ifndef CPU_H
 #define CPU_H
-
 #include <cstdint>
+class Bus;
 
 class CPU
 {
@@ -16,10 +16,24 @@ public:
 	uint16_t = program_counter = 0x00; // 16-bit register that contains a pointer to the next instruction
 	uint8_t status = 0x00; // 8-bit register that contains status flags
 
-	CPU(){
+	CPU();
+	~CPU();
+
+	void ConnectBus(Bus *n) {
+		bus = n;
 	}
 
-	void respTest();
+
+private:
+	Bus *bus = nullptr;
+	uint8_t read(uint16_t address);
+	void write(uint16_t address, uint8_t data);
 };
+
+CPU::CPU() {
+}
+
+CPU::~CPU() {
+}
 
 #endif

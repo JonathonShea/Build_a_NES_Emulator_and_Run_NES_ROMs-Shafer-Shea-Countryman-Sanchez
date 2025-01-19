@@ -2,6 +2,7 @@
 // Last updated: 12/1/2024
 
 #include "CPU.h"
+#include "Bus.h"
 #include <iostream>
 
 void CPU::respTest()
@@ -9,9 +10,10 @@ void CPU::respTest()
     std::cout << "The CPU says hi! Say hi back or else..." << std::endl;
 }
 
-int main()
-{
-    CPU testCPU;
-    testCPU.respTest();
-    return 0;
+uint8_t CPU::read(uint16_t address) {
+	return bus->read(address, false);
+}
+
+void CPU::write(uint16_t address, uint8_t data) {
+	bus->write(address, data);
 }
