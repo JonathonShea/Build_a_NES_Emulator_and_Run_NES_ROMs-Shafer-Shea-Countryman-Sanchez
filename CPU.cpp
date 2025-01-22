@@ -112,6 +112,7 @@ void CPU::ROR(uint16_t addr) // Rotate Right
     setNegativeFlag(value & 0x80);
 }
 
+// Bitwise
 void CPU::AND(uint16_t addr)
 {
 	uint8_t comp = read(addr);
