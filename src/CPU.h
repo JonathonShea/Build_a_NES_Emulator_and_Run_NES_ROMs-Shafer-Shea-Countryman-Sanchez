@@ -32,6 +32,7 @@ public:
 	void INC(uint16_t addr);
 	void DEC(uint16_t addr);
 	void INX();
+	void DEX();
 
 	bool getOverFlowFlag() const;
 	bool getNegativeFlag() const;

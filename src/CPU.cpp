@@ -119,6 +119,17 @@ void CPU::INX()
     }
 }
 
+void CPU::DEX()
+{
+    uint16_t sum = --x;
+    if (sum & negative_mask) {
+        setNegativeFlag(true);
+    }
+    if ((sum && 0) == 0) {
+        setZeroFlag(true);
+    }
+}
+
 
 // flags
 void CPU::setCarryFlag(bool value)

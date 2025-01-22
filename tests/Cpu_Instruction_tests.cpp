@@ -172,6 +172,45 @@ namespace ProcessorTests {
 		ASSERT_EQ(cpu.x, val + 1);
 	}
 
+	class CPUDEXTest : public testing::Test {
+	protected:
+		CPUDEXTest() {}
+
+		~CPUDEXTest() override {
+		}
+
+		void SetUp() override {
+			// Code here will be called immediately after the constructor (right
+			// before each test).
+			cpu.clearStatus();
+
+		}
+
+		void TearDown() override {
+			// Code here will be called immediately after each test (right
+			// before the destructor).
+		}
+		CPU cpu;
+
+	};
+
+	TEST_F(CPUDEXTest, DEX_simple) {
+		int val = 5;
+		cpu.x = val;
+		cpu.DEX();
+		ASSERT_EQ(cpu.x, val - 1);
+	}
+
+	TEST_F(CPUDEXTest, DEX_negative_flag) {
+		int val = 0x81;
+		cpu.x = val;
+		EXPECT_FALSE(cpu.getNegativeFlag());
+		cpu.DEX();
+		ASSERT_TRUE(cpu.getNegativeFlag());
+		ASSERT_EQ(cpu.x, val - 1);
+	}
+
+
 
 
 }
