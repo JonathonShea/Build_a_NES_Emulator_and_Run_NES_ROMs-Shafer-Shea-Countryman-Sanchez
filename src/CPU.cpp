@@ -2,6 +2,7 @@
 // Last updated: 1/21/2025
 
 #include "CPU.h"
+#include "Bus.h"
 #include <iostream>
 
 void CPU::respTest()
@@ -112,6 +113,92 @@ void CPU::ROR(uint16_t addr) // Rotate Right
     setNegativeFlag(value & 0x80);
 }
 
+// Add with carry OP code
+void CPU::ADC(uint16_t addr) {
+    uint16_t sum = accumulator + memory[addr] + getCarryFlag();
+    if ((~(sum ^ accumulator) & (sum ^ memory[addr]) & negative_mask) > 0)
+    {
+        setOverflowFlag(true);
+    }
+    if (sum > 0xFF) {
+        setCarryFlag(true);
+    }
+    if (sum == 0) {
+        setZeroFlag(0);
+    }
+    if (sum & negative_mask) {
+        setNegativeFlag(true);
+    }
+    accumulator += (sum & 0xFF);
+}
+
+void CPU::INC(uint16_t addr)
+{
+    uint16_t sum = ++memory[addr];
+    if (sum & negative_mask) {
+        setNegativeFlag(true);
+    }
+    if ((sum & 0xFF) == 0) {
+        setZeroFlag(true);
+    }
+}
+
+void CPU::DEC(uint16_t addr)
+{
+    uint16_t sum = --memory[addr];
+    if (sum & negative_mask) {
+        setNegativeFlag(true);
+    }
+    if ((sum & 0xFF) == 0) {
+        setZeroFlag(true);
+    }
+}
+
+void CPU::INX()
+{
+    uint16_t sum = ++x;
+    if (sum & negative_mask) {
+        setNegativeFlag(true);
+    }
+    if ((sum && 0) == 0) {
+        setZeroFlag(true);
+    }
+}
+
+void CPU::DEX()
+{
+    uint16_t sum = --x;
+    if (sum & negative_mask) {
+        setNegativeFlag(true);
+    }
+    if ((sum && 0) == 0) {
+        setZeroFlag(true);
+    }
+}
+
+void CPU::INY()
+{
+    uint16_t sum = ++y;
+    if (sum & negative_mask) {
+        setNegativeFlag(true);
+    }
+    if ((sum && 0) == 0) {
+        setZeroFlag(true);
+    }
+}
+
+void CPU::DEY()
+{
+    uint16_t sum = --y;
+    if (sum & negative_mask) {
+        setNegativeFlag(true);
+    }
+    if ((sum && 0) == 0) {
+        setZeroFlag(true);
+    }
+}
+
+
 // flags
 void CPU::setCarryFlag(bool value) 
 {
@@ -174,9 +261,24 @@ void CPU::setNegativeFlag(bool value)
         status &= ~0x80;
 }
 
-int main()
+
+bool CPU::getOverFlowFlag() const
 {
-    CPU testCPU;
-    testCPU.respTest();
-    return 0;
+    return status & overflow_mask;
+}
+
+bool CPU::getNegativeFlag() const
+{
+    return status & negative_mask;
+}
+
+void CPU::clearStatus()
+{
+    status = 0;
+uint8_t CPU::bus_read(uint16_t address) {
+	return bus->read(address, false);
+}
+
+void CPU::bus_write(uint16_t address, uint8_t data) {
+	bus->write(address, data);
 }

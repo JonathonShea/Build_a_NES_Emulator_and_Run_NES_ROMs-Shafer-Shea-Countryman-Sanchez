@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.14)
+cmake_minimum_required(VERSION 3.26)
 project(NES_Emulator)
 
 # Set C++ standard
@@ -35,7 +35,7 @@ if (CMAKE_IMPORT_LIBRARY_SUFFIX)
     )
 endif()
 
-add_executable(CPU_Test ../CPU.cpp)
+add_executable(CPU_Test ../src/CPU.cpp)
 target_include_directories(CPU_Test PRIVATE ${SDL2_INCLUDE_DIRS})
 target_link_libraries(CPU_Test PRIVATE ${SDL2_LIBRARIES})
 if (CMAKE_IMPORT_LIBRARY_SUFFIX)
