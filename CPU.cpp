@@ -25,7 +25,7 @@ void CPU::write(uint16_t addr, uint8_t data)
 }
 
 // shift instructions
-void CPU::ASL(uint16_t addr)
+void CPU::ASL(uint16_t addr) // Arithmetic Shift Left
 {
     uint8_t value = read(addr);
     setCarryFlag(value & 0x80);
@@ -35,7 +35,7 @@ void CPU::ASL(uint16_t addr)
     setNegativeFlag(value & 0x80);
 }
 
-void CPU::LSR(uint16_t addr)
+void CPU::LSR(uint16_t addr) // Logical Shift Right
 {
     uint8_t value = read(addr);
     setCarryFlag(value & 0x01); 
@@ -45,18 +45,18 @@ void CPU::LSR(uint16_t addr)
     setNegativeFlag(0);        
 }
 
-void CPU::ROL(uint16_t addr)
+void CPU::ROL(uint16_t addr) // Rotate Left
 {
     uint8_t value = read(addr);
     bool carry = getCarryFlag();
     setCarryFlag(value & 0x80);
-    value = (value << 1) | carry;
-    write(addr, value);
-    setZeroFlag(value == 0);
+    value = (value << 1) | carry; // shift left and add carry
+    write(addr, value); 
+    setZeroFlag(value == 0); 
     setNegativeFlag(value & 0x80);
 }
 
-void CPU::ROR(uint16_t addr)
+void CPU::ROR(uint16_t addr) // Rotate Right
 {
     uint8_t value = read(addr);
     bool carry = getCarryFlag();
@@ -68,7 +68,7 @@ void CPU::ROR(uint16_t addr)
 }
 
 // flags
-void CPU::setCarryFlag(bool value)
+void CPU::setCarryFlag(bool value) 
 {
     if (value)
         status |= 0x01;
