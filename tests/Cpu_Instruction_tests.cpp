@@ -94,4 +94,44 @@ namespace ProcessorTests {
 	}
 
 
+
+	class CPUDECTest : public testing::Test {
+	protected:
+		CPUDECTest() {}
+
+		~CPUDECTest() override {
+		}
+
+		void SetUp() override {
+			// Code here will be called immediately after the constructor (right
+			// before each test).
+
+		}
+
+		void TearDown() override {
+			// Code here will be called immediately after each test (right
+			// before the destructor).
+		}
+		CPU cpu;
+
+	};
+
+	TEST_F(CPUDECTest, DEC_simple) {
+		int val = 5;
+		cpu.write(0x00, val);
+		cpu.DEC(0x00);
+		ASSERT_EQ(cpu.read(0x00), val - 1);
+	}
+
+	TEST_F(CPUDECTest, DEC_negative_flag) {
+		int val = 0x81;
+		EXPECT_FALSE(cpu.getNegativeFlag());
+		cpu.write(0x00, val);
+		cpu.DEC(0x00);
+		ASSERT_TRUE(cpu.getNegativeFlag());
+		ASSERT_EQ(cpu.read(0x00), val - 1);
+	}
+
+
+
 }

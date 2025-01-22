@@ -28,6 +28,7 @@ public:
 	void ROR(uint16_t addr);
 	void ADC(uint16_t addr);
 	void INC(uint16_t addr);
+	void DEC(uint16_t addr);
 
 	bool getOverFlowFlag() const;
 	bool getNegativeFlag() const;
