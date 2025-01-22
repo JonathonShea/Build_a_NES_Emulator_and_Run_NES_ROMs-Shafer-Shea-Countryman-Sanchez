@@ -130,6 +130,28 @@ void CPU::DEX()
     }
 }
 
+void CPU::INY()
+{
+    uint16_t sum = ++y;
+    if (sum & negative_mask) {
+        setNegativeFlag(true);
+    }
+    if ((sum && 0) == 0) {
+        setZeroFlag(true);
+    }
+}
+
+void CPU::DEY()
+{
+    uint16_t sum = --y;
+    if (sum & negative_mask) {
+        setNegativeFlag(true);
+    }
+    if ((sum && 0) == 0) {
+        setZeroFlag(true);
+    }
+}
+
 
 // flags
 void CPU::setCarryFlag(bool value)

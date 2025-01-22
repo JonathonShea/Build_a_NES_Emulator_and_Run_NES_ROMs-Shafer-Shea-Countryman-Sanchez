@@ -210,6 +210,83 @@ namespace ProcessorTests {
 		ASSERT_EQ(cpu.x, val - 1);
 	}
 
+	class CPUINYTest : public testing::Test {
+	protected:
+		CPUINYTest() {}
+
+		~CPUINYTest() override {
+		}
+
+		void SetUp() override {
+			// Code here will be called immediately after the constructor (right
+			// before each test).
+			cpu.clearStatus();
+
+		}
+
+		void TearDown() override {
+			// Code here will be called immediately after each test (right
+			// before the destructor).
+		}
+		CPU cpu;
+
+	};
+
+	TEST_F(CPUINYTest, INY_simple) {
+		int val = 5;
+		cpu.y = val;
+		cpu.INY();
+		ASSERT_EQ(cpu.y, val + 1);
+	}
+
+	TEST_F(CPUINYTest, INY_negative_flag) {
+		int val = 0x81;
+		cpu.y = val;
+		EXPECT_FALSE(cpu.getNegativeFlag());
+		cpu.INY();
+		ASSERT_TRUE(cpu.getNegativeFlag());
+		ASSERT_EQ(cpu.y, val + 1);
+	}
+
+	class CPUDEYTest : public testing::Test {
+	protected:
+		CPUDEYTest() {}
+
+		~CPUDEYTest() override {
+		}
+
+		void SetUp() override {
+			// Code here will be called immediately after the constructor (right
+			// before each test).
+			cpu.clearStatus();
+
+		}
+
+		void TearDown() override {
+			// Code here will be called immediately after each test (right
+			// before the destructor).
+		}
+		CPU cpu;
+
+	};
+
+	TEST_F(CPUDEYTest, DEY_simple) {
+		int val = 5;
+		cpu.y = val;
+		cpu.DEY();
+		ASSERT_EQ(cpu.y, val - 1);
+	}
+
+	TEST_F(CPUDEYTest, DEY_negative_flag) {
+		int val = 0x81;
+		cpu.y = val;
+		EXPECT_FALSE(cpu.getNegativeFlag());
+		cpu.DEY();
+		ASSERT_TRUE(cpu.getNegativeFlag());
+		ASSERT_EQ(cpu.y, val - 1);
+	}
+
+
 
 
 
