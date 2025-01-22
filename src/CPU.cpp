@@ -275,10 +275,11 @@ bool CPU::getNegativeFlag() const
 void CPU::clearStatus()
 {
     status = 0;
-uint8_t CPU::bus_read(uint16_t address) {
-	return bus->read(address, false);
 }
+// uint8_t CPU::bus_read(uint16_t address) {
+// 	return bus->read(address, false);
+// }
 
-void CPU::bus_write(uint16_t address, uint8_t data) {
-	bus->write(address, data);
-}
+// void CPU::bus_write(uint16_t address, uint8_t data) {
+// 	bus->write(address, data);
+// }
