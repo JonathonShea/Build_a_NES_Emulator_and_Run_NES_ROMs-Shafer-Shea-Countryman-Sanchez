@@ -2,6 +2,7 @@
 // Last updated: 1/21/2025
 
 #include "CPU.h"
+#include "Bus.h"
 #include <iostream>
 
 void CPU::respTest()
@@ -274,11 +275,10 @@ bool CPU::getNegativeFlag() const
 void CPU::clearStatus()
 {
     status = 0;
+uint8_t CPU::bus_read(uint16_t address) {
+	return bus->read(address, false);
 }
 
-int main()
-{
-    CPU testCPU;
-    testCPU.respTest();
-    return 0;
+void CPU::bus_write(uint16_t address, uint8_t data) {
+	bus->write(address, data);
 }
