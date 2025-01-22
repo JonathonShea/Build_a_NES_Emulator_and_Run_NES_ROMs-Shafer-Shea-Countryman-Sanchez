@@ -26,12 +26,15 @@ public:
 	void LSR(uint16_t addr);
 	void ROL(uint16_t addr);
 	void ROR(uint16_t addr);
+	void AND(uint16_t addr);
+	void ORA(uint16_t addr);
+	void EOR(uint16_t addr);
 
 
 private:
 	std::vector<uint8_t> memory;
 
-	void setCarryFlag(bool value);
+    void setCarryFlag(bool value);
     bool getCarryFlag();
     void setZeroFlag(bool value);
     void setInterruptDisableFlag(bool value);
