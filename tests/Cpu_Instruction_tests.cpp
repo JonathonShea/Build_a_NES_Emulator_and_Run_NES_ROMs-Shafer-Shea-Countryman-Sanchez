@@ -286,7 +286,71 @@ namespace ProcessorTests {
 		ASSERT_EQ(cpu.y, val - 1);
 	}
 
+	class CPUShiftTest : public ::testing::Test {
+	protected:
+		void SetUp() override {
+			cpu.clearStatus();
+		}
 
+		void TearDown() override {
+		}
+
+		CPU cpu;
+	};
+
+	TEST_F(CPUShiftTest, ASL_Test) {
+		uint16_t addr = 0x2000;
+		uint8_t value = 0x55;
+
+		cpu.write(addr, value);
+		uint8_t beforeShift = cpu.read(addr);
+
+		cpu.ASL(addr);
+		uint8_t afterShift = cpu.read(addr);
+
+		ASSERT_EQ(afterShift, 0xAA);
+	}
+
+	TEST_F(CPUShiftTest, LSR_Test) {
+		uint16_t addr = 0x2000;
+		uint8_t value = 0x55;
+
+		cpu.write(addr, value);
+		uint8_t beforeShift = cpu.read(addr);
+
+		cpu.LSR(addr);
+		uint8_t afterShift = cpu.read(addr);
+
+		ASSERT_EQ(afterShift, 0x2A);
+	}
+
+	TEST_F(CPUShiftTest, ROL_Test) {
+		uint16_t addr = 0x2000;
+		uint8_t value = 0x55;
+
+		cpu.write(addr, value);
+		cpu.setCarryFlag(false);
+		uint8_t beforeShift = cpu.read(addr);
+
+		cpu.ROL(addr);
+		uint8_t afterShift = cpu.read(addr);
+
+		ASSERT_EQ(afterShift, 0xAA);
+	}
+
+	TEST_F(CPUShiftTest, ROR_Test) {
+		uint16_t addr = 0x2000;
+		uint8_t value = 0x55;
+
+		cpu.write(addr, value);
+		cpu.setCarryFlag(false);
+		uint8_t beforeShift = cpu.read(addr);
+
+		cpu.ROR(addr);
+		uint8_t afterShift = cpu.read(addr);
+
+		ASSERT_EQ(afterShift, 0x2A);
+	}
 
 
 

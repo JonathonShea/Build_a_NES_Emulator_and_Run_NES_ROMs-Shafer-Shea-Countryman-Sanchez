@@ -23,6 +23,8 @@ public:
 		bus = n;
 	}
 
+	CPU();
+
 	void respTest();
 	uint8_t read(uint16_t addr);
 	void write(uint16_t addr, uint8_t data);
@@ -43,6 +45,14 @@ public:
 	bool getOverFlowFlag() const;
 	bool getNegativeFlag() const;
 	void clearStatus();
+	void setCarryFlag(bool value);
+    bool getCarryFlag();
+    void setZeroFlag(bool value);
+    void setInterruptDisableFlag(bool value);
+    void setDecimalModeFlag(bool value);
+    void setBreakCommandFlag(bool value);
+    void setOverflowFlag(bool value);
+    void setNegativeFlag(bool value);
 
 
 private:
@@ -93,12 +103,12 @@ private: // Opcodes
 	uint8_t CPX(); // Compare with X
 	uint8_t CPY(); // Compare with Y
 	uint8_t DEC(); // Decrement
-	uint8_t DEX(); // Decrement X
-	uint8_t DEY(); // Decrement Y
+	// uint8_t DEX(); // Decrement X
+	// uint8_t DEY(); // Decrement Y
 	uint8_t EOR(); // Exclusive OR (with accumulator)
 	uint8_t INC(); // Increment 
-	uint8_t INX(); // Increment X
-	uint8_t INY(); // Increment Y
+	// uint8_t INX(); // Increment X
+	// uint8_t INY(); // Increment Y
 	uint8_t JMP(); // Jump
 	uint8_t JSR(); // Jump subroutine
 	uint8_t LDA(); // Load accumulaotr
@@ -128,14 +138,7 @@ private: // Opcodes
 	uint8_t TXA(); // Transfer X to accumulator
 	uint8_t TXS(); // Transfer X to stack pointer
 	uint8_t TYA(); // Transfer Y to accumulator
-	void setCarryFlag(bool value);
-    bool getCarryFlag();
-    void setZeroFlag(bool value);
-    void setInterruptDisableFlag(bool value);
-    void setDecimalModeFlag(bool value);
-    void setBreakCommandFlag(bool value);
-    void setOverflowFlag(bool value);
-    void setNegativeFlag(bool value);
+	
 };
 
 #endif
