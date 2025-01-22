@@ -12,7 +12,7 @@ FetchContent_MakeAvailable(googletest)
 enable_testing()
 add_test(NAME example_test COMMAND example_tests)
 add_executable(example_tests Run_Tests.cpp
-        example_test.cpp)
+        example_test.cpp "Cpu_Instruction_tests.cpp")
 target_link_libraries(example_tests gtest_main)
 target_link_libraries(example_tests MemoryMapper)
 
