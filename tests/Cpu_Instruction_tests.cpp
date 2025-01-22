@@ -55,34 +55,43 @@ namespace ProcessorTests {
 		ASSERT_TRUE(cpu.getNegativeFlag());
 	}
 
+
+	class CPUINCTest : public testing::Test {
+	protected:
+		CPUINCTest() {}
+
+		~CPUINCTest() override {
+		}
+
+		void SetUp() override {
+			// Code here will be called immediately after the constructor (right
+			// before each test).
+
+		}
+
+		void TearDown() override {
+			// Code here will be called immediately after each test (right
+			// before the destructor).
+		}
+		CPU cpu;
+
+	};
+
+	TEST_F(CPUINCTest, INC_simple) {
+		int val = 5;
+		cpu.write(0x00, val);
+		cpu.INC(0x00);
+		ASSERT_EQ(cpu.read(0x00), val + 1);
+	}
+
+	TEST_F(CPUINCTest, INC_negative_flag) {
+		int val = 0x7F;
+		EXPECT_FALSE(cpu.getNegativeFlag());
+		cpu.write(0x00, val);
+		cpu.INC(0x00);
+		ASSERT_TRUE(cpu.getNegativeFlag());
+		ASSERT_EQ(cpu.read(0x00), val + 1);
+	}
+
+
 }
-
-class CPUINCTest : public testing::Test {
-protected:
-	CPUINCTest() {}
-
-	~CPUINCTest() override {
-	}
-
-	void SetUp() override {
-		// Code here will be called immediately after the constructor (right
-		// before each test).
-
-	}
-
-	void TearDown() override {
-		// Code here will be called immediately after each test (right
-		// before the destructor).
-	}
-	CPU cpu;
-
-};
-
-TEST_F(CPUINCTest, INC_simple) {
-	int val = 5;
-	cpu.write(0x00, val);
-	cpu.INC(0x00);
-	ASSERT_EQ(cpu.read(0x00), val + 1);
-}
-
-TEST_F(CPUINCTest, )
