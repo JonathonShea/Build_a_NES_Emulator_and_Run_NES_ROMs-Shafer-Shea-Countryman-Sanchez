@@ -6,7 +6,52 @@
 
 void CPU::respTest()
 {
-    std::cout << "The CPU says hi! Say hi back or else..." << std::endl;
+    uint16_t addr = 0x2000; // Example address
+    uint8_t value = 0x55; // Example value
+
+    // Write the value to memory
+    write(addr, value);
+
+    // Read and print the value before the shift
+    uint8_t beforeShift = read(addr);
+    std::cout << "Value before ASL: " << std::hex << static_cast<int>(beforeShift) << std::endl;
+
+    // Perform the arithmetic shift left
+    ASL(addr);
+
+    // Read and print the value after the shift
+    uint8_t afterShift = read(addr);
+    std::cout << "Value after ASL: " << std::hex << static_cast<int>(afterShift) << std::endl;
+    std::cout << "Expected value after ASL: " << std::hex << static_cast<int>(0xAA) << std::endl;
+
+    // Perform the logical shift right
+    write(addr, value);
+    beforeShift = read(addr);
+    std::cout << "Value before LSR: " << std::hex << static_cast<int>(beforeShift) << std::endl;
+    LSR(addr);
+    afterShift = read(addr);
+    std::cout << "Value after LSR: " << std::hex << static_cast<int>(afterShift) << std::endl;
+    std::cout << "Expected value after LSR: " << std::hex << static_cast<int>(0x2A) << std::endl;
+
+    // Perform the rotate left
+    write(addr, value);
+    setCarryFlag(false); // Clear carry flag before ROL
+    beforeShift = read(addr);
+    std::cout << "Value before ROL: " << std::hex << static_cast<int>(beforeShift) << std::endl;
+    ROL(addr);
+    afterShift = read(addr);
+    std::cout << "Value after ROL: " << std::hex << static_cast<int>(afterShift) << std::endl;
+    std::cout << "Expected value after ROL: " << std::hex << static_cast<int>(0xAA) << std::endl;
+
+    // Perform the rotate right
+    write(addr, value);
+    setCarryFlag(false); // Clear carry flag before ROR
+    beforeShift = read(addr);
+    std::cout << "Value before ROR: " << std::hex << static_cast<int>(beforeShift) << std::endl;
+    ROR(addr);
+    afterShift = read(addr);
+    std::cout << "Value after ROR: " << std::hex << static_cast<int>(afterShift) << std::endl;
+    std::cout << "Expected value after ROR: " << std::hex << static_cast<int>(0x2A) << std::endl;
 }
 
 CPU::CPU() : memory(65536, 0) // Initialize 64KB of memory
@@ -25,7 +70,7 @@ void CPU::write(uint16_t addr, uint8_t data)
 }
 
 // shift instructions
-void CPU::ASL(uint16_t addr)
+void CPU::ASL(uint16_t addr) // Arithmetic Shift Left
 {
     uint8_t value = read(addr);
     setCarryFlag(value & 0x80);
@@ -35,7 +80,7 @@ void CPU::ASL(uint16_t addr)
     setNegativeFlag(value & 0x80);
 }
 
-void CPU::LSR(uint16_t addr)
+void CPU::LSR(uint16_t addr) // Logical Shift Right
 {
     uint8_t value = read(addr);
     setCarryFlag(value & 0x01); 
@@ -45,18 +90,18 @@ void CPU::LSR(uint16_t addr)
     setNegativeFlag(0);        
 }
 
-void CPU::ROL(uint16_t addr)
+void CPU::ROL(uint16_t addr) // Rotate Left
 {
     uint8_t value = read(addr);
     bool carry = getCarryFlag();
     setCarryFlag(value & 0x80);
-    value = (value << 1) | carry;
-    write(addr, value);
-    setZeroFlag(value == 0);
+    value = (value << 1) | carry; // shift left and add carry
+    write(addr, value); 
+    setZeroFlag(value == 0); 
     setNegativeFlag(value & 0x80);
 }
 
-void CPU::ROR(uint16_t addr)
+void CPU::ROR(uint16_t addr) // Rotate Right
 {
     uint8_t value = read(addr);
     bool carry = getCarryFlag();
@@ -154,7 +199,7 @@ void CPU::DEY()
 
 
 // flags
-void CPU::setCarryFlag(bool value)
+void CPU::setCarryFlag(bool value) 
 {
     if (value)
         status |= 0x01;
