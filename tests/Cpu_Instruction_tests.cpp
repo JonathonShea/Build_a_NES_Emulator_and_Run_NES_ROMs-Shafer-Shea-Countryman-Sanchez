@@ -12,7 +12,7 @@ namespace ProcessorTests {
 		void SetUp() override {
 			// Code here will be called immediately after the constructor (right
 			// before each test).
-
+			cpu.clearStatus();
 		}
 
 		void TearDown() override {
@@ -66,7 +66,7 @@ namespace ProcessorTests {
 		void SetUp() override {
 			// Code here will be called immediately after the constructor (right
 			// before each test).
-
+			cpu.clearStatus();
 		}
 
 		void TearDown() override {
@@ -105,7 +105,7 @@ namespace ProcessorTests {
 		void SetUp() override {
 			// Code here will be called immediately after the constructor (right
 			// before each test).
-
+			cpu.clearStatus();
 		}
 
 		void TearDown() override {
@@ -130,6 +130,46 @@ namespace ProcessorTests {
 		cpu.DEC(0x00);
 		ASSERT_TRUE(cpu.getNegativeFlag());
 		ASSERT_EQ(cpu.read(0x00), val - 1);
+	}
+
+
+
+	class CPUINXTest : public testing::Test {
+	protected:
+		CPUINXTest() {}
+
+		~CPUINXTest() override {
+		}
+
+		void SetUp() override {
+			// Code here will be called immediately after the constructor (right
+			// before each test).
+			cpu.clearStatus();
+
+		}
+
+		void TearDown() override {
+			// Code here will be called immediately after each test (right
+			// before the destructor).
+		}
+		CPU cpu;
+
+	};
+
+	TEST_F(CPUINXTest, INX_simple) {
+		int val = 5;
+		cpu.x = val;
+		cpu.INX();
+		ASSERT_EQ(cpu.x, val + 1);
+	}
+
+	TEST_F(CPUINXTest, INX_negative_flag) {
+		int val = 0x81;
+		cpu.x = val;
+		EXPECT_FALSE(cpu.getNegativeFlag());
+		cpu.INX();
+		ASSERT_TRUE(cpu.getNegativeFlag());
+		ASSERT_EQ(cpu.x, val + 1);
 	}
 
 

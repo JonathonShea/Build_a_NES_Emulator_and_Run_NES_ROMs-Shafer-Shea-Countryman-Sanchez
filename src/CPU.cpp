@@ -108,6 +108,17 @@ void CPU::DEC(uint16_t addr)
     }
 }
 
+void CPU::INX()
+{
+    uint16_t sum = ++x;
+    if (sum & negative_mask) {
+        setNegativeFlag(true);
+    }
+    if ((sum && 0) == 0) {
+        setZeroFlag(true);
+    }
+}
+
 
 // flags
 void CPU::setCarryFlag(bool value)
@@ -180,6 +191,11 @@ bool CPU::getOverFlowFlag() const
 bool CPU::getNegativeFlag() const
 {
     return status & negative_mask;
+}
+
+void CPU::clearStatus()
+{
+    status = 0;
 }
 
 int main()

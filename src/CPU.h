@@ -26,12 +26,16 @@ public:
 	void LSR(uint16_t addr);
 	void ROL(uint16_t addr);
 	void ROR(uint16_t addr);
+
+	// Arithmetic OP codes.
 	void ADC(uint16_t addr);
 	void INC(uint16_t addr);
 	void DEC(uint16_t addr);
+	void INX();
 
 	bool getOverFlowFlag() const;
 	bool getNegativeFlag() const;
+	void clearStatus();
 
 
 private:
