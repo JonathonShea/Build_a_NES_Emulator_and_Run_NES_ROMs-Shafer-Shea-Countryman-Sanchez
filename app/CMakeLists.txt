@@ -34,3 +34,14 @@ if (CMAKE_IMPORT_LIBRARY_SUFFIX)
         COMMAND_EXPAND_LISTS
     )
 endif()
+
+add_executable(CPU_Test ../CPU.cpp)
+target_include_directories(CPU_Test PRIVATE ${SDL2_INCLUDE_DIRS})
+target_link_libraries(CPU_Test PRIVATE ${SDL2_LIBRARIES})
+if (CMAKE_IMPORT_LIBRARY_SUFFIX)
+    add_custom_command(
+        TARGET CPU_Test POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_RUNTIME_DLLS:APU_Test> $<TARGET_FILE_DIR:APU_Test>
+        COMMAND_EXPAND_LISTS
+    )
+endif()
