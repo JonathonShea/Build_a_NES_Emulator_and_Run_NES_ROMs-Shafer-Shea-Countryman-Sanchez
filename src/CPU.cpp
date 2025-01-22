@@ -86,6 +86,17 @@ void CPU::ADC(uint16_t addr) {
     accumulator += (sum & 0xFF);
 }
 
+void CPU::INC(uint16_t addr)
+{
+    uint16_t sum = memory[addr]++;
+    if (sum & negative_mask) {
+        setNegativeFlag(true);
+    }
+    if ((sum & 0xFF) == 0) {
+        setZeroFlag(true);
+    }
+}
+
 
 // flags
 void CPU::setCarryFlag(bool value)
