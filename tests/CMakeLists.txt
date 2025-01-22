@@ -10,18 +10,20 @@ FetchContent_MakeAvailable(googletest)
 
 # Now simply link against gtest or gtest_main as needed. Eg
 enable_testing()
-add_test(NAME example_test COMMAND example_tests)
-add_executable(example_tests Run_Tests.cpp
-        example_test.cpp "Cpu_Instruction_tests.cpp")
-target_link_libraries(example_tests gtest_main)
-target_link_libraries(example_tests MemoryMapper)
+add_test(NAME example_test COMMAND nes_tests)
+add_executable(nes_tests Run_Tests.cpp
+              Cpu_Instruction_tests.cpp)
+target_link_libraries(nes_tests gtest_main)
+target_link_libraries(nes_tests MemoryMapper)
 
 
 # The following variable is defined only on DLL systems
 if (CMAKE_IMPORT_LIBRARY_SUFFIX)
     add_custom_command(
-            TARGET example_tests POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_RUNTIME_DLLS:example_tests> $<TARGET_FILE_DIR:example_tests>
+            TARGET nes_tests POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_RUNTIME_DLLS:nes_tests> $<TARGET_FILE_DIR:nes_tests>
             COMMAND_EXPAND_LISTS
     )
 endif ()
+include(GoogleTest)
+gtest_discover_tests(nes_tests)

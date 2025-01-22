@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.14)
+cmake_minimum_required(VERSION 3.26)
 project(NES_Emulator)
 
 # Set C++ standard
@@ -11,7 +11,7 @@ set(SDL2_LIBRARIES "C:/SDL2/lib/x64/SDL2.lib;C:/SDL2/lib/x64/SDL2main.lib")
 
 
 # Find SDL2 package
-find_package(SDL2 REQUIRED)
+#find_package(SDL2 REQUIRED)
 
 add_executable(nes_emulator main.cpp)
 target_link_libraries(nes_emulator PRIVATE MemoryMapper)

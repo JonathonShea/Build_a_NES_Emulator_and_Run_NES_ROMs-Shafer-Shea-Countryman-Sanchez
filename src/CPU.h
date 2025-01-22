@@ -26,9 +26,18 @@ public:
 	void LSR(uint16_t addr);
 	void ROL(uint16_t addr);
 	void ROR(uint16_t addr);
+	void ADC(uint16_t addr);
+
+	bool getOverFlowFlag() const;
+	bool getNegativeFlag() const;
 
 
 private:
+	// Masks for status register
+	static constexpr uint8_t overflow_mask = 0x40;
+	static constexpr uint8_t negative_mask = 0x80;
+	static constexpr uint8_t carry_mask = 0x01;
+	static constexpr uint8_t zero_mask = 0x02;
 	std::vector<uint8_t> memory;
 
 	void setCarryFlag(bool value);

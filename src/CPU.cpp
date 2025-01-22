@@ -67,6 +67,26 @@ void CPU::ROR(uint16_t addr)
     setNegativeFlag(value & 0x80);
 }
 
+// Add with carry OP code
+void CPU::ADC(uint16_t addr) {
+    uint16_t sum = accumulator + memory[addr] + getCarryFlag();
+    if ((~(sum ^ accumulator) & (sum ^ memory[addr]) & negative_mask) > 0)
+    {
+        setOverflowFlag(true);
+    }
+    if (sum > 0xFF) {
+        setCarryFlag(true);
+    }
+    if (sum == 0) {
+        setZeroFlag(0);
+    }
+    if (sum & negative_mask) {
+        setNegativeFlag(true);
+    }
+    accumulator += (sum & 0xFF);
+}
+
+
 // flags
 void CPU::setCarryFlag(bool value)
 {
@@ -127,6 +147,17 @@ void CPU::setNegativeFlag(bool value)
         status |= 0x80;
     else
         status &= ~0x80;
+}
+
+
+bool CPU::getOverFlowFlag() const
+{
+    return status & overflow_mask;
+}
+
+bool CPU::getNegativeFlag() const
+{
+    return status & negative_mask;
 }
 
 int main()
