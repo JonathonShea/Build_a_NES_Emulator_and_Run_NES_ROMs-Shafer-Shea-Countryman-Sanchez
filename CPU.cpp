@@ -112,6 +112,33 @@ void CPU::ROR(uint16_t addr) // Rotate Right
     setNegativeFlag(value & 0x80);
 }
 
+void CPU::AND(uint16_t addr)
+{
+	uint8_t comp = read(addr);
+	accumulator = accumulator & comp;
+
+	setZeroFlag(accumulator);
+	setNegativeFlag(accumulator);
+}
+
+void CPU::ORA(uint16_t addr) 
+{
+	uint8_t comp = read(addr);
+	accumulator = accumulator | comp;
+
+	setZeroFlag(accumulator);
+	setNegativeFlag(accumulator);
+}
+
+void CPU::EOR(uint16_t addr) 
+{
+	uint8_t comp = read(addr);
+	accumulator = accumulator ^ comp;
+
+	setZeroFlag(accumulator);
+	setNegativeFlag(accumulator);
+}
+
 // flags
 void CPU::setCarryFlag(bool value) 
 {
