@@ -113,31 +113,37 @@ void CPU::ROR(uint16_t addr) // Rotate Right
 }
 
 // Bitwise
-void CPU::AND(uint16_t addr)
-{
-	uint8_t comp = read(addr);
-	accumulator = accumulator & comp;
+void CPU::AND(uint16_t addr) {
+	uint8_t value = read(addr);
+	accumulator = accumulator & value;
 
-	setZeroFlag(accumulator);
-	setNegativeFlag(accumulator);
+	setZeroFlag(accumulator == 0x00);
+	setNegativeFlag(accumulator & 0x80);
 }
 
-void CPU::ORA(uint16_t addr) 
-{
-	uint8_t comp = read(addr);
-	accumulator = accumulator | comp;
+void CPU::ORA(uint16_t addr) {
+	uint8_t value = read(addr);
+	accumulator = accumulator | value;
 
-	setZeroFlag(accumulator);
-	setNegativeFlag(accumulator);
+	setZeroFlag(accumulator == 0x00);
+	setNegativeFlag(accumulator & 0x80);
 }
 
-void CPU::EOR(uint16_t addr) 
-{
-	uint8_t comp = read(addr);
-	accumulator = accumulator ^ comp;
+void CPU::EOR(uint16_t addr) {
+	uint8_t value = read(addr);
+	accumulator = accumulator ^ value;
 
-	setZeroFlag(accumulator);
-	setNegativeFlag(accumulator);
+	setZeroFlag(accumulator == 0x00);
+	setNegativeFlag(accumulator & 0x80);
+}
+
+void CPU::BIT(uint16_t addr) {
+	uint8_t value = read(addr);
+	result = accumulator & value;
+
+	setZeroFlag((result & 0xFF) == 0x00);
+	setOverflowFlag(value & (1 << 6));
+	setNegativeFlag(value & (1 << 7));
 }
 
 // flags
