@@ -139,11 +139,11 @@ void CPU::EOR(uint16_t addr) {
 
 void CPU::BIT(uint16_t addr) {
 	uint8_t value = read(addr);
-	result = accumulator & value;
+	uint8_t result = accumulator & value;
 
 	setZeroFlag((result & 0xFF) == 0x00);
-	setOverflowFlag(value & (1 << 6));
-	setNegativeFlag(value & (1 << 7));
+	setOverflowFlag(value & 0x40);
+	setNegativeFlag(value & 0x80);
 }
 
 // flags
