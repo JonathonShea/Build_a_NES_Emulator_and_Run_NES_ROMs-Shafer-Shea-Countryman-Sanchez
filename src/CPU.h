@@ -35,6 +35,7 @@ public:
 
 	// Arithmetic OP codes.
 	void ADC(uint16_t addr);
+	void SBC(uint16_t addr);
 	void INC(uint16_t addr);
 	void DEC(uint16_t addr);
 	void INX();
