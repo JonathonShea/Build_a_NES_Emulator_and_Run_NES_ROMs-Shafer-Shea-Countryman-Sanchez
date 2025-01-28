@@ -353,5 +353,64 @@ namespace ProcessorTests {
 	}
 
 
+	class CPUSBCTest : public testing::Test {
+	protected:
+		CPUSBCTest() {}
+
+		~CPUSBCTest() override {
+		}
+
+		void SetUp() override {
+			// Code here will be called immediately after the constructor (right
+			// before each test).
+			cpu.clearStatus();
+			cpu.accumulator = 10; // test start point
+		}
+
+		void TearDown() override {
+			// Code here will be called immediately after each test (right
+			// before the destructor).
+		}
+		CPU cpu;
+
+	};
+
+	TEST_F(CPUSBCTest, SBC_simple_sub_carry_clear) {
+		cpu.write(0x55, 5);
+		cpu.SBC(0x55);
+		cpu.setCarryFlag(true);
+		ASSERT_EQ(cpu.accumulator, 5);
+	}
+
+	TEST_F(CPUSBCTest, SBC_simple_sub_carry_set) {
+		cpu.write(0x55, 5);
+		cpu.SBC(0x55);
+		cpu.setCarryFlag(false);
+		ASSERT_EQ(cpu.accumulator, 4);
+	}
+
+	TEST_F(CPUSBCTest, SBC_carry_bit) {
+		cpu.write(0x56, 0xFE);
+		cpu.SBC(0x56);
+		cpu.write(0x55, 0x02);
+		cpu.ADC(0x55);
+		ASSERT_TRUE(cpu.status & 0x01);
+	}
+
+	TEST_F(CPUSBCTest, SBC_signed_underflow) {
+		EXPECT_FALSE(cpu.getOverFlowFlag());
+		cpu.write(0x01, 0x3F);
+		cpu.write(0x02, 0x3F);
+		cpu.SBC(0x01);
+		cpu.SBC(0x02);
+		ASSERT_TRUE(cpu.getOverFlowFlag());
+	}
+
+	TEST_F(CPUSBCTest, SBC_negative) {
+		EXPECT_FALSE(cpu.getNegativeFlag());
+		cpu.write(0x01, 0x80);
+		cpu.SBC(0x01);
+		ASSERT_TRUE(cpu.getNegativeFlag());
+	}
 
 }
