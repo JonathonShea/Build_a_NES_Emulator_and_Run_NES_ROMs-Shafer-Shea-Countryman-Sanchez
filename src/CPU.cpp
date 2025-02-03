@@ -292,10 +292,78 @@ bool CPU::getNegativeFlag() const
     return status & negative_mask;
 }
 
+bool CPU::getZeroFlag() const
+{
+    return status & zero_mask;
+}
+
 void CPU::clearStatus()
 {
     status = 0;
 }
+
+//Bitwise Operations
+void CPU::AND(uint16_t addr) {
+    uint8_t value = read(addr);
+    accumulator = accumulator & value;
+
+    setZeroFlag(accumulator == 0x00);
+    setNegativeFlag(accumulator & 0x80);
+}
+
+void CPU::ORA(uint16_t addr) {
+    uint8_t value = read(addr);
+    accumulator = accumulator | value;
+
+    setZeroFlag(accumulator == 0x00);
+    setNegativeFlag(accumulator & 0x80);
+}
+
+void CPU::EOR(uint16_t addr) {
+    uint8_t value = read(addr);
+    accumulator = accumulator ^ value;
+
+    setZeroFlag(accumulator == 0x00);
+    setNegativeFlag(accumulator & 0x80);
+}
+
+void CPU::BIT(uint16_t addr) {
+    uint8_t value = read(addr);
+    uint8_t result = accumulator & value;
+
+    setZeroFlag(result == 0x00);
+    setOverflowFlag(value & 0x40);
+    setNegativeFlag(value & 0x80);
+}
+
+//Compare
+void CPU::CMP(uint16_t addr) {
+    uint8_t value = read(addr);
+    uint8_t result = accumulator - value;
+
+    setCarryFlag(accumulator >= value);
+    setZeroFlag(result == 0);
+    setNegativeFlag(result & 0x80);
+}
+
+void CPU::CPX(uint16_t addr) {
+    uint8_t value = read(addr);
+    uint8_t result = x - value;
+
+    setCarryFlag(x >= value);
+    setZeroFlag(result == 0);
+    setNegativeFlag(result & 0x80);
+}
+
+void CPU::CPY(uint16_t addr) {
+    uint8_t value = read(addr);
+    uint8_t result = y - value;
+
+    setCarryFlag(y >= value);
+    setZeroFlag(result == 0);
+    setNegativeFlag(result & 0x80);
+}
+
 // uint8_t CPU::bus_read(uint16_t address) {
 // 	return bus->read(address, false);
 // }
