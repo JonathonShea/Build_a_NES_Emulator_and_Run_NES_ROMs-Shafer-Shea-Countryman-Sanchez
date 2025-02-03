@@ -49,11 +49,21 @@ public:
 	void setCarryFlag(bool value);
     bool getCarryFlag();
     void setZeroFlag(bool value);
+	bool getZeroFlag() const;
     void setInterruptDisableFlag(bool value);
     void setDecimalModeFlag(bool value);
     void setBreakCommandFlag(bool value);
     void setOverflowFlag(bool value);
     void setNegativeFlag(bool value);
+
+	void AND(uint16_t addr);
+	void ORA(uint16_t addr);
+	void EOR(uint16_t addr);
+	void BIT(uint16_t addr);
+
+	void CMP(uint16_t addr);
+	void CPX(uint16_t addr);
+	void CPY(uint16_t addr);
 
 
 private:
@@ -84,12 +94,12 @@ private: // Addressing Modes
 
 private: // Opcodes
 	uint8_t ADC(); // Add with carry
-	uint8_t AND(); // AND (with accumulator)
+	//uint8_t AND(); // AND (with accumulator)
 	uint8_t ASL(); // Arithmetic shift left
 	uint8_t BCC(); // Branch on carry clear
 	uint8_t BCS(); // Branch on carry set
 	uint8_t BEQ(); // Branch on equal (zero set)
-	uint8_t BIT(); // Bit test
+	//uint8_t BIT(); // Bit test
 	uint8_t BMI(); // Branch on minus (negative set)
 	uint8_t BNE(); // Branch on not equal (zero clear)
 	uint8_t BPL(); // Branch on plus (negative clear)
@@ -100,13 +110,13 @@ private: // Opcodes
 	uint8_t CLD(); // Clear decimal
 	uint8_t CLI(); // Clear interrupt disable
 	uint8_t CLV(); // Clear overflow
-	uint8_t CMP(); // Compare (with accumlulator)
-	uint8_t CPX(); // Compare with X
-	uint8_t CPY(); // Compare with Y
+	//uint8_t CMP(); // Compare (with accumlulator)
+	//uint8_t CPX(); // Compare with X
+	//uint8_t CPY(); // Compare with Y
 	uint8_t DEC(); // Decrement
 	// uint8_t DEX(); // Decrement X
 	// uint8_t DEY(); // Decrement Y
-	uint8_t EOR(); // Exclusive OR (with accumulator)
+	//uint8_t EOR(); // Exclusive OR (with accumulator)
 	uint8_t INC(); // Increment 
 	// uint8_t INX(); // Increment X
 	// uint8_t INY(); // Increment Y
@@ -117,7 +127,7 @@ private: // Opcodes
 	uint8_t LDY(); // Load Y
 	uint8_t LSR(); // Logical shift right
 	uint8_t NOP(); // No operation
-	uint8_t ORA(); // Or with accumulator
+	//uint8_t ORA(); // Or with accumulator
 	uint8_t PHA(); // Push accumulator
 	uint8_t PHP(); // Push processor status
 	uint8_t PLA(); // Pull accumulator

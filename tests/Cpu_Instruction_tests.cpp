@@ -413,4 +413,276 @@ namespace ProcessorTests {
 		ASSERT_TRUE(cpu.getNegativeFlag());
 	}
 
+	class CPUBitwiseTest : public ::testing::Test {
+	protected:
+		void SetUp() override {
+			cpu.clearStatus();
+		}
+
+		void TearDown() override {
+		}
+
+		CPU cpu;
+	};
+
+	TEST_F(CPUBitwiseTest, bitwise_and_zero_zero) {
+		cpu.accumulator = 0x00;
+		cpu.write(0x1000, 0x00);
+		cpu.AND(0x1000);
+		ASSERT_EQ(cpu.accumulator, 0x00);
+		ASSERT_TRUE(cpu.getZeroFlag());
+		ASSERT_FALSE(cpu.getNegativeFlag());
+	}
+
+	TEST_F(CPUBitwiseTest, bitwise_and_none_alike) {
+		cpu.accumulator = 0x00;
+		cpu.write(0x1000, 0xFF);
+		cpu.AND(0x1000);
+		ASSERT_EQ(cpu.accumulator, 0x00);
+		ASSERT_TRUE(cpu.getZeroFlag());
+		ASSERT_FALSE(cpu.getNegativeFlag());
+	}
+
+	TEST_F(CPUBitwiseTest, bitwise_and_all_alike) {
+		cpu.accumulator = 0xFF;
+		cpu.write(0x1000, 0xFF);
+		cpu.AND(0x1000);
+		ASSERT_EQ(cpu.accumulator, 0xFF);
+		ASSERT_FALSE(cpu.getZeroFlag());
+		ASSERT_TRUE(cpu.getNegativeFlag());
+	}
+
+	TEST_F(CPUBitwiseTest, bitwise_and_shared_neg_bit) {
+		cpu.accumulator = 0xF2;
+		cpu.write(0x1000, 0x81);
+		cpu.AND(0x1000);
+		ASSERT_EQ(cpu.accumulator, 0x80);
+		ASSERT_FALSE(cpu.getZeroFlag());
+		ASSERT_TRUE(cpu.getNegativeFlag());
+	}
+
+	TEST_F(CPUBitwiseTest, bitwise_or_all_zero) {
+		cpu.accumulator = 0x00;
+		cpu.write(0x1000, 0x00);
+		cpu.ORA(0x1000);
+		ASSERT_EQ(cpu.accumulator, 0x00);
+		ASSERT_TRUE(cpu.getZeroFlag());
+		ASSERT_FALSE(cpu.getNegativeFlag());
+	}
+
+	TEST_F(CPUBitwiseTest, bitwise_or_all_non_zero) {
+		cpu.accumulator = 0xFF;
+		cpu.write(0x1000, 0xFF);
+		cpu.ORA(0x1000);
+		ASSERT_EQ(cpu.accumulator, 0xFF);
+		ASSERT_FALSE(cpu.getZeroFlag());
+		ASSERT_TRUE(cpu.getNegativeFlag());
+	}
+
+	TEST_F(CPUBitwiseTest, bitwise_or_none_alike) {
+		cpu.accumulator = 0xAA;
+		cpu.write(0x1000, 0x55);
+		cpu.ORA(0x1000);
+		ASSERT_EQ(cpu.accumulator, 0xFF);
+		ASSERT_FALSE(cpu.getZeroFlag());
+		ASSERT_TRUE(cpu.getNegativeFlag());
+	}
+
+	TEST_F(CPUBitwiseTest, bitwise_or_alternate_bit_result) {
+		cpu.accumulator = 0x00;
+		cpu.write(0x1000, 0x55);
+		cpu.ORA(0x1000);
+		ASSERT_EQ(cpu.accumulator, 0x55);
+		ASSERT_FALSE(cpu.getZeroFlag());
+		ASSERT_FALSE(cpu.getNegativeFlag());
+	}
+
+	TEST_F(CPUBitwiseTest, bitwise_eor_zeros) {
+		cpu.accumulator = 0x00;
+		cpu.write(0x1000, 0x00);
+		cpu.EOR(0x1000);
+		ASSERT_EQ(cpu.accumulator, 0x00);
+		ASSERT_TRUE(cpu.getZeroFlag());
+		ASSERT_FALSE(cpu.getNegativeFlag());
+	}
+
+	TEST_F(CPUBitwiseTest, bitwise_eor_all_non_zero) {
+		cpu.accumulator = 0xFF;
+		cpu.write(0x1000, 0xFF);
+		cpu.EOR(0x1000);
+		ASSERT_EQ(cpu.accumulator, 0x00);
+		ASSERT_TRUE(cpu.getZeroFlag());
+		ASSERT_FALSE(cpu.getNegativeFlag());
+	}
+
+	TEST_F(CPUBitwiseTest, bitwise_eor_none_alike) {
+		cpu.accumulator = 0xAA;
+		cpu.write(0x1000, 0x55);
+		cpu.EOR(0x1000);
+		ASSERT_EQ(cpu.accumulator, 0xFF);
+		ASSERT_FALSE(cpu.getZeroFlag());
+		ASSERT_TRUE(cpu.getNegativeFlag());
+	}
+
+	TEST_F(CPUBitwiseTest, bitwise_eor_some_alike) {
+		cpu.accumulator = 0xAA;
+		cpu.write(0x1000, 0x5B);
+		cpu.EOR(0x1000);
+		ASSERT_EQ(cpu.accumulator, 0xF1);
+		ASSERT_FALSE(cpu.getZeroFlag());
+		ASSERT_TRUE(cpu.getNegativeFlag());
+	}
+
+	TEST_F(CPUBitwiseTest, bitwise_bit_zero_zero) {
+		cpu.accumulator = 0x00;
+		cpu.write(0x1000, 0x00);
+		cpu.BIT(0x1000);
+		ASSERT_EQ(cpu.accumulator, 0x00);
+		ASSERT_TRUE(cpu.getZeroFlag());
+		ASSERT_FALSE(cpu.getOverFlowFlag());
+		ASSERT_FALSE(cpu.getNegativeFlag());
+	}
+
+	TEST_F(CPUBitwiseTest, bitwise_bit_none_alike_neg_value) {
+		cpu.accumulator = 0x00;
+		cpu.write(0x1000, 0xFF);
+		cpu.BIT(0x1000);
+		ASSERT_EQ(cpu.accumulator, 0x00);
+		ASSERT_TRUE(cpu.getZeroFlag());
+		ASSERT_TRUE(cpu.getOverFlowFlag());
+		ASSERT_TRUE(cpu.getNegativeFlag());
+	}
+
+	TEST_F(CPUBitwiseTest, bitwise_bit_none_alike_neg_accumulator) {
+		cpu.accumulator = 0xFF;
+		cpu.write(0x1000, 0x00);
+		cpu.BIT(0x1000);
+		ASSERT_EQ(cpu.accumulator, 0xFF);
+		ASSERT_TRUE(cpu.getZeroFlag());
+		ASSERT_FALSE(cpu.getOverFlowFlag());
+		ASSERT_FALSE(cpu.getOverFlowFlag());
+		ASSERT_FALSE(cpu.getNegativeFlag());
+	}
+
+	TEST_F(CPUBitwiseTest, bitwise_bit_all_alike) {
+		cpu.accumulator = 0xFF;
+		cpu.write(0x1000, 0xFF);
+		cpu.BIT(0x1000);
+		ASSERT_EQ(cpu.accumulator, 0xFF);
+		ASSERT_FALSE(cpu.getZeroFlag());
+		ASSERT_TRUE(cpu.getOverFlowFlag());
+		ASSERT_TRUE(cpu.getNegativeFlag());
+	}
+
+	TEST_F(CPUBitwiseTest, bitwise_bit_shared_neg_bit) {
+		cpu.accumulator = 0xF2;
+		cpu.write(0x1000, 0x81);
+		cpu.BIT(0x1000);
+		ASSERT_EQ(cpu.accumulator, 0xF2);
+		ASSERT_FALSE(cpu.getZeroFlag());
+		ASSERT_FALSE(cpu.getOverFlowFlag());
+		ASSERT_TRUE(cpu.getNegativeFlag());
+	}
+
+	class CPUCompareTest : public ::testing::Test {
+	protected:
+		void SetUp() override {
+			cpu.clearStatus();
+		}
+
+		void TearDown() override {
+		}
+
+		CPU cpu;
+	};
+
+	TEST_F(CPUCompareTest, compare_cmp_zeros_a_equal_m) {
+		cpu.accumulator = 0x00;
+		cpu.write(0x1000, 0x00);
+		cpu.CMP(0x1000);
+		
+		ASSERT_TRUE(cpu.getCarryFlag());
+		ASSERT_TRUE(cpu.getZeroFlag());
+		ASSERT_FALSE(cpu.getNegativeFlag());
+	}
+
+	TEST_F(CPUCompareTest, compare_cmp_a_less_m) {
+		cpu.accumulator = 0x40;
+		cpu.write(0x1000, 0x80);
+		cpu.CMP(0x1000);
+
+		ASSERT_FALSE(cpu.getCarryFlag());
+		ASSERT_FALSE(cpu.getZeroFlag());
+		ASSERT_TRUE(cpu.getNegativeFlag());
+	}
+
+	TEST_F(CPUCompareTest, compare_cmp_a_greater_m) {
+		cpu.accumulator = 0x80;
+		cpu.write(0x1000, 0x40);
+		cpu.CMP(0x1000);
+
+		ASSERT_TRUE(cpu.getCarryFlag());
+		ASSERT_FALSE(cpu.getZeroFlag());
+		ASSERT_FALSE(cpu.getNegativeFlag());
+	}
+
+	TEST_F(CPUCompareTest, compare_cpx_zeros_x_equal_m) {
+		cpu.x = 0x00;
+		cpu.write(0x1000, 0x00);
+		cpu.CPX(0x1000);
+
+		ASSERT_TRUE(cpu.getCarryFlag());
+		ASSERT_TRUE(cpu.getZeroFlag());
+		ASSERT_FALSE(cpu.getNegativeFlag());
+	}
+
+	TEST_F(CPUCompareTest, compare_cpx_x_less_m) {
+		cpu.x = 0x40;
+		cpu.write(0x1000, 0x80);
+		cpu.CPX(0x1000);
+
+		ASSERT_FALSE(cpu.getCarryFlag());
+		ASSERT_FALSE(cpu.getZeroFlag());
+		ASSERT_TRUE(cpu.getNegativeFlag());
+	}
+
+	TEST_F(CPUCompareTest, compare_cpx_x_greater_m) {
+		cpu.x = 0x80;
+		cpu.write(0x1000, 0x40);
+		cpu.CPX(0x1000);
+
+		ASSERT_TRUE(cpu.getCarryFlag());
+		ASSERT_FALSE(cpu.getZeroFlag());
+		ASSERT_FALSE(cpu.getNegativeFlag());
+	}
+
+	TEST_F(CPUCompareTest, compare_cpy_zeros_y_equal_m) {
+		cpu.y = 0x00;
+		cpu.write(0x1000, 0x00);
+		cpu.CPY(0x1000);
+
+		ASSERT_TRUE(cpu.getCarryFlag());
+		ASSERT_TRUE(cpu.getZeroFlag());
+		ASSERT_FALSE(cpu.getNegativeFlag());
+	}
+
+	TEST_F(CPUCompareTest, compare_cpy_y_less_m) {
+		cpu.y = 0x40;
+		cpu.write(0x1000, 0x80);
+		cpu.CPY(0x1000);
+
+		ASSERT_FALSE(cpu.getCarryFlag());
+		ASSERT_FALSE(cpu.getZeroFlag());
+		ASSERT_TRUE(cpu.getNegativeFlag());
+	}
+
+	TEST_F(CPUCompareTest, compare_cpy_y_greater_m) {
+		cpu.y = 0x80;
+		cpu.write(0x1000, 0x40);
+		cpu.CPY(0x1000);
+
+		ASSERT_TRUE(cpu.getCarryFlag());
+		ASSERT_FALSE(cpu.getZeroFlag());
+		ASSERT_FALSE(cpu.getNegativeFlag());
+	}
 }
