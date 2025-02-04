@@ -65,6 +65,12 @@ public:
 	void CPX(uint16_t addr);
 	void CPY(uint16_t addr);
 
+	// JMP can be an absolute address or indirect.
+	void JMP_ABS(uint16_t addr);
+	void JMP_IND(uint16_t addr);
+	void JSR(uint16_t addr);
+	void RTS(uint16_t addr);
+
 
 private:
 	// Masks for status register
@@ -73,6 +79,7 @@ private:
 	static constexpr uint8_t carry_mask = 0x01;
 	static constexpr uint8_t zero_mask = 0x02;
 	std::vector<uint8_t> memory;
+	std::vector<uint8_t> stack;
 	Bus *bus = nullptr;
 	uint8_t bus_read(uint16_t address);
 	void bus_write(uint16_t address, uint8_t data);

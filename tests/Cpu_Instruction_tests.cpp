@@ -685,4 +685,65 @@ namespace ProcessorTests {
 		ASSERT_FALSE(cpu.getZeroFlag());
 		ASSERT_FALSE(cpu.getNegativeFlag());
 	}
+
+
+
+
+	class CPUJMPTest : public testing::Test {
+	protected:
+		CPUJMPTest() {}
+
+		~CPUJMPTest() override {
+		}
+
+		void SetUp() override {
+			// Code here will be called immediately after the constructor (right
+			// before each test).
+			cpu.clearStatus();
+		}
+
+		void TearDown() override {
+			// Code here will be called immediately after each test (right
+			// before the destructor).
+		}
+		CPU cpu;
+
+	};
+
+	TEST_F(CPUJMPTest, JMP_ABS) {
+		uint8_t val = 0x05;
+		cpu.write(0x01, val);
+		cpu.JMP_ABS(0x01);
+		ASSERT_EQ(val, cpu.program_counter);
+	}
+
+	TEST_F(CPUJMPTest, JMP_ABS_two_bytes) {
+		uint8_t val1 = 0xFC;
+		uint8_t val2 = 0x15;
+		uint8_t val3 = 0xFC15;
+		cpu.write(0x01, val1);
+		cpu.write(0x01, val2);
+		cpu.JMP_ABS(0x01);
+		ASSERT_EQ(val3, cpu.program_counter);
+	}
+
+	TEST_F(CPUJMPTest, JMP_IND) {
+		uint8_t addr = 0x05;
+		uint8_t val = 0xFC;
+		cpu.write(0x01, addr);
+		cpu.write(addr, val);
+		cpu.JMP_IND(0x01);
+		ASSERT_EQ(val, cpu.program_counter);
+	}
+
+	TEST_F(CPUJMPTest, JMP_IND_bug) {
+		uint8_t addr = 0x05;
+		uint8_t val = 0xFF;
+		cpu.write(0x01, addr);
+		cpu.write(addr, val);
+		cpu.JMP_IND(0x01);
+		ASSERT_NE(val, cpu.program_counter);
+		ASSERT_EQ(0, cpu.program_counter);
+
+	}
 }
