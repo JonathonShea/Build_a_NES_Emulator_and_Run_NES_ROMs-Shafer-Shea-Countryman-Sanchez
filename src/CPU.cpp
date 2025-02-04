@@ -55,7 +55,7 @@ void CPU::respTest()
     std::cout << "Expected value after ROR: " << std::hex << static_cast<int>(0x2A) << std::endl;
 }
 
-CPU::CPU() : memory(65536, 0) // Initialize 64KB of memory
+CPU::CPU() : stack_pointer(0xFF), memory(65536, 0) // Initialize 64KB of memory
 {
 }
 
@@ -379,6 +379,28 @@ void CPU::JMP_IND(uint16_t addr)
 
     // CPU bug when crossing a page boundary, "For example, JMP ($03FF) reads $03FF and $0300 instead of $0400"
     (program_counter & 0xFF) == 0xFF? program_counter -= 0xFF : program_counter;
+}
+
+void CPU::JSR(uint16_t addr)
+{
+    stack.push_back(program_counter >> 1); // MSB
+    stack.push_back(program_counter & 0xFF); // LSB
+    stack_pointer -= 2;
+    JMP_ABS(addr);
+}
+
+void CPU::RTS(uint16_t addr)
+{
+    // Pop program counter bytes into program counter
+    program_counter = 0;
+    program_counter = stack.back() << 1;
+    stack.pop_back();
+    program_counter |= stack.back();
+    stack.pop_back();
+    stack_pointer += 2;
+
+    program_counter++; // We return to the next address after the JMP that brought us here (otherwise this becomes a portal emulator)
+
 }
 
 // uint8_t CPU::bus_read(uint16_t address) {
