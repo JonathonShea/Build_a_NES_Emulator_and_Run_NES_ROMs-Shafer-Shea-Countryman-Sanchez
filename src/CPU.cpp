@@ -364,6 +364,23 @@ void CPU::CPY(uint16_t addr) {
     setNegativeFlag(result & 0x80);
 }
 
+void CPU::JMP_ABS(uint16_t addr)
+{
+    // Program counter is 2 bytes, need to read in value in the next address as well.
+    std::memcpy(&program_counter, memory.data() + addr, sizeof(program_counter));
+}
+
+void CPU::JMP_IND(uint16_t addr)
+{
+    
+    uint16_t jmp_addr;
+    std::memcpy(&jmp_addr, memory.data() + addr, sizeof(addr));
+    std::memcpy(&program_counter, memory.data() + jmp_addr, sizeof(jmp_addr));
+
+    // CPU bug when crossing a page boundary, "For example, JMP ($03FF) reads $03FF and $0300 instead of $0400"
+    (program_counter & 0xFF) == 0xFF? program_counter -= 0xFF : program_counter;
+}
+
 // uint8_t CPU::bus_read(uint16_t address) {
 // 	return bus->read(address, false);
 // }

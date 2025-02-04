@@ -65,6 +65,10 @@ public:
 	void CPX(uint16_t addr);
 	void CPY(uint16_t addr);
 
+	// JMP can be an absolute address or indirect.
+	void JMP_ABS(uint16_t addr);
+	void JMP_IND(uint16_t addr);
+
 
 private:
 	// Masks for status register
