@@ -113,10 +113,10 @@ private: // Opcodes
 	uint8_t BRK(); // Break (interrupt)
 	uint8_t BVC(); // Branch on overflow clear
 	uint8_t BVS(); // Break on overflow set
-	uint8_t CLC(); // Clear carry
-	uint8_t CLD(); // Clear decimal
-	uint8_t CLI(); // Clear interrupt disable
-	uint8_t CLV(); // Clear overflow
+	void CLC(); // Clear carry
+	void CLD(); // Clear decimal
+	void CLI(); // Clear interrupt disable
+	void CLV(); // Clear overflow
 	//uint8_t CMP(); // Compare (with accumlulator)
 	//uint8_t CPX(); // Compare with X
 	//uint8_t CPY(); // Compare with Y
@@ -144,9 +144,9 @@ private: // Opcodes
 	uint8_t RTI(); // Return from interrupt
 	uint8_t RTS(); // Return from subroutine
 	uint8_t SBC(); // Subtract with carry
-	uint8_t SEC(); // Set carry
-	uint8_t SED(); // Set decimal
-	uint8_t SEI(); // Set interrupt disable
+	void SEC(); // Set carry
+	void SED(); // Set decimal
+	void SEI(); // Set interrupt disable
 	uint8_t STA(); // Store accumulator
 	uint8_t STX(); // Store X
 	uint8_t STY(); // Store Y

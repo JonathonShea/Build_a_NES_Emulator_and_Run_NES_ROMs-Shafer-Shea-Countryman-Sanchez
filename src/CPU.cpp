@@ -219,6 +219,41 @@ void CPU::DEY()
 }
 
 
+void CPU::CLC() // Clear Carry Flag
+{
+    setCarryFlag(false);
+}
+
+void CPU::SEC() // Set Carry Flag
+{
+    setCarryFlag(true);
+}
+
+void CPU::CLI() // Clear Interrupt Disable Flag
+{
+    setInterruptDisableFlag(false);
+}
+
+void CPU::SEI() // Set Interrupt Disable Flag
+{
+    setInterruptDisableFlag(true);
+}
+
+void CPU::CLV() // Clear Overflow Flag
+{
+    setOverflowFlag(false);
+}
+
+void CPU::CLD() // Clear Decimal Mode Flag
+{
+    setDecimalModeFlag(false);
+}
+
+void CPU::SED() // Set Decimal Mode Flag
+{
+    setDecimalModeFlag(true);
+}
+
 // flags
 void CPU::setCarryFlag(bool value) 
 {
