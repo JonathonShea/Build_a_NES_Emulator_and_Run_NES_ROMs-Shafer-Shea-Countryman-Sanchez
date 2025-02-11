@@ -399,6 +399,44 @@ void CPU::CPY(uint16_t addr) {
     setNegativeFlag(result & 0x80);
 }
 
+//Access
+void CPU::LDA(uint16_t addr) {
+    uint8_t value = read(addr);
+    accumulator = value;
+
+    setZeroFlag(value == 0);
+    setNegativeFlag(value & 0x80);
+}
+
+void CPU::STA(uint16_t addr) {
+    write(addr, accumulator);
+}
+
+void CPU::LDX(uint16_t addr) {
+    uint8_t result = read(addr);
+    x = result;
+
+    setZeroFlag(result == 0);
+    setNegativeFlag(result & 0x80);
+}
+
+void CPU::STX(uint16_t addr) {
+    write(addr, x);
+}
+
+void CPU::LDY(uint16_t addr) {
+    uint8_t result = read(addr);
+    y = result;
+
+    setZeroFlag(result == 0);
+    setNegativeFlag(result & 0x80);
+}
+
+void CPU::STY(uint16_t addr) {
+    write(addr, y);
+}
+
+
 void CPU::JMP_ABS(uint16_t addr)
 {
     // Program counter is 2 bytes, need to read in value in the next address as well.

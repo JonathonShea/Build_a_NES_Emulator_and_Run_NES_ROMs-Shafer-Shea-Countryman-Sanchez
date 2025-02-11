@@ -746,4 +746,101 @@ namespace ProcessorTests {
 		ASSERT_EQ(0, cpu.program_counter);
 
 	}
+
+	class CPUAccessTest : public ::testing::Test {
+	protected:
+		void SetUp() override {
+			cpu.clearStatus();
+		}
+
+		void TearDown() override {
+		}
+
+		CPU cpu;
+	};
+
+	TEST_F(CPUAccessTest, access_LDA_assign) {
+		cpu.accumulator = 0x00;
+		cpu.write(0x1000, 0x50);
+		cpu.LDA(0x1000);
+		ASSERT_EQ(cpu.accumulator,0x50);
+	}
+
+	TEST_F(CPUAccessTest, access_LDA_assign_empty_address) {
+		cpu.accumulator = 0x00;
+		cpu.LDA(0x1000);
+		ASSERT_EQ(cpu.accumulator, 0x00);
+	}
+
+	TEST_F(CPUAccessTest, access_STA_assign) {
+		cpu.accumulator = 0x50;
+		uint16_t addr = 0x1000;
+		cpu.write(addr, 0x00);
+		cpu.STA(addr);
+		ASSERT_EQ(cpu.accumulator, cpu.read(addr));
+	}
+
+	TEST_F(CPUAccessTest, access_STA_assign_empty_accumulator) {
+		uint16_t addr = 0x1000;
+		cpu.write(addr, 0x00);
+		cpu.STA(addr);
+		ASSERT_EQ(0x00, cpu.read(addr));
+	}
+
+	TEST_F(CPUAccessTest, access_LDX_assign) {
+		cpu.x = 0x00;
+		cpu.write(0x1000, 0x50);
+		cpu.LDX(0x1000);
+		ASSERT_EQ(cpu.x, 0x50);
+	}
+
+	TEST_F(CPUAccessTest, access_LDX_assign_empty_address) {
+		cpu.x = 0x00;
+		cpu.LDX(0x1000);
+		ASSERT_EQ(cpu.x, 0x00);
+	}
+
+	TEST_F(CPUAccessTest, access_STX_assign) {
+		cpu.x = 0x50;
+		uint16_t addr = 0x1000;
+		cpu.write(addr, 0x00);
+		cpu.STX(addr);
+		ASSERT_EQ(cpu.x, cpu.read(addr));
+	}
+
+	TEST_F(CPUAccessTest, access_STX_assign_empty_x) {
+		uint16_t addr = 0x1000;
+		cpu.write(addr, 0x00);
+		cpu.STX(addr);
+		ASSERT_EQ(0x00, cpu.read(addr));
+	}
+
+	TEST_F(CPUAccessTest, access_LDY_assign) {
+		cpu.y = 0x00;
+		cpu.write(0x1000, 0x50);
+		cpu.LDY(0x1000);
+		ASSERT_EQ(cpu.y, 0x50);
+	}
+
+	TEST_F(CPUAccessTest, access_LDY_assign_empty_address) {
+		cpu.y = 0x00;
+		cpu.LDY(0x1000);
+		ASSERT_EQ(cpu.y, 0x00);
+	}
+
+	TEST_F(CPUAccessTest, access_STY_assign) {
+		cpu.y = 0x50;
+		uint16_t addr = 0x1000;
+		cpu.write(addr, 0x00);
+		cpu.STY(addr);
+		ASSERT_EQ(cpu.y, cpu.read(addr));
+	}
+
+	TEST_F(CPUAccessTest, access_STY_assign_empty_y) {
+		uint16_t addr = 0x1000;
+		cpu.write(addr, 0x00);
+		cpu.STY(addr);
+		ASSERT_EQ(0x00, cpu.read(addr));
+	}
+
 }
