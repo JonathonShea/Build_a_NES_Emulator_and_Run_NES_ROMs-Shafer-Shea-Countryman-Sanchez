@@ -116,8 +116,8 @@ void CPU::ROR(uint16_t addr) // Rotate Right
 // Add with carry OP code
 void CPU::ADC(uint16_t addr) {
     uint16_t sum = accumulator + memory[addr] + getCarryFlag();
-    accumulator += (sum & 0xFF);
-    if ((~(sum ^ accumulator) & (sum ^ memory[addr]) & negative_mask) > 0)
+    accumulator = (sum & 0xFF);
+    if (~((sum ^ accumulator) & (sum ^ memory[addr]) & negative_mask) & 0x80)
     {
         setOverflowFlag(true);
     }
@@ -134,12 +134,13 @@ void CPU::ADC(uint16_t addr) {
 }
 // Add with carry OP code
 void CPU::SBC(uint16_t addr) {
-    uint16_t sum = accumulator - memory[addr] - ~getCarryFlag();
-    accumulator -= (sum & 0xFF);
-    //if ((~(sum ^ accumulator) & (sum ^ memory[addr]) & negative_mask) > 0)
-    //{
-    //    setOverflowFlag(true);
-    //}
+    uint16_t inverse = memory[addr] ^ 0xFF;
+    uint16_t sum = accumulator + inverse + getCarryFlag();
+    accumulator = (sum & 0xFF);
+    if (~((sum ^ accumulator) & (sum ^ inverse) & negative_mask) & 0x80)
+    {
+        setOverflowFlag(true);
+    }
     if (sum > 0xFF) {
         setCarryFlag(true);
     }
@@ -568,6 +569,27 @@ void CPU::RTS(uint16_t addr)
 
 }
 
+void CPU::BRK()
+{
+    status |= b_flag_mask; // b flag is set prior to pushing status to the stack.
+    program_counter += 2;
+    stack.push_back(program_counter & 0x0F); // low byte
+    stack.push_back((program_counter & 0xF0) >> 1); // high byte
+    stack.push_back(status);
+    status |= irq_dis_mask; // irq disable flag is set after pushing status to the stack.
+    program_counter = 0xFFFE;
+}
+
+void CPU::RTI()
+{
+    status = stack.back();
+    stack.pop_back();
+    program_counter = stack.back() << 1; // high byte
+    stack.pop_back();
+    program_counter |= stack.back(); // low byte
+    stack.pop_back();
+}
+
 // Branch Opcodes
 void CPU::BCC(int8_t offset)
 {
@@ -619,3 +641,22 @@ void CPU::BVS(int8_t offset)
 
 
 
+// void CPU::bus_write(uint16_t address, uint8_t data) {
+// 	bus->write(address, data);
+// }
+
+void CPU::BNE(uint16_t addr)
+{
+    if (!getZeroFlag()) {
+        // Signed value, need to cast
+        program_counter += static_cast<int8_t>(memory[addr]) + 2;
+    }
+}
+
+void CPU::BEQ(uint16_t addr)
+{
+    if (getZeroFlag()) {
+        // Signed value, need to cast
+        program_counter += static_cast<int8_t>(memory[addr]) + 2;
+    }
+}

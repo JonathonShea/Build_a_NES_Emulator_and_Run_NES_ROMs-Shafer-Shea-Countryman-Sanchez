@@ -95,11 +95,13 @@ public:
 	void TXS();
 	void TSX();
 
+	// Jump opcodes
 	// JMP can be an absolute address or indirect.
 	void JMP_ABS(uint16_t addr);
 	void JMP_IND(uint16_t addr);
 	void JSR(uint16_t addr);
 	void RTS(uint16_t addr);
+	void BRK(); // Break (interrupt)
 
 	// Branch Opcodes
 	void BCC(int8_t offset); // Branch on carry clear
@@ -111,6 +113,12 @@ public:
 	uint8_t BRK(); // Break (interrupt)
 	void BVC(int8_t offset); // Branch on overflow clear
 	void BVS(int8_t offset); // Break on overflow set
+	void RTI(); // Return from interrupt
+
+
+	// Branch
+	void BNE(uint16_t addr); // Branch on not equal (zero clear)
+	void BEQ(uint16_t addr); // Branch on equal (zero set)
 
 
 private:
@@ -159,7 +167,6 @@ private: // Opcodes
 	uint8_t NOP(); // No operation
 	uint8_t ROL(); // Rotate left
 	uint8_t ROR(); // Rotate Right
-	uint8_t RTI(); // Return from interrupt
 	uint8_t RTS(); // Return from subroutine
 	uint8_t SBC(); // Subtract with carry
 	void SEC(); // Set carry

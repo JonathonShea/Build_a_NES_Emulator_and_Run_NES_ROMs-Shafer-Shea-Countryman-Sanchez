@@ -377,15 +377,15 @@ namespace ProcessorTests {
 
 	TEST_F(CPUSBCTest, SBC_simple_sub_carry_clear) {
 		cpu.write(0x55, 5);
-		cpu.SBC(0x55);
 		cpu.setCarryFlag(true);
+		cpu.SBC(0x55);
 		ASSERT_EQ(cpu.accumulator, 5);
 	}
 
 	TEST_F(CPUSBCTest, SBC_simple_sub_carry_set) {
 		cpu.write(0x55, 5);
-		cpu.SBC(0x55);
 		cpu.setCarryFlag(false);
+		cpu.SBC(0x55);
 		ASSERT_EQ(cpu.accumulator, 4);
 	}
 
@@ -393,8 +393,8 @@ namespace ProcessorTests {
 		cpu.write(0x56, 0xFE);
 		cpu.SBC(0x56);
 		cpu.write(0x55, 0x02);
-		cpu.ADC(0x55);
-		ASSERT_TRUE(cpu.status & 0x01);
+		cpu.SBC(0x55);
+		ASSERT_TRUE(cpu.getCarryFlag());
 	}
 
 	TEST_F(CPUSBCTest, SBC_signed_underflow) {
