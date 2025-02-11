@@ -56,14 +56,24 @@ public:
     void setOverflowFlag(bool value);
     void setNegativeFlag(bool value);
 
+	// Bitwise OP codes
 	void AND(uint16_t addr);
 	void ORA(uint16_t addr);
 	void EOR(uint16_t addr);
 	void BIT(uint16_t addr);
 
+	// Compare OP codes
 	void CMP(uint16_t addr);
 	void CPX(uint16_t addr);
 	void CPY(uint16_t addr);
+
+	// Access OP codes
+	void LDA(uint16_t addr);
+	void STA(uint16_t addr);
+	void LDX(uint16_t addr);
+	void STX(uint16_t addr);
+	void LDY(uint16_t addr);
+	void STY(uint16_t addr);
 
 	// JMP can be an absolute address or indirect.
 	void JMP_ABS(uint16_t addr);
@@ -129,9 +139,9 @@ private: // Opcodes
 	// uint8_t INY(); // Increment Y
 	uint8_t JMP(); // Jump
 	uint8_t JSR(); // Jump subroutine
-	uint8_t LDA(); // Load accumulaotr
-	uint8_t LDX(); // Load X
-	uint8_t LDY(); // Load Y
+	//uint8_t LDA(); // Load accumulaotr
+	//uint8_t LDX(); // Load X
+	//uint8_t LDY(); // Load Y
 	uint8_t LSR(); // Logical shift right
 	uint8_t NOP(); // No operation
 	//uint8_t ORA(); // Or with accumulator
@@ -147,9 +157,9 @@ private: // Opcodes
 	void SEC(); // Set carry
 	void SED(); // Set decimal
 	void SEI(); // Set interrupt disable
-	uint8_t STA(); // Store accumulator
-	uint8_t STX(); // Store X
-	uint8_t STY(); // Store Y
+	//uint8_t STA(); // Store accumulator
+	//uint8_t STX(); // Store X
+	//uint8_t STY(); // Store Y
 	uint8_t TAX(); // Transfer Accumulator to X
 	uint8_t TAY(); // Transfer Accumulator to Y
 	uint8_t TSX(); // Transfer stack pointer to X
