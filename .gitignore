@@ -19,3 +19,4 @@
 /.idea/workspace.xml
 /.vs
 /out/build/x64-Debug
+/vcpkg_installed

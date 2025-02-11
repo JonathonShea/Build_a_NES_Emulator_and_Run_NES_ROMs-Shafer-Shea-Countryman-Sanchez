@@ -65,19 +65,31 @@ public:
 	void CPX(uint16_t addr);
 	void CPY(uint16_t addr);
 
+	// Jump opcodes
 	// JMP can be an absolute address or indirect.
 	void JMP_ABS(uint16_t addr);
 	void JMP_IND(uint16_t addr);
 	void JSR(uint16_t addr);
 	void RTS(uint16_t addr);
+	void BRK(); // Break (interrupt)
+
+	void RTI(); // Return from interrupt
+
+
+	// Branch
+	void BNE(uint16_t addr); // Branch on not equal (zero clear)
+	void BEQ(uint16_t addr); // Branch on equal (zero set)
 
 
 private:
 	// Masks for status register
-	static constexpr uint8_t overflow_mask = 0x40;
-	static constexpr uint8_t negative_mask = 0x80;
-	static constexpr uint8_t carry_mask = 0x01;
-	static constexpr uint8_t zero_mask = 0x02;
+	inline static constexpr uint8_t b_flag_mask = 0x10;
+	inline static constexpr uint8_t overflow_mask = 0x40;
+	inline static constexpr uint8_t negative_mask = 0x80;
+	inline static constexpr uint8_t carry_mask = 0x01;
+	inline static constexpr uint8_t zero_mask = 0x02;
+	inline static constexpr uint8_t irq_dis_mask = 0x04;
+
 	std::vector<uint8_t> memory;
 	std::vector<uint8_t> stack;
 	Bus *bus = nullptr;
@@ -105,12 +117,11 @@ private: // Opcodes
 	uint8_t ASL(); // Arithmetic shift left
 	uint8_t BCC(); // Branch on carry clear
 	uint8_t BCS(); // Branch on carry set
-	uint8_t BEQ(); // Branch on equal (zero set)
 	//uint8_t BIT(); // Bit test
 	uint8_t BMI(); // Branch on minus (negative set)
-	uint8_t BNE(); // Branch on not equal (zero clear)
+
 	uint8_t BPL(); // Branch on plus (negative clear)
-	uint8_t BRK(); // Break (interrupt)
+
 	uint8_t BVC(); // Branch on overflow clear
 	uint8_t BVS(); // Break on overflow set
 	uint8_t CLC(); // Clear carry
@@ -141,7 +152,6 @@ private: // Opcodes
 	uint8_t PLP(); // Pull procesor status
 	uint8_t ROL(); // Rotate left
 	uint8_t ROR(); // Rotate Right
-	uint8_t RTI(); // Return from interrupt
 	uint8_t RTS(); // Return from subroutine
 	uint8_t SBC(); // Subtract with carry
 	uint8_t SEC(); // Set carry
