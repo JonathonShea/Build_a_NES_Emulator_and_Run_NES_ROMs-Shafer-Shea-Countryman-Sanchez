@@ -292,6 +292,11 @@ void CPU::setDecimalModeFlag(bool value)
         status &= ~0x08;
 }
 
+bool CPU::getDecimalModeFlag() const
+{
+    return status & decimal_mode_mask;
+}
+
 void CPU::setBreakCommandFlag(bool value)
 {
     if (value)
@@ -332,9 +337,23 @@ bool CPU::getZeroFlag() const
     return status & zero_mask;
 }
 
+bool CPU::getBreakCommandFlag() const
+{
+    return status & break_mask;
+}
+
 void CPU::clearStatus()
 {
     status = 0;
+}
+
+std::vector<uint8_t> CPU::getStackTESTING() const {
+    return stack;
+}
+
+void CPU::setStackBackTESTING(uint8_t value) {
+    stack.push_back(value);
+    stack_pointer --;
 }
 
 //Bitwise Operations
@@ -430,6 +449,49 @@ void CPU::LDY(uint16_t addr) {
 
     setZeroFlag(result == 0);
     setNegativeFlag(result & 0x80);
+}
+
+void CPU::PHA() { //Push accumulator value onto stack
+    stack.push_back(accumulator);
+    stack_pointer --;
+}
+void CPU::PLA() { //If stack not empty set accumulator to value at back of stack and set flags based on new accumulator value
+    if (!stack.empty()) {
+        accumulator = stack.back();
+        stack.pop_back();
+        stack_pointer++;
+
+        setZeroFlag(accumulator & zero_mask);
+        setNegativeFlag(accumulator & negative_mask);
+    }
+}
+void CPU::PHP() { //Set Break flag to 1 and push status register onto stack. Initialization of the extrabit found in status truncated due to being unnecessary
+    setBreakCommandFlag(1);
+    stack.push_back(status);
+    stack_pointer --;
+}
+void CPU::PLP() { //If stack not empty assign status to value at back of stack and set flags based on new status value
+    if (!stack.empty()) {
+        status = stack.back();
+        stack.pop_back();
+        stack_pointer++;
+
+        setCarryFlag(status & carry_mask);
+        setZeroFlag(status & zero_mask);
+        setInterruptDisableFlag(status & interrupt_disable_mask);
+        setDecimalModeFlag(status & decimal_mode_mask);
+        setOverflowFlag(status & overflow_mask);
+        setNegativeFlag(status & negative_mask);
+    }
+}
+void CPU::TXS() { //Transfer X to Stack Pointer
+    stack_pointer = x;
+}
+void CPU::TSX() { //Transfer Stack Pointer to x
+    x = stack_pointer;
+
+    setZeroFlag(x & zero_mask);
+    setNegativeFlag(x & negative_mask);
 }
 
 void CPU::STY(uint16_t addr) {

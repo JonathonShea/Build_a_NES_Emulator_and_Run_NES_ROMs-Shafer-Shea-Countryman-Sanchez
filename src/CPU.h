@@ -52,9 +52,14 @@ public:
 	bool getZeroFlag() const;
     void setInterruptDisableFlag(bool value);
     void setDecimalModeFlag(bool value);
+	bool getDecimalModeFlag() const;
     void setBreakCommandFlag(bool value);
+	bool getBreakCommandFlag() const;
     void setOverflowFlag(bool value);
     void setNegativeFlag(bool value);
+
+	std::vector<uint8_t> getStackTESTING() const;
+	void setStackBackTESTING(uint8_t value);
 
 	// Bitwise OP codes
 	void AND(uint16_t addr);
@@ -75,6 +80,14 @@ public:
 	void LDY(uint16_t addr);
 	void STY(uint16_t addr);
 
+	// Stack OP codes
+	void PHA();
+	void PLA();
+	void PHP();
+	void PLP();
+	void TXS();
+	void TSX();
+
 	// JMP can be an absolute address or indirect.
 	void JMP_ABS(uint16_t addr);
 	void JMP_IND(uint16_t addr);
@@ -84,10 +97,14 @@ public:
 
 private:
 	// Masks for status register
-	static constexpr uint8_t overflow_mask = 0x40;
 	static constexpr uint8_t negative_mask = 0x80;
-	static constexpr uint8_t carry_mask = 0x01;
+	static constexpr uint8_t overflow_mask = 0x40;
+	static constexpr uint8_t break_mask = 0x10;
+	static constexpr uint8_t decimal_mode_mask = 0x08;
+	static constexpr uint8_t interrupt_disable_mask = 0x04;
 	static constexpr uint8_t zero_mask = 0x02;
+	static constexpr uint8_t carry_mask = 0x01;
+
 	std::vector<uint8_t> memory;
 	std::vector<uint8_t> stack;
 	Bus *bus = nullptr;
@@ -145,10 +162,10 @@ private: // Opcodes
 	uint8_t LSR(); // Logical shift right
 	uint8_t NOP(); // No operation
 	//uint8_t ORA(); // Or with accumulator
-	uint8_t PHA(); // Push accumulator
-	uint8_t PHP(); // Push processor status
-	uint8_t PLA(); // Pull accumulator
-	uint8_t PLP(); // Pull procesor status
+	//uint8_t PHA(); // Push accumulator
+	//uint8_t PHP(); // Push processor status
+	//uint8_t PLA(); // Pull accumulator
+	//uint8_t PLP(); // Pull procesor status
 	uint8_t ROL(); // Rotate left
 	uint8_t ROR(); // Rotate Right
 	uint8_t RTI(); // Return from interrupt
@@ -162,9 +179,9 @@ private: // Opcodes
 	//uint8_t STY(); // Store Y
 	uint8_t TAX(); // Transfer Accumulator to X
 	uint8_t TAY(); // Transfer Accumulator to Y
-	uint8_t TSX(); // Transfer stack pointer to X
+	//uint8_t TSX(); // Transfer stack pointer to X
 	uint8_t TXA(); // Transfer X to accumulator
-	uint8_t TXS(); // Transfer X to stack pointer
+	//uint8_t TXS(); // Transfer X to stack pointer
 	uint8_t TYA(); // Transfer Y to accumulator
 	
 };
