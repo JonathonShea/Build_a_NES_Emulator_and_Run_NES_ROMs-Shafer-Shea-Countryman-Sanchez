@@ -843,4 +843,121 @@ namespace ProcessorTests {
 		ASSERT_EQ(0x00, cpu.read(addr));
 	}
 
+	class CPUStackTest : public ::testing::Test {
+	protected:
+		void SetUp() override {
+			cpu.clearStatus();
+			cpu.accumulator = 0x00;
+			cpu.stack_pointer = 0xFF;
+		}
+
+		void TearDown() override {
+		}
+
+		CPU cpu;
+	};
+
+	TEST_F(CPUStackTest, stack_PHA) {
+		cpu.accumulator = 0x50;
+		cpu.PHA();
+		uint8_t value = cpu.getStackTESTING().back();
+
+		ASSERT_EQ(cpu.accumulator, value);
+		ASSERT_EQ(cpu.stack_pointer, 0xFE);
+
+	}
+
+	TEST_F(CPUStackTest, stack_PLA_StackSize_1) {
+		uint8_t value = 0x50;
+		cpu.setStackBackTESTING(value);
+		ASSERT_EQ(cpu.stack_pointer, 0xFE); 
+		cpu.PLA();
+
+		ASSERT_EQ(cpu.accumulator, value);
+		ASSERT_EQ(cpu.stack_pointer, 0xFF);
+	}
+
+	TEST_F(CPUStackTest, stack_PLA_StackSize_EMPTY) {
+		cpu.PLA();
+		
+		ASSERT_EQ(cpu.accumulator, 0x00);
+		ASSERT_EQ(cpu.stack_pointer, 0xFF);
+	}
+
+	TEST_F(CPUStackTest, stack_PHP) {
+		cpu.status = 0x88;
+		EXPECT_FALSE(cpu.getBreakCommandFlag());
+		cpu.PHP();
+		
+		uint8_t value = cpu.getStackTESTING().back();
+		ASSERT_EQ(cpu.status, value);
+		ASSERT_EQ(cpu.stack_pointer, 0xFE);
+		ASSERT_TRUE(cpu.getBreakCommandFlag());
+	}
+
+	TEST_F(CPUStackTest, stack_PLP_StackSize_1) {
+		uint8_t value = 0x88;
+		cpu.setStackBackTESTING(value);
+		EXPECT_EQ(cpu.stack_pointer, 0xFE);
+		cpu.PLP();
+
+		ASSERT_EQ(cpu.status, value);
+		ASSERT_EQ(cpu.stack_pointer, 0xFF);
+		ASSERT_TRUE(cpu.getNegativeFlag());
+		ASSERT_TRUE(cpu.getDecimalModeFlag());
+		ASSERT_FALSE(cpu.getZeroFlag());
+	}
+
+	TEST_F(CPUStackTest, stack_PLP_StackSize_EMPTY) {
+		cpu.PLP();
+
+		ASSERT_EQ(cpu.status, 0x00);
+		ASSERT_EQ(cpu.stack_pointer, 0xFF);
+	}
+
+	TEST_F(CPUStackTest, stack_TXS_non_zero) {
+		cpu.x = 0x50;
+		cpu.TXS();
+		ASSERT_EQ(cpu.stack_pointer, cpu.x);
+		ASSERT_EQ(cpu.status, 0x00);
+	}
+
+	TEST_F(CPUStackTest, stack_TXS_upper_boundary) {
+		cpu.x = 0xFF;
+		cpu.TXS();
+		ASSERT_EQ(cpu.stack_pointer, cpu.x);
+		ASSERT_EQ(cpu.status, 0x00);
+	}
+
+	TEST_F(CPUStackTest, stack_TXS_lower_boundary) {
+		cpu.x = 0x00;
+		cpu.TXS();
+		ASSERT_EQ(cpu.stack_pointer, cpu.x);
+		ASSERT_EQ(cpu.status, 0x00);
+	}
+
+	TEST_F(CPUStackTest, stack_TSX_non_zero) {
+		cpu.stack_pointer = 0x50;
+		cpu.TSX();
+		ASSERT_EQ(cpu.stack_pointer, cpu.x);
+		ASSERT_FALSE(cpu.getNegativeFlag());
+		ASSERT_FALSE(cpu.getZeroFlag());
+	}
+
+	TEST_F(CPUStackTest, stack_TSX_upper_boundary) {
+		cpu.stack_pointer = 0xFF;
+		cpu.TSX();
+		ASSERT_EQ(cpu.stack_pointer, cpu.x);
+		ASSERT_TRUE(cpu.getNegativeFlag());
+		ASSERT_TRUE(cpu.getZeroFlag());
+	}
+
+	TEST_F(CPUStackTest, stack_TSX_lower_boundary) {
+		cpu.stack_pointer = 0x00;
+		cpu.TSX();
+		ASSERT_EQ(cpu.stack_pointer, cpu.x);
+		ASSERT_FALSE(cpu.getNegativeFlag());
+		ASSERT_FALSE(cpu.getZeroFlag());
+	}
+
 }
