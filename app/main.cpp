@@ -38,6 +38,11 @@ int main(int argc, const char * argv[]){
 		}
 	}
 	Cartridge cart(romData);
+
+	while (true) {
+		clock.tick();
+		std::cout << clock.getTicks() << "us" << std::endl;
+	}
 	romFile.close();
 
   return 0;
