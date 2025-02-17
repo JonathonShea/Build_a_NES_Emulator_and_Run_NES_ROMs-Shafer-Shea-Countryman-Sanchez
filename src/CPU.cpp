@@ -640,11 +640,6 @@ void CPU::BVS(int8_t offset)
 }
 
 
-
-// void CPU::bus_write(uint16_t address, uint8_t data) {
-// 	bus->write(address, data);
-// }
-
 void CPU::BNE(uint16_t addr)
 {
     if (!getZeroFlag()) {
