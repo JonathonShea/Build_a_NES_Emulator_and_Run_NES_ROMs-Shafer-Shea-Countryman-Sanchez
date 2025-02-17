@@ -960,4 +960,148 @@ namespace ProcessorTests {
 		ASSERT_FALSE(cpu.getZeroFlag());
 	}
 
+	class CPUTransferTest : public ::testing::Test {
+	protected:
+		void SetUp() override {
+			cpu.clearStatus();
+		}
+
+		void TearDown() override {
+		}
+
+		CPU cpu;
+	};
+
+	TEST_F(CPUTransferTest, TXA_SetsZeroFlag) 
+	{
+		cpu.x = 0x00;
+		cpu.TXA();
+		ASSERT_TRUE(cpu.getZeroFlag());
+	}
+
+	TEST_F(CPUTransferTest, TXA_UnsetsSetZeroFlag) 
+	{
+		cpu.x = 0x01;
+		cpu.TXA();
+		ASSERT_FALSE(cpu.getZeroFlag());
+	}
+
+	TEST_F(CPUTransferTest, TXA_SetsNegativeFlag) 
+	{
+		cpu.x = 0x80;
+		cpu.TXA();
+		ASSERT_TRUE(cpu.getNegativeFlag());
+	}
+
+	TEST_F(CPUTransferTest, TXA_UnsetsSetNegativeFlag) {
+		cpu.x = 0x7F;
+		cpu.TXA();
+		ASSERT_FALSE(cpu.getNegativeFlag());
+	}
+
+	TEST_F(CPUTransferTest, TXA_TransfersXToAccumulator) 
+	{
+		cpu.x = 0x42;
+		cpu.TXA();
+		ASSERT_EQ(cpu.accumulator, cpu.x);
+	}
+
+	TEST_F(CPUTransferTest, TYA_SetsZeroFlag)
+	{
+		cpu.y = 0x00;
+		cpu.TYA();
+		ASSERT_TRUE(cpu.getZeroFlag());
+	}
+
+	TEST_F(CPUTransferTest, TYA_UnsetsSetZeroFlag)
+	{
+		cpu.y = 0x01;
+		cpu.TYA();
+		ASSERT_FALSE(cpu.getZeroFlag());
+	}
+
+	TEST_F(CPUTransferTest, TYA_SetsNegativeFlag)
+	{
+		cpu.y = 0x80;
+		cpu.TYA();
+		ASSERT_TRUE(cpu.getNegativeFlag());
+	}
+
+	TEST_F(CPUTransferTest, TYA_UnsetsSetNegativeFlag) {
+		cpu.y = 0x7F;
+		cpu.TYA();
+		ASSERT_FALSE(cpu.getNegativeFlag());
+	}
+
+	TEST_F(CPUTransferTest, TYA_TransfersYToAccumulator) {
+		cpu.y = 0x42;
+		cpu.TYA();
+		ASSERT_EQ(cpu.accumulator, cpu.y);
+	}
+
+	TEST_F(CPUTransferTest, TAX_SetsZeroFlag)
+	{
+		cpu.accumulator = 0x00;
+		cpu.TAX();
+		ASSERT_TRUE(cpu.getZeroFlag());
+	}
+
+	TEST_F(CPUTransferTest, TAX_UnsetsSetZeroFlag)
+	{
+		cpu.accumulator = 0x01;
+		cpu.TAX();
+		ASSERT_FALSE(cpu.getZeroFlag());
+	}
+
+	TEST_F(CPUTransferTest, TAX_SetsNegativeFlag)
+	{
+		cpu.accumulator = 0x80;
+		cpu.TAX();
+		ASSERT_TRUE(cpu.getNegativeFlag());
+	}
+
+	TEST_F(CPUTransferTest, TAX_UnsetsSetNegativeFlag) {
+		cpu.accumulator = 0x7F;
+		cpu.TAX();
+		ASSERT_FALSE(cpu.getNegativeFlag());
+	}
+
+	TEST_F(CPUTransferTest, TAX_TransfersAccumulatorToX) {
+		cpu.accumulator = 0x42;
+		cpu.TAX();
+		ASSERT_EQ(cpu.x, cpu.accumulator);
+	}
+
+	TEST_F(CPUTransferTest, TAY_SetsZeroFlag)
+	{
+		cpu.accumulator = 0x00;
+		cpu.TAY();
+		ASSERT_TRUE(cpu.getZeroFlag());
+	}
+
+	TEST_F(CPUTransferTest, TAY_UnsetsSetZeroFlag)
+	{
+		cpu.accumulator = 0x01;
+		cpu.TAY();
+		ASSERT_FALSE(cpu.getZeroFlag());
+	}
+
+	TEST_F(CPUTransferTest, TAY_SetsNegativeFlag)
+	{
+		cpu.accumulator = 0x80;
+		cpu.TAY();
+		ASSERT_TRUE(cpu.getNegativeFlag());
+	}
+
+	TEST_F(CPUTransferTest, TAY_UnsetsSetNegativeFlag) {
+		cpu.accumulator = 0x7F;
+		cpu.TAY();
+		ASSERT_FALSE(cpu.getNegativeFlag());
+	}
+
+	TEST_F(CPUTransferTest, TAX_TransfersAccumulatorToY) {
+		cpu.accumulator = 0x42;
+		cpu.TAY();
+		ASSERT_EQ(cpu.y, cpu.accumulator);
+	}
 }

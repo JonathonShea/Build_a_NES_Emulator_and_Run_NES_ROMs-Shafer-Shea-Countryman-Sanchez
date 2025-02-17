@@ -80,6 +80,13 @@ public:
 	void LDY(uint16_t addr);
 	void STY(uint16_t addr);
 
+	// Transfer opcodes
+	void TXA(); // Transfer X to Accumulator
+	void TYA(); // Transfer Y to Accumulator
+	void TAX(); // Transfer Accumulator to X
+	void TAY(); // Transfer Accumulator to Y
+
+
 	// Stack OP codes
 	void PHA();
 	void PLA();
@@ -177,13 +184,6 @@ private: // Opcodes
 	//uint8_t STA(); // Store accumulator
 	//uint8_t STX(); // Store X
 	//uint8_t STY(); // Store Y
-	uint8_t TAX(); // Transfer Accumulator to X
-	uint8_t TAY(); // Transfer Accumulator to Y
-	//uint8_t TSX(); // Transfer stack pointer to X
-	uint8_t TXA(); // Transfer X to accumulator
-	//uint8_t TXS(); // Transfer X to stack pointer
-	uint8_t TYA(); // Transfer Y to accumulator
-	
 };
 
 #endif

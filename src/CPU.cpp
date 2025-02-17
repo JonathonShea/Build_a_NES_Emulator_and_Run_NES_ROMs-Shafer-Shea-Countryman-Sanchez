@@ -484,9 +484,11 @@ void CPU::PLP() { //If stack not empty assign status to value at back of stack a
         setNegativeFlag(status & negative_mask);
     }
 }
+
 void CPU::TXS() { //Transfer X to Stack Pointer
     stack_pointer = x;
 }
+
 void CPU::TSX() { //Transfer Stack Pointer to x
     x = stack_pointer;
 
@@ -498,6 +500,34 @@ void CPU::STY(uint16_t addr) {
     write(addr, y);
 }
 
+void CPU::TXA()
+{
+    accumulator = x;
+    setZeroFlag(accumulator == 0x00);
+    setNegativeFlag(accumulator & negative_mask);
+}
+
+void CPU::TYA()
+{
+    accumulator = y;
+    setZeroFlag(accumulator == 0x00);
+    setNegativeFlag(accumulator & negative_mask);
+}
+
+void CPU::TAX()
+{
+    x = accumulator;
+    setZeroFlag(x == 0x00);
+    setNegativeFlag(x & negative_mask);
+    
+}
+
+void CPU::TAY()
+{
+    y = accumulator;
+    setZeroFlag(y == 0x00);
+    setNegativeFlag(y & negative_mask);
+}
 
 void CPU::JMP_ABS(uint16_t addr)
 {
@@ -537,11 +567,3 @@ void CPU::RTS(uint16_t addr)
     program_counter++; // We return to the next address after the JMP that brought us here (otherwise this becomes a portal emulator)
 
 }
-
-// uint8_t CPU::bus_read(uint16_t address) {
-// 	return bus->read(address, false);
-// }
-
-// void CPU::bus_write(uint16_t address, uint8_t data) {
-// 	bus->write(address, data);
-// }
