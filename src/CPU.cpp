@@ -571,12 +571,12 @@ void CPU::RTS(uint16_t addr)
 
 void CPU::BRK()
 {
-    status |= b_flag_mask; // b flag is set prior to pushing status to the stack.
+    status |= break_mask; // b flag is set prior to pushing status to the stack.
     program_counter += 2;
     stack.push_back(program_counter & 0x0F); // low byte
     stack.push_back((program_counter & 0xF0) >> 1); // high byte
     stack.push_back(status);
-    status |= irq_dis_mask; // irq disable flag is set after pushing status to the stack.
+    status |= interrupt_disable_mask; // irq disable flag is set after pushing status to the stack.
     program_counter = 0xFFFE;
 }
 
