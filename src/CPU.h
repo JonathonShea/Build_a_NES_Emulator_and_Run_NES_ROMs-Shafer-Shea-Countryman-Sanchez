@@ -146,34 +146,17 @@ private: // Addressing Modes
 
 private: // Opcodes
 	uint8_t ADC(); // Add with carry
-	//uint8_t AND(); // AND (with accumulator)
 	uint8_t ASL(); // Arithmetic shift left
 	void CLC(); // Clear carry
 	void CLD(); // Clear decimal
 	void CLI(); // Clear interrupt disable
 	void CLV(); // Clear overflow
-	//uint8_t CMP(); // Compare (with accumlulator)
-	//uint8_t CPX(); // Compare with X
-	//uint8_t CPY(); // Compare with Y
 	uint8_t DEC(); // Decrement
-	// uint8_t DEX(); // Decrement X
-	// uint8_t DEY(); // Decrement Y
-	//uint8_t EOR(); // Exclusive OR (with accumulator)
 	uint8_t INC(); // Increment 
-	// uint8_t INX(); // Increment X
-	// uint8_t INY(); // Increment Y
 	uint8_t JMP(); // Jump
 	uint8_t JSR(); // Jump subroutine
-	//uint8_t LDA(); // Load accumulaotr
-	//uint8_t LDX(); // Load X
-	//uint8_t LDY(); // Load Y
 	uint8_t LSR(); // Logical shift right
 	uint8_t NOP(); // No operation
-	//uint8_t ORA(); // Or with accumulator
-	//uint8_t PHA(); // Push accumulator
-	//uint8_t PHP(); // Push processor status
-	//uint8_t PLA(); // Pull accumulator
-	//uint8_t PLP(); // Pull procesor status
 	uint8_t ROL(); // Rotate left
 	uint8_t ROR(); // Rotate Right
 	uint8_t RTI(); // Return from interrupt
@@ -182,9 +165,6 @@ private: // Opcodes
 	void SEC(); // Set carry
 	void SED(); // Set decimal
 	void SEI(); // Set interrupt disable
-	//uint8_t STA(); // Store accumulator
-	//uint8_t STX(); // Store X
-	//uint8_t STY(); // Store Y
 };
 
 #endif
