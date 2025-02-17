@@ -7,11 +7,13 @@
 #include <string> 
 #include <Cartridge.h>
 #include <Utilities.h>
+#include "CPU.h"
 
 static constexpr std::array<uint8_t, 4> magicNumbers = { 0x4E, 0x45, 0x53, 0x1A }; // NES<EOF> magic numbers to identify a NES ROM file
 
 int main(int argc, const char * argv[]){
-	Clock clock;
+	Clock clock(10000);
+	CPU cpu;
 	std::ifstream romFile; 
 	std::vector<uint8_t> romData;
 	std::string filePath;
@@ -41,7 +43,7 @@ int main(int argc, const char * argv[]){
 
 	while (true) {
 		clock.tick();
-		std::cout << clock.getTicks() << "us" << std::endl;
+		cpu.respTest();
 	}
 	romFile.close();
 
