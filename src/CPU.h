@@ -95,22 +95,27 @@ public:
 	void TXS();
 	void TSX();
 
+	// Jump opcodes
 	// JMP can be an absolute address or indirect.
 	void JMP_ABS(uint16_t addr);
 	void JMP_IND(uint16_t addr);
 	void JSR(uint16_t addr);
 	void RTS(uint16_t addr);
+	void BRK(); // Break (interrupt)
 
 	// Branch Opcodes
 	void BCC(int8_t offset); // Branch on carry clear
 	void BCS(int8_t offset); // Branch on carry set
-	uint8_t BEQ(); // Branch on equal (zero set)
 	void BMI(int8_t offset); // Branch on minus (negative set)
-	uint8_t BNE(); // Branch on not equal (zero clear)
 	void BPL(int8_t offset); // Branch on plus (negative clear)
-	uint8_t BRK(); // Break (interrupt)
 	void BVC(int8_t offset); // Branch on overflow clear
 	void BVS(int8_t offset); // Break on overflow set
+	void RTI(); // Return from interrupt
+
+
+	// Branch
+	void BNE(uint16_t addr); // Branch on not equal (zero clear)
+	void BEQ(uint16_t addr); // Branch on equal (zero set)
 
 
 private:
@@ -126,42 +131,14 @@ private:
 	std::vector<uint8_t> memory;
 	std::vector<uint8_t> stack;
 	Bus *bus = nullptr;
-	uint8_t bus_read(uint16_t address);
-	void bus_write(uint16_t address, uint8_t data);
 
 private: // Addressing Modes
-	uint8_t ACC(); // Accumulator
-	uint8_t ABS(); // Absolute
-	uint8_t ABSX(); // Absolute X
-	uint8_t ABSY(); // Absolute Y
-	uint8_t IMM(); // Immediate
-	uint8_t IMP(); // Implied
-	uint8_t IND(); // Indirect
-	uint8_t XIND(); // X, Indirect
-	uint8_t INDY(); // Indirect, Y
-	uint8_t REL(); // Relative
-	uint8_t ZP(); // Zero Page
-	uint8_t ZPX(); // Zero Page, X
-	uint8_t ZPY(); // Zero Page, Y
 
 private: // Opcodes
-	uint8_t ADC(); // Add with carry
-	uint8_t ASL(); // Arithmetic shift left
 	void CLC(); // Clear carry
 	void CLD(); // Clear decimal
 	void CLI(); // Clear interrupt disable
 	void CLV(); // Clear overflow
-	uint8_t DEC(); // Decrement
-	uint8_t INC(); // Increment 
-	uint8_t JMP(); // Jump
-	uint8_t JSR(); // Jump subroutine
-	uint8_t LSR(); // Logical shift right
-	uint8_t NOP(); // No operation
-	uint8_t ROL(); // Rotate left
-	uint8_t ROR(); // Rotate Right
-	uint8_t RTI(); // Return from interrupt
-	uint8_t RTS(); // Return from subroutine
-	uint8_t SBC(); // Subtract with carry
 	void SEC(); // Set carry
 	void SED(); // Set decimal
 	void SEI(); // Set interrupt disable
