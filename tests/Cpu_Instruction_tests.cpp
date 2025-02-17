@@ -960,4 +960,352 @@ namespace ProcessorTests {
 		ASSERT_FALSE(cpu.getZeroFlag());
 	}
 
+	class CPUTransferTest : public ::testing::Test {
+	protected:
+		void SetUp() override {
+			cpu.clearStatus();
+		}
+
+		void TearDown() override {
+		}
+
+		CPU cpu;
+	};
+
+	TEST_F(CPUTransferTest, TXA_SetsZeroFlag) 
+	{
+		cpu.x = 0x00;
+		cpu.TXA();
+		ASSERT_TRUE(cpu.getZeroFlag());
+	}
+
+	TEST_F(CPUTransferTest, TXA_UnsetsSetZeroFlag) 
+	{
+		cpu.x = 0x01;
+		cpu.TXA();
+		ASSERT_FALSE(cpu.getZeroFlag());
+	}
+
+	TEST_F(CPUTransferTest, TXA_SetsNegativeFlag) 
+	{
+		cpu.x = 0x80;
+		cpu.TXA();
+		ASSERT_TRUE(cpu.getNegativeFlag());
+	}
+
+	TEST_F(CPUTransferTest, TXA_UnsetsSetNegativeFlag) {
+		cpu.x = 0x7F;
+		cpu.TXA();
+		ASSERT_FALSE(cpu.getNegativeFlag());
+	}
+
+	TEST_F(CPUTransferTest, TXA_TransfersXToAccumulator) 
+	{
+		cpu.x = 0x42;
+		cpu.TXA();
+		ASSERT_EQ(cpu.accumulator, cpu.x);
+	}
+
+	TEST_F(CPUTransferTest, TYA_SetsZeroFlag)
+	{
+		cpu.y = 0x00;
+		cpu.TYA();
+		ASSERT_TRUE(cpu.getZeroFlag());
+	}
+
+	TEST_F(CPUTransferTest, TYA_UnsetsSetZeroFlag)
+	{
+		cpu.y = 0x01;
+		cpu.TYA();
+		ASSERT_FALSE(cpu.getZeroFlag());
+	}
+
+	TEST_F(CPUTransferTest, TYA_SetsNegativeFlag)
+	{
+		cpu.y = 0x80;
+		cpu.TYA();
+		ASSERT_TRUE(cpu.getNegativeFlag());
+	}
+
+	TEST_F(CPUTransferTest, TYA_UnsetsSetNegativeFlag) {
+		cpu.y = 0x7F;
+		cpu.TYA();
+		ASSERT_FALSE(cpu.getNegativeFlag());
+	}
+
+	TEST_F(CPUTransferTest, TYA_TransfersYToAccumulator) {
+		cpu.y = 0x42;
+		cpu.TYA();
+		ASSERT_EQ(cpu.accumulator, cpu.y);
+	}
+
+	TEST_F(CPUTransferTest, TAX_SetsZeroFlag)
+	{
+		cpu.accumulator = 0x00;
+		cpu.TAX();
+		ASSERT_TRUE(cpu.getZeroFlag());
+	}
+
+	TEST_F(CPUTransferTest, TAX_UnsetsSetZeroFlag)
+	{
+		cpu.accumulator = 0x01;
+		cpu.TAX();
+		ASSERT_FALSE(cpu.getZeroFlag());
+	}
+
+	TEST_F(CPUTransferTest, TAX_SetsNegativeFlag)
+	{
+		cpu.accumulator = 0x80;
+		cpu.TAX();
+		ASSERT_TRUE(cpu.getNegativeFlag());
+	}
+
+	TEST_F(CPUTransferTest, TAX_UnsetsSetNegativeFlag) {
+		cpu.accumulator = 0x7F;
+		cpu.TAX();
+		ASSERT_FALSE(cpu.getNegativeFlag());
+	}
+
+	TEST_F(CPUTransferTest, TAX_TransfersAccumulatorToX) {
+		cpu.accumulator = 0x42;
+		cpu.TAX();
+		ASSERT_EQ(cpu.x, cpu.accumulator);
+	}
+
+	TEST_F(CPUTransferTest, TAY_SetsZeroFlag)
+	{
+		cpu.accumulator = 0x00;
+		cpu.TAY();
+		ASSERT_TRUE(cpu.getZeroFlag());
+	}
+
+	TEST_F(CPUTransferTest, TAY_UnsetsSetZeroFlag)
+	{
+		cpu.accumulator = 0x01;
+		cpu.TAY();
+		ASSERT_FALSE(cpu.getZeroFlag());
+	}
+
+	TEST_F(CPUTransferTest, TAY_SetsNegativeFlag)
+	{
+		cpu.accumulator = 0x80;
+		cpu.TAY();
+		ASSERT_TRUE(cpu.getNegativeFlag());
+	}
+
+	TEST_F(CPUTransferTest, TAY_UnsetsSetNegativeFlag) {
+		cpu.accumulator = 0x7F;
+		cpu.TAY();
+		ASSERT_FALSE(cpu.getNegativeFlag());
+	}
+
+	TEST_F(CPUTransferTest, TAX_TransfersAccumulatorToY) {
+		cpu.accumulator = 0x42;
+		cpu.TAY();
+		ASSERT_EQ(cpu.y, cpu.accumulator);
+	}
+
+	class CPUBranchTest : public ::testing::Test {
+	protected:
+		void SetUp() override {
+			cpu.clearStatus();
+		}
+
+		void TearDown() override {
+		}
+
+		CPU cpu;
+	};
+
+	TEST_F(CPUBranchTest, BCC_BranchWithPositiveOffsetCarryClear) {
+		cpu.setCarryFlag(false);
+		cpu.program_counter = 0x1000;
+		int8_t offset = 5;
+		cpu.BCC(offset);
+		ASSERT_EQ(cpu.program_counter, 0x1005);
+	}
+
+	TEST_F(CPUBranchTest, BCC_BranchWithNegativeOffsetCarryClear) {
+		cpu.setCarryFlag(false);
+		cpu.program_counter = 0x1000;
+		int8_t offset = -3;
+		cpu.BCC(offset);
+		ASSERT_EQ(cpu.program_counter, 0x0FFD);
+	}
+
+	TEST_F(CPUBranchTest, BCC_CarrySet) {
+		cpu.setCarryFlag(true);
+		cpu.program_counter = 0x1000;
+		int8_t offset = 5;
+		cpu.BCC(offset);
+		ASSERT_EQ(cpu.program_counter, 0x1000);
+	}
+
+	TEST_F(CPUBranchTest, BCC_BranchWithWrapAround) {
+		cpu.setCarryFlag(false);
+		cpu.program_counter = 0x1000;
+		int8_t offset = -128;
+		cpu.BCC(offset);
+		ASSERT_EQ(cpu.program_counter, 0x0F80);
+	}
+
+	TEST_F(CPUBranchTest, BCS_BranchWithPositiveOffsetCarrySet) {
+		cpu.setCarryFlag(true);
+		cpu.program_counter = 0x1000;
+		int8_t offset = 10;
+		cpu.BCS(offset);
+		ASSERT_EQ(cpu.program_counter, 0x100A);
+	}
+
+	TEST_F(CPUBranchTest, BCS_BranchWithNegativeOffsetCarrySet) {
+		cpu.setCarryFlag(true);
+		cpu.program_counter = 0x1000;
+		int8_t offset = -10;
+		cpu.BCS(offset);
+		ASSERT_EQ(cpu.program_counter, 0x0FF6);
+	}
+
+	TEST_F(CPUBranchTest, BCS_CarryCleared) {
+		cpu.setCarryFlag(false);
+		cpu.program_counter = 0x1000;
+		int8_t offset = 5;
+		cpu.BCS(offset);
+		ASSERT_EQ(cpu.program_counter, 0x1000);
+	}
+
+	TEST_F(CPUBranchTest, BCS_BranchWithWrapAround) {
+		cpu.setCarryFlag(true);
+		cpu.program_counter = 0x1000;
+		int8_t offset = -128;
+		cpu.BCS(offset);
+		ASSERT_EQ(cpu.program_counter, 0x0F80);
+	}
+
+	TEST_F(CPUBranchTest, BMI_BranchWithPositiveOffsetNegativeSet) {
+		cpu.setNegativeFlag(true);
+		cpu.program_counter = 0x1000;
+		int8_t offset = 10;
+		cpu.BMI(offset);
+		ASSERT_EQ(cpu.program_counter, 0x100A);
+	}
+
+	TEST_F(CPUBranchTest, BMI_BranchWithNegativeOffsetNegativeSet) {
+		cpu.setNegativeFlag(true);
+		cpu.program_counter = 0x1000;
+		int8_t offset = -10;
+		cpu.BMI(offset);
+		ASSERT_EQ(cpu.program_counter, 0x0FF6);
+	}
+
+	TEST_F(CPUBranchTest, BMI_NegativeCleared) {
+		cpu.setNegativeFlag(false);
+		cpu.program_counter = 0x1000;
+		int8_t offset = 5;
+		cpu.BMI(offset);
+		ASSERT_EQ(cpu.program_counter, 0x1000);
+	}
+
+	TEST_F(CPUBranchTest, BMI_BranchWithWrapAround) {
+		cpu.setNegativeFlag(true);
+		cpu.program_counter = 0x1000;
+		int8_t offset = -128;
+		cpu.BMI(offset);
+		ASSERT_EQ(cpu.program_counter, 0x0F80);
+	}
+
+	TEST_F(CPUBranchTest, BPL_BranchWithPositiveOffsetNegativeClear) {
+		cpu.setNegativeFlag(false);
+		cpu.program_counter = 0x1000;
+		int8_t offset = 10;
+		cpu.BPL(offset);
+		ASSERT_EQ(cpu.program_counter, 0x100A);
+	}
+
+	TEST_F(CPUBranchTest, BPL_BranchWithNegativeOffsetNegativeClear) {
+		cpu.setNegativeFlag(false);
+		cpu.program_counter = 0x1000;
+		int8_t offset = -10;
+		cpu.BPL(offset);
+		ASSERT_EQ(cpu.program_counter, 0x0FF6);
+	}
+
+	TEST_F(CPUBranchTest, BPL_NegativeSet) {
+		cpu.setNegativeFlag(true);
+		cpu.program_counter = 0x1000;
+		int8_t offset = 5;
+		cpu.BPL(offset);
+		ASSERT_EQ(cpu.program_counter, 0x1000);
+	}
+
+	TEST_F(CPUBranchTest, BPL_BranchWithWrapAround) {
+		cpu.setNegativeFlag(false);
+		cpu.program_counter = 0x1000;
+		int8_t offset = -128;
+		cpu.BPL(offset);
+		ASSERT_EQ(cpu.program_counter, 0x0F80);
+	}
+
+	TEST_F(CPUBranchTest, BVC_BranchWithPositiveOffsetOverflowClear) {
+		cpu.setOverflowFlag(false);
+		cpu.program_counter = 0x1000;
+		int8_t offset = 10;
+		cpu.BVC(offset);
+		ASSERT_EQ(cpu.program_counter, 0x100A);
+	}
+
+	TEST_F(CPUBranchTest, BVC_BranchWithNegativeOffsetOverflowClear) {
+		cpu.setOverflowFlag(false);
+		cpu.program_counter = 0x1000;
+		int8_t offset = -10;
+		cpu.BVC(offset);
+		ASSERT_EQ(cpu.program_counter, 0x0FF6);
+	}
+
+	TEST_F(CPUBranchTest, BVC_OverflowSet) {
+		cpu.setOverflowFlag(true);
+		cpu.program_counter = 0x1000;
+		int8_t offset = 5;
+		cpu.BVC(offset);
+		ASSERT_EQ(cpu.program_counter, 0x1000);
+	}
+
+	TEST_F(CPUBranchTest, BVC_BranchWithWrapAround) {
+		cpu.setOverflowFlag(false);
+		cpu.program_counter = 0x1000;
+		int8_t offset = -128;
+		cpu.BVC(offset);
+		ASSERT_EQ(cpu.program_counter, 0x0F80);
+	}
+
+	TEST_F(CPUBranchTest, BVS_BranchWithPositiveOffsetOverflowSet) {
+		cpu.setOverflowFlag(true);
+		cpu.program_counter = 0x1000;
+		int8_t offset = 10;
+		cpu.BVS(offset);
+		ASSERT_EQ(cpu.program_counter, 0x100A);
+	}
+
+	TEST_F(CPUBranchTest, BVS_BranchWithNegativeOffsetOverflowSet) {
+		cpu.setOverflowFlag(true);
+		cpu.program_counter = 0x1000;
+		int8_t offset = -10;
+		cpu.BVS(offset);
+		ASSERT_EQ(cpu.program_counter, 0x0FF6);
+	}
+
+	TEST_F(CPUBranchTest, BVS_OverflowCleared) {
+		cpu.setOverflowFlag(false);
+		cpu.program_counter = 0x1000;
+		int8_t offset = 5;
+		cpu.BVS(offset);
+		ASSERT_EQ(cpu.program_counter, 0x1000);
+	}
+
+	TEST_F(CPUBranchTest, BVS_BranchWithWrapAround) {
+		cpu.setOverflowFlag(true);
+		cpu.program_counter = 0x1000;
+		int8_t offset = -128;
+		cpu.BVS(offset);
+		ASSERT_EQ(cpu.program_counter, 0x0F80);
+	}
 }

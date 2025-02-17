@@ -484,9 +484,11 @@ void CPU::PLP() { //If stack not empty assign status to value at back of stack a
         setNegativeFlag(status & negative_mask);
     }
 }
+
 void CPU::TXS() { //Transfer X to Stack Pointer
     stack_pointer = x;
 }
+
 void CPU::TSX() { //Transfer Stack Pointer to x
     x = stack_pointer;
 
@@ -498,6 +500,34 @@ void CPU::STY(uint16_t addr) {
     write(addr, y);
 }
 
+void CPU::TXA()
+{
+    accumulator = x;
+    setZeroFlag(accumulator == 0x00);
+    setNegativeFlag(accumulator & negative_mask);
+}
+
+void CPU::TYA()
+{
+    accumulator = y;
+    setZeroFlag(accumulator == 0x00);
+    setNegativeFlag(accumulator & negative_mask);
+}
+
+void CPU::TAX()
+{
+    x = accumulator;
+    setZeroFlag(x == 0x00);
+    setNegativeFlag(x & negative_mask);
+
+}
+
+void CPU::TAY()
+{
+    y = accumulator;
+    setZeroFlag(y == 0x00);
+    setNegativeFlag(y & negative_mask);
+}
 
 void CPU::JMP_ABS(uint16_t addr)
 {
@@ -507,13 +537,13 @@ void CPU::JMP_ABS(uint16_t addr)
 
 void CPU::JMP_IND(uint16_t addr)
 {
-    
+
     uint16_t jmp_addr;
     std::memcpy(&jmp_addr, memory.data() + addr, sizeof(addr));
     std::memcpy(&program_counter, memory.data() + jmp_addr, sizeof(jmp_addr));
 
     // CPU bug when crossing a page boundary, "For example, JMP ($03FF) reads $03FF and $0300 instead of $0400"
-    (program_counter & 0xFF) == 0xFF? program_counter -= 0xFF : program_counter;
+    (program_counter & 0xFF) == 0xFF ? program_counter -= 0xFF : program_counter;
 }
 
 void CPU::JSR(uint16_t addr)
@@ -538,10 +568,54 @@ void CPU::RTS(uint16_t addr)
 
 }
 
-// uint8_t CPU::bus_read(uint16_t address) {
-// 	return bus->read(address, false);
-// }
+// Branch Opcodes
+void CPU::BCC(int8_t offset)
+{
+    if (!getCarryFlag())
+    {
+        program_counter += offset;
+    }
+}
 
-// void CPU::bus_write(uint16_t address, uint8_t data) {
-// 	bus->write(address, data);
-// }
+void CPU::BCS(int8_t offset)
+{
+    if (getCarryFlag())
+    {
+        program_counter += offset;
+    }
+}
+
+void CPU::BMI(int8_t offset)
+{
+    if (getNegativeFlag()) 
+    {
+        program_counter += offset;
+    }
+}
+
+void CPU::BPL(int8_t offset)
+{
+    if (!getNegativeFlag())
+    {
+        program_counter += offset;
+    }
+}
+
+void CPU::BVC(int8_t offset)
+{
+    if (!getOverFlowFlag())
+    {
+        program_counter += offset;
+    }
+}
+
+void CPU::BVS(int8_t offset)
+{
+    if (getOverFlowFlag())
+    {
+        program_counter += offset;
+    }
+}
+
+
+
