@@ -519,7 +519,7 @@ void CPU::TAX()
     x = accumulator;
     setZeroFlag(x == 0x00);
     setNegativeFlag(x & negative_mask);
-    
+
 }
 
 void CPU::TAY()
@@ -537,13 +537,13 @@ void CPU::JMP_ABS(uint16_t addr)
 
 void CPU::JMP_IND(uint16_t addr)
 {
-    
+
     uint16_t jmp_addr;
     std::memcpy(&jmp_addr, memory.data() + addr, sizeof(addr));
     std::memcpy(&program_counter, memory.data() + jmp_addr, sizeof(jmp_addr));
 
     // CPU bug when crossing a page boundary, "For example, JMP ($03FF) reads $03FF and $0300 instead of $0400"
-    (program_counter & 0xFF) == 0xFF? program_counter -= 0xFF : program_counter;
+    (program_counter & 0xFF) == 0xFF ? program_counter -= 0xFF : program_counter;
 }
 
 void CPU::JSR(uint16_t addr)
@@ -567,3 +567,55 @@ void CPU::RTS(uint16_t addr)
     program_counter++; // We return to the next address after the JMP that brought us here (otherwise this becomes a portal emulator)
 
 }
+
+// Branch Opcodes
+void CPU::BCC(int8_t offset)
+{
+    if (!getCarryFlag())
+    {
+        program_counter += offset;
+    }
+}
+
+void CPU::BCS(int8_t offset)
+{
+    if (getCarryFlag())
+    {
+        program_counter += offset;
+    }
+}
+
+void CPU::BMI(int8_t offset)
+{
+    if (getNegativeFlag()) 
+    {
+        program_counter += offset;
+    }
+}
+
+void CPU::BPL(int8_t offset)
+{
+    if (!getNegativeFlag())
+    {
+        program_counter += offset;
+    }
+}
+
+void CPU::BVC(int8_t offset)
+{
+    if (!getOverFlowFlag())
+    {
+        program_counter += offset;
+    }
+}
+
+void CPU::BVS(int8_t offset)
+{
+    if (getOverFlowFlag())
+    {
+        program_counter += offset;
+    }
+}
+
+
+

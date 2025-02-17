@@ -101,6 +101,17 @@ public:
 	void JSR(uint16_t addr);
 	void RTS(uint16_t addr);
 
+	// Branch Opcodes
+	void BCC(int8_t offset); // Branch on carry clear
+	void BCS(int8_t offset); // Branch on carry set
+	uint8_t BEQ(); // Branch on equal (zero set)
+	void BMI(int8_t offset); // Branch on minus (negative set)
+	uint8_t BNE(); // Branch on not equal (zero clear)
+	void BPL(int8_t offset); // Branch on plus (negative clear)
+	uint8_t BRK(); // Break (interrupt)
+	void BVC(int8_t offset); // Branch on overflow clear
+	void BVS(int8_t offset); // Break on overflow set
+
 
 private:
 	// Masks for status register
@@ -137,16 +148,6 @@ private: // Opcodes
 	uint8_t ADC(); // Add with carry
 	//uint8_t AND(); // AND (with accumulator)
 	uint8_t ASL(); // Arithmetic shift left
-	uint8_t BCC(); // Branch on carry clear
-	uint8_t BCS(); // Branch on carry set
-	uint8_t BEQ(); // Branch on equal (zero set)
-	//uint8_t BIT(); // Bit test
-	uint8_t BMI(); // Branch on minus (negative set)
-	uint8_t BNE(); // Branch on not equal (zero clear)
-	uint8_t BPL(); // Branch on plus (negative clear)
-	uint8_t BRK(); // Break (interrupt)
-	uint8_t BVC(); // Branch on overflow clear
-	uint8_t BVS(); // Break on overflow set
 	void CLC(); // Clear carry
 	void CLD(); // Clear decimal
 	void CLI(); // Clear interrupt disable
