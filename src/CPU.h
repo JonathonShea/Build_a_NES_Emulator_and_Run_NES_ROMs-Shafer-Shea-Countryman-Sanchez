@@ -1,6 +1,3 @@
-// Created by Abel Sanchez om 11/17/2024
-// Last updated: 1/21/2025
-
 #ifndef CPU_H
 #define CPU_H
 
@@ -28,20 +25,6 @@ public:
 	void respTest();
 	uint8_t read(uint16_t addr);
 	void write(uint16_t addr, uint8_t data);
-	void ASL(uint16_t addr);
-	void LSR(uint16_t addr);
-	void ROL(uint16_t addr);
-	void ROR(uint16_t addr);
-
-	// Arithmetic OP codes.
-	void ADC(uint16_t addr);
-	void SBC(uint16_t addr);
-	void INC(uint16_t addr);
-	void DEC(uint16_t addr);
-	void INX();
-	void DEX();
-	void INY();
-	void DEY();
 
 	bool getOverFlowFlag() const;
 	bool getNegativeFlag() const;
@@ -60,6 +43,21 @@ public:
 
 	std::vector<uint8_t> getStackTESTING() const;
 	void setStackBackTESTING(uint8_t value);
+	
+	void ASL(uint16_t addr);
+	void LSR(uint16_t addr);
+	void ROL(uint16_t addr);
+	void ROR(uint16_t addr);
+
+	// Arithmetic OP codes.
+	void ADC(uint16_t addr);
+	void SBC(uint16_t addr);
+	void INC(uint16_t addr);
+	void DEC(uint16_t addr);
+	void INX();
+	void DEX();
+	void INY();
+	void DEY();
 
 	// Bitwise OP codes
 	void AND(uint16_t addr);
@@ -86,7 +84,6 @@ public:
 	void TAX(); // Transfer Accumulator to X
 	void TAY(); // Transfer Accumulator to Y
 
-
 	// Stack OP codes
 	void PHA();
 	void PLA();
@@ -104,19 +101,15 @@ public:
 	void BRK(); // Break (interrupt)
 
 	// Branch Opcodes
-	void BCC(int8_t offset); // Branch on carry clear
-	void BCS(int8_t offset); // Branch on carry set
-	void BMI(int8_t offset); // Branch on minus (negative set)
-	void BPL(int8_t offset); // Branch on plus (negative clear)
-	void BVC(int8_t offset); // Branch on overflow clear
-	void BVS(int8_t offset); // Break on overflow set
+	void BCC(uint16_t addr); // Branch on carry clear
+	void BCS(uint16_t addr); // Branch on carry set
+	void BMI(uint16_t addr); // Branch on minus (negative set)
+	void BPL(uint16_t addr); // Branch on plus (negative clear)
+	void BVC(uint16_t addr); // Branch on overflow clear
+	void BVS(uint16_t addr); // Break on overflow set
 	void RTI(); // Return from interrupt
-
-
-	// Branch
 	void BNE(uint16_t addr); // Branch on not equal (zero clear)
 	void BEQ(uint16_t addr); // Branch on equal (zero set)
-
 
 private:
 	// Masks for status register
@@ -133,6 +126,7 @@ private:
 	Bus *bus = nullptr;
 
 private: // Addressing Modes
+
 
 private: // Opcodes
 	void CLC(); // Clear carry

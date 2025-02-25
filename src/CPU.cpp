@@ -591,54 +591,53 @@ void CPU::RTI()
 }
 
 // Branch Opcodes
-void CPU::BCC(int8_t offset)
+void CPU::BCC(uint16_t addr)
 {
     if (!getCarryFlag())
     {
-        program_counter += offset;
+        program_counter += static_cast<int8_t>(memory[addr]) + 2;
     }
 }
 
-void CPU::BCS(int8_t offset)
+void CPU::BCS(uint16_t addr)
 {
     if (getCarryFlag())
     {
-        program_counter += offset;
+        program_counter += static_cast<int8_t>(memory[addr]) + 2;
     }
 }
 
-void CPU::BMI(int8_t offset)
+void CPU::BMI(uint16_t addr)
 {
     if (getNegativeFlag()) 
     {
-        program_counter += offset;
+        program_counter += static_cast<int8_t>(memory[addr]) + 2;
     }
 }
 
-void CPU::BPL(int8_t offset)
+void CPU::BPL(uint16_t addr)
 {
     if (!getNegativeFlag())
     {
-        program_counter += offset;
+        program_counter += static_cast<int8_t>(memory[addr]) + 2;
     }
 }
 
-void CPU::BVC(int8_t offset)
+void CPU::BVC(uint16_t addr)
 {
     if (!getOverFlowFlag())
     {
-        program_counter += offset;
+        program_counter += static_cast<int8_t>(memory[addr]) + 2;
     }
 }
 
-void CPU::BVS(int8_t offset)
+void CPU::BVS(uint16_t addr)
 {
     if (getOverFlowFlag())
     {
-        program_counter += offset;
+        program_counter += static_cast<int8_t>(memory[addr]) + 2;
     }
 }
-
 
 void CPU::BNE(uint16_t addr)
 {
@@ -655,3 +654,5 @@ void CPU::BEQ(uint16_t addr)
         program_counter += static_cast<int8_t>(memory[addr]) + 2;
     }
 }
+
+
