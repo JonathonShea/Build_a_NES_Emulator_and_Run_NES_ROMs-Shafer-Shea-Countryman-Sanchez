@@ -14,7 +14,7 @@ set(SDL2_LIBRARIES "C:/SDL2/lib/x64/SDL2.lib;C:/SDL2/lib/x64/SDL2main.lib")
 #find_package(SDL2 REQUIRED)
 
 add_executable(nes_emulator main.cpp)
-target_link_libraries(nes_emulator PRIVATE MemoryMapper)
+target_link_libraries(nes_emulator PRIVATE NES)
 if (CMAKE_IMPORT_LIBRARY_SUFFIX)
     add_custom_command(
             TARGET nes_emulator POST_BUILD

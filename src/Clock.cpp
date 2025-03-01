@@ -1,7 +1,7 @@
 #include "Clock.h"
 #include <thread>
 
-Clock::Clock(uint64_t prescaler) : mClockDivider(prescaler), mTicks(0), mName("Clock"){
+Clock::Clock(uint64_t prescaler, const char* name) : mClockDivider(prescaler), mTicks(0), mName(name){
 	// Initialize the clock
 }
 

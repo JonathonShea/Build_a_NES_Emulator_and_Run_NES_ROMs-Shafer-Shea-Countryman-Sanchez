@@ -8,11 +8,13 @@
 #include <Cartridge.h>
 #include <Utilities.h>
 #include "CPU.h"
+#include <memory>
+#include "event/EventDispatcher.h"
 
 static constexpr std::array<uint8_t, 4> magicNumbers = { 0x4E, 0x45, 0x53, 0x1A }; // NES<EOF> magic numbers to identify a NES ROM file
 
 int main(int argc, const char * argv[]){
-	Clock clock(10000);
+	Clock clock(3000, "CPU Clock");
 	CPU cpu;
 	std::ifstream romFile; 
 	std::vector<uint8_t> romData;
@@ -27,6 +29,7 @@ int main(int argc, const char * argv[]){
 	if (romFile.is_open()) {
 		std::cout << "Opened file: " << filePath << std::endl;
 		romData = std::vector<uint8_t>(std::istreambuf_iterator<char>(romFile), std::istreambuf_iterator<char>());
+		romFile.close();
 	}
 	else {
 		std::cout << "Failed to open file: " << filePath << std::endl;
@@ -39,13 +42,15 @@ int main(int argc, const char * argv[]){
 			return(0);
 		}
 	}
-	Cartridge cart(romData);
+	auto cart = std::make_shared<Cartridge>(romData);
+	cpu.SetCartridge(cart);
 
 	while (true) {
 		clock.tick();
-		cpu.respTest();
+		int test =  cpu.read(0xfffc);
+		std::cout << test << std::endl;
 	}
-	romFile.close();
+	
 
   return 0;
 }

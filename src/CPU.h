@@ -6,6 +6,10 @@
 
 #include <cstdint>
 #include <vector>
+#include <memory>
+#include "Cartridge.h"
+#include "Utilities.h"
+
 class Bus;
 
 class CPU
@@ -14,8 +18,8 @@ public:
 	uint8_t accumulator = 0x00; // 8-bit arithmetic register
 	uint8_t x = 0x00; // 8-bit general purpose register
 	uint8_t y = 0x00; // 8-bit general purpose register
-	uint8_t stack_pointer = 0x0000; // 8-bit register that contains lower 8 bits of stack
-	uint16_t program_counter = 0x00; // 16-bit register that contains a pointer to the next instruction
+	uint8_t stack_pointer; // 8-bit register that contains lower 8 bits of stack
+	uint16_t program_counter; // 16-bit register that contains a pointer to the next instruction
 	uint8_t status = 0x00; // 8-bit register that contains status flags
 
 	// Connect CPU to the bus
@@ -43,6 +47,7 @@ public:
 	void INY();
 	void DEY();
 
+	void Execute();
 	bool getOverFlowFlag() const;
 	bool getNegativeFlag() const;
 	void clearStatus();
@@ -118,6 +123,9 @@ public:
 	void BEQ(uint16_t addr); // Branch on equal (zero set)
 
 
+	void SetCartridge(std::shared_ptr<Cartridge> cartridge);
+
+
 private:
 	// Masks for status register
 	static constexpr uint8_t negative_mask = 0x80;
@@ -127,9 +135,11 @@ private:
 	static constexpr uint8_t interrupt_disable_mask = 0x04;
 	static constexpr uint8_t zero_mask = 0x02;
 	static constexpr uint8_t carry_mask = 0x01;
+	static constexpr uint16_t reset_vector = 0xFFFc; // It all starts here!!!
 
 	std::vector<uint8_t> memory;
 	std::vector<uint8_t> stack;
+	std::shared_ptr<Cartridge> cart;
 	Bus *bus = nullptr;
 
 private: // Addressing Modes

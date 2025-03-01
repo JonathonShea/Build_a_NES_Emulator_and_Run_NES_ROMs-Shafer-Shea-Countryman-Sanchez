@@ -7,7 +7,7 @@ using namespace std::chrono_literals;
 
 class Clock : IEvent{
 public:
-	Clock(uint64_t prescaler);
+	Clock(uint64_t prescaler, const char* name);
 	~Clock();
 	bool tick();
 	uint64_t getTicks() const;

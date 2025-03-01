@@ -14,7 +14,7 @@ add_test(NAME example_test COMMAND nes_tests)
 add_executable(nes_tests Run_Tests.cpp
               Cpu_Instruction_tests.cpp)
 target_link_libraries(nes_tests gtest_main)
-target_link_libraries(nes_tests MemoryMapper)
+target_link_libraries(nes_tests NES)
 
 
 # The following variable is defined only on DLL systems
