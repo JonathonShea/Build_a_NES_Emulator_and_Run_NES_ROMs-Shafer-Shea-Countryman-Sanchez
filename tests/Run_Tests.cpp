@@ -1,7 +1,8 @@
 //
 // Created by sheaj on 11/15/2024.
 //
-#include <gtest/gtest.h>
+#include <Gtest/gtest.h>
+
 
 int main(int argc, char **argv) {
     testing::InitGoogleTest(&argc, argv);
