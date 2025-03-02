@@ -126,6 +126,20 @@ private:
 	Bus *bus = nullptr;
 
 private: // Addressing Modes
+	// Returns the effective address for each addressing mode
+	uint16_t addr_implied();               // Implied - No address needed
+	uint16_t addr_accumulator();           // Accumulator - Operation on A register
+	uint16_t addr_immediate();             // Immediate - Use value from next byte
+	uint16_t addr_zero_page();             // Zero Page - Use address from next byte (0x00-0xFF)
+	uint16_t addr_zero_page_x();           // Zero Page X - Use address from next byte + X (0x00-0xFF)
+	uint16_t addr_zero_page_y();           // Zero Page Y - Use address from next byte + Y (0x00-0xFF)
+	uint16_t addr_absolute();              // Absolute - Use 16-bit address from next two bytes
+	uint16_t addr_absolute_x();            // Absolute X - Use 16-bit address from next two bytes + X
+	uint16_t addr_absolute_y();            // Absolute Y - Use 16-bit address from next two bytes + Y
+	uint16_t addr_indirect();              // Indirect - Get 16-bit address from pointer (JMP only)
+	uint16_t addr_indexed_indirect_x();    // Indexed Indirect (X) - Get address from zero page location at (byte+X)
+	uint16_t addr_indirect_indexed_y();    // Indirect Indexed (Y) - Get address from zero page location and add Y
+	uint16_t addr_relative();              // Relative - Signed 8-bit offset from current PC (branches)
 
 
 private: // Opcodes

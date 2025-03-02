@@ -70,6 +70,144 @@ void CPU::write(uint16_t addr, uint8_t data)
     memory[addr] = data;
 }
 
+// CPU Addressing Modes Implementation
+// Implied 
+uint16_t CPU::addr_implied()
+{
+    return 0;
+}
+
+// Accumulator 
+uint16_t CPU::addr_accumulator()
+{
+    return 0; 
+}
+
+// Immediate 
+uint16_t CPU::addr_immediate()
+{
+    return program_counter++; 
+}
+
+// Zero Page 
+uint16_t CPU::addr_zero_page()
+{
+    return read(program_counter++);
+}
+
+// Zero Page X
+uint16_t CPU::addr_zero_page_x()
+{
+    uint8_t base = read(program_counter++);
+    
+    // Zero page wraps around
+    return (base + x) & 0xFF; 
+}
+
+// Zero Page Y 
+uint16_t CPU::addr_zero_page_y()
+{
+    uint8_t base = read(program_counter++);
+
+    // Zero page wraps around
+    return (base + y) & 0xFF; 
+}
+
+// Absolute 
+uint16_t CPU::addr_absolute()
+{
+    uint16_t low_byte = read(program_counter++);
+    uint16_t high_byte = read(program_counter++);
+    return (high_byte << 8) | low_byte; 
+}
+
+// Absolute X 
+uint16_t CPU::addr_absolute_x()
+{
+    uint16_t low_byte = read(program_counter++);
+    uint16_t high_byte = read(program_counter++);
+    uint16_t addr = ((high_byte << 8) | low_byte) + x;
+
+    return addr;
+}
+
+// Absolute Y - Use 16-bit address from next two bytes + Y
+uint16_t CPU::addr_absolute_y()
+{
+    uint16_t low_byte = read(program_counter++);
+    uint16_t high_byte = read(program_counter++);
+    uint16_t addr = ((high_byte << 8) | low_byte) + y;
+
+    return addr;
+}
+
+// Indirect
+uint16_t CPU::addr_indirect()
+{
+    uint16_t ptr_low = read(program_counter++);
+    uint16_t ptr_high = read(program_counter++);
+    uint16_t ptr = (ptr_high << 8) | ptr_low;
+
+    // Handle the 6502 JMP indirect bug
+    // If the pointer is at the end of a page, it wraps around within the same page
+    // instead of crossing to the next page
+    uint16_t low_byte;
+    uint16_t high_byte;
+
+    if (ptr_low == 0xFF) {
+        // Bug: high byte is fetched from the same page, not the next page
+        low_byte = read(ptr);
+        
+        // Wrap around in the same page
+        high_byte = read(ptr & 0xFF00); 
+    }
+    else {
+        // Normal case
+        low_byte = read(ptr);
+        high_byte = read(ptr + 1);
+    }
+
+    return (high_byte << 8) | low_byte;
+}
+
+// Indexed Indirect (X) 
+uint16_t CPU::addr_indexed_indirect_x()
+{
+    uint8_t base = read(program_counter++);
+
+    // Zero page wraps around
+    uint8_t ptr = (base + x) & 0xFF; 
+
+    uint16_t low_byte = read(ptr);
+
+    // Zero page wraps around
+    uint16_t high_byte = read((ptr + 1) & 0xFF);
+
+    return (high_byte << 8) | low_byte;
+}
+
+// Indirect Indexed (Y) 
+uint16_t CPU::addr_indirect_indexed_y()
+{
+    uint8_t ptr = read(program_counter++);
+
+    uint16_t low_byte = read(ptr);
+
+    // Zero page wraps around
+    uint16_t high_byte = read((ptr + 1) & 0xFF); 
+
+    uint16_t addr = ((high_byte << 8) | low_byte) + y;
+
+    return addr;
+}
+
+// Relative addressing mode
+uint16_t CPU::addr_relative()
+{
+    int8_t offset = static_cast<int8_t>(read(program_counter++));
+    return program_counter + offset;
+}
+
 // shift instructions
 void CPU::ASL(uint16_t addr) // Arithmetic Shift Left
 {
@@ -132,6 +270,7 @@ void CPU::ADC(uint16_t addr) {
     }
     
 }
+
 // Add with carry OP code
 void CPU::SBC(uint16_t addr) {
     uint16_t inverse = memory[addr] ^ 0xFF;
@@ -321,7 +460,6 @@ void CPU::setNegativeFlag(bool value)
     else
         status &= ~0x80;
 }
-
 
 bool CPU::getOverFlowFlag() const
 {
