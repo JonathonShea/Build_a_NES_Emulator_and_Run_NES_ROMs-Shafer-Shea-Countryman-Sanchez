@@ -1,8 +1,6 @@
-// Created by Abel Sanchez on 11/17/2024
-// Last updated: 1/21/2025
-
 #include "CPU.h"
-#include "Bus.h"
+#include "MemoryMapper.h"
+#include "Clock.h"
 #include <iostream>
 
 void CPU::respTest()
@@ -210,6 +208,7 @@ uint16_t CPU::addr_relative()
     int8_t offset = static_cast<int8_t>(read(program_counter++));
     return program_counter + offset;
 }
+
 ///////////////////////////////////////////////////////////////////
 // FLAG OPERATIONS
 ///////////////////////////////////////////////////////////////////
@@ -809,4 +808,105 @@ void CPU::BEQ(uint16_t addr)
     }
 }
 
+///////////////////////////////////////////////////////////////////
+// INSTRUCTION EXECUTION LOOP
+///////////////////////////////////////////////////////////////////
+
+uint8_t CPU::execute() {
+    // Fetch the next instruction
+    uint8_t opcode = read(program_counter++);
+
+    uint16_t addr = 0;
+    uint16_t addr_abs = 0;
+    uint8_t cycles = 0;
+    bool page_crossed = false;
+
+    switch (opcode) {
+        // AND
+        case 0x29: // Immediate
+            break;
+        case 0x25: // Zero Page
+            break;
+        case 0x35: // Zero Page X
+            break;
+        case 0x2D: // Absolute
+            break;
+        case 0x3D: // Absolute X
+            break;
+        case 0x39: // Absolute Y
+            break;
+        case 0x21: // Indiredct X
+            break;
+        case 0x31: // Indirect Y
+            break;
+
+            // ASL
+        case 0x0A: // Accumulator
+            break;
+        case 0x06: // Zero Page
+            break;
+        case 0x16: // Zero Page X
+            break;
+        case 0x0E: // Absolute
+            break;
+        case 0x1E: // Absolute X
+            break;
+
+            // BCC
+        case 0x90: // Relative
+            break;
+
+            // BCS 
+        case 0xB0: // Relative
+            break;
+
+            // BEQ
+        case 0xF0: // Relative
+            break;
+
+            // BIT
+        case 0x24: // Zero Page
+            break;
+        case 0x2C: // Absolute
+            break;
+
+            // BMI
+        case 0x30: // Relative
+            break;
+
+            // BNE    
+        case 0xD0: // Realtive
+            break;
+
+            // BPL
+        case 0x10: // Relative
+            break;
+
+            // BRK
+        case 0x00: // Implied
+            break;
+
+            // BVC
+        case 0x50: // Relative
+            break;
+
+            // BVS
+        case 0x70: // Relative
+            break;
+
+            // CLC
+        case 0x18: // Implied
+            break;
+
+            // CLD
+        case 0xD8: // Implied
+            break;
+
+            // CLI
+        case 0x58: // Implied
+            break;
+    }
+
+    return cycles;
+}
 

@@ -24,6 +24,8 @@ public:
 	std::vector<uint8_t> getStackTESTING() const;
 	void setStackBackTESTING(uint8_t value);
 
+	uint8_t execute();
+
 private:
 	// Masks for status register
 	static constexpr uint8_t negative_mask = 0x80;
