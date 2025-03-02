@@ -686,9 +686,6 @@ namespace ProcessorTests {
 		ASSERT_FALSE(cpu.getNegativeFlag());
 	}
 
-
-
-
 	class CPUJMPTest : public testing::Test {
 	protected:
 		CPUJMPTest() {}
@@ -1120,192 +1117,476 @@ namespace ProcessorTests {
 	TEST_F(CPUBranchTest, BCC_BranchWithPositiveOffsetCarryClear) {
 		cpu.setCarryFlag(false);
 		cpu.program_counter = 0x1000;
-		int8_t offset = 5;
-		cpu.BCC(offset);
-		ASSERT_EQ(cpu.program_counter, 0x1005);
+		cpu.write(0x1001, 5);
+		cpu.BCC(0x1001);
+		ASSERT_EQ(cpu.program_counter, 0x1007);
 	}
 
 	TEST_F(CPUBranchTest, BCC_BranchWithNegativeOffsetCarryClear) {
 		cpu.setCarryFlag(false);
 		cpu.program_counter = 0x1000;
-		int8_t offset = -3;
-		cpu.BCC(offset);
-		ASSERT_EQ(cpu.program_counter, 0x0FFD);
+		cpu.write(0x1001, -3);
+		cpu.BCC(0x1001);
+		ASSERT_EQ(cpu.program_counter, 0x0FFF);
 	}
 
 	TEST_F(CPUBranchTest, BCC_CarrySet) {
 		cpu.setCarryFlag(true);
 		cpu.program_counter = 0x1000;
-		int8_t offset = 5;
-		cpu.BCC(offset);
+		cpu.write(0x1001, 5);
+		cpu.BCC(0x1001);
 		ASSERT_EQ(cpu.program_counter, 0x1000);
 	}
 
 	TEST_F(CPUBranchTest, BCC_BranchWithWrapAround) {
 		cpu.setCarryFlag(false);
 		cpu.program_counter = 0x1000;
-		int8_t offset = -128;
-		cpu.BCC(offset);
-		ASSERT_EQ(cpu.program_counter, 0x0F80);
+		cpu.write(0x1001, -128);
+		cpu.BCC(0x1001);
+		ASSERT_EQ(cpu.program_counter, 0x0F82);
 	}
 
 	TEST_F(CPUBranchTest, BCS_BranchWithPositiveOffsetCarrySet) {
 		cpu.setCarryFlag(true);
 		cpu.program_counter = 0x1000;
-		int8_t offset = 10;
-		cpu.BCS(offset);
-		ASSERT_EQ(cpu.program_counter, 0x100A);
+		cpu.write(0x1001, 5);
+		cpu.BCS(0x1001);
+		ASSERT_EQ(cpu.program_counter, 0x1007);
 	}
 
 	TEST_F(CPUBranchTest, BCS_BranchWithNegativeOffsetCarrySet) {
 		cpu.setCarryFlag(true);
 		cpu.program_counter = 0x1000;
-		int8_t offset = -10;
-		cpu.BCS(offset);
-		ASSERT_EQ(cpu.program_counter, 0x0FF6);
+		cpu.write(0x1001, -3);
+		cpu.BCS(0x1001);
+		ASSERT_EQ(cpu.program_counter, 0x0FFF);
 	}
 
 	TEST_F(CPUBranchTest, BCS_CarryCleared) {
 		cpu.setCarryFlag(false);
 		cpu.program_counter = 0x1000;
-		int8_t offset = 5;
-		cpu.BCS(offset);
+		cpu.write(0x1001, 5);
+		cpu.BCS(0x1001);
 		ASSERT_EQ(cpu.program_counter, 0x1000);
 	}
 
 	TEST_F(CPUBranchTest, BCS_BranchWithWrapAround) {
 		cpu.setCarryFlag(true);
 		cpu.program_counter = 0x1000;
-		int8_t offset = -128;
-		cpu.BCS(offset);
-		ASSERT_EQ(cpu.program_counter, 0x0F80);
+		cpu.write(0x1001, -128);
+		cpu.BCS(0x1001);
+		ASSERT_EQ(cpu.program_counter, 0x0F82);
 	}
 
 	TEST_F(CPUBranchTest, BMI_BranchWithPositiveOffsetNegativeSet) {
 		cpu.setNegativeFlag(true);
 		cpu.program_counter = 0x1000;
-		int8_t offset = 10;
-		cpu.BMI(offset);
-		ASSERT_EQ(cpu.program_counter, 0x100A);
+		cpu.write(0x1001, 5);
+		cpu.BMI(0x1001);
+		ASSERT_EQ(cpu.program_counter, 0x1007);
 	}
 
 	TEST_F(CPUBranchTest, BMI_BranchWithNegativeOffsetNegativeSet) {
 		cpu.setNegativeFlag(true);
 		cpu.program_counter = 0x1000;
-		int8_t offset = -10;
-		cpu.BMI(offset);
-		ASSERT_EQ(cpu.program_counter, 0x0FF6);
+		cpu.write(0x1001, -3);
+		cpu.BMI(0x1001);
+		ASSERT_EQ(cpu.program_counter, 0x0FFF);
 	}
 
 	TEST_F(CPUBranchTest, BMI_NegativeCleared) {
 		cpu.setNegativeFlag(false);
 		cpu.program_counter = 0x1000;
-		int8_t offset = 5;
-		cpu.BMI(offset);
+		cpu.write(0x1001, 5);
+		cpu.BMI(0x1001);
 		ASSERT_EQ(cpu.program_counter, 0x1000);
 	}
 
 	TEST_F(CPUBranchTest, BMI_BranchWithWrapAround) {
 		cpu.setNegativeFlag(true);
 		cpu.program_counter = 0x1000;
-		int8_t offset = -128;
-		cpu.BMI(offset);
-		ASSERT_EQ(cpu.program_counter, 0x0F80);
+		cpu.write(0x1001, -128);
+		cpu.BMI(0x1001);
+		ASSERT_EQ(cpu.program_counter, 0x0F82);
 	}
 
 	TEST_F(CPUBranchTest, BPL_BranchWithPositiveOffsetNegativeClear) {
 		cpu.setNegativeFlag(false);
 		cpu.program_counter = 0x1000;
-		int8_t offset = 10;
-		cpu.BPL(offset);
-		ASSERT_EQ(cpu.program_counter, 0x100A);
+		cpu.write(0x1001, 5);
+		cpu.BPL(0x1001);
+		ASSERT_EQ(cpu.program_counter, 0x1007);
 	}
 
 	TEST_F(CPUBranchTest, BPL_BranchWithNegativeOffsetNegativeClear) {
 		cpu.setNegativeFlag(false);
 		cpu.program_counter = 0x1000;
-		int8_t offset = -10;
-		cpu.BPL(offset);
-		ASSERT_EQ(cpu.program_counter, 0x0FF6);
+		cpu.write(0x1001, -3);
+		cpu.BPL(0x1001);
+		ASSERT_EQ(cpu.program_counter, 0x0FFF);
 	}
 
 	TEST_F(CPUBranchTest, BPL_NegativeSet) {
 		cpu.setNegativeFlag(true);
 		cpu.program_counter = 0x1000;
-		int8_t offset = 5;
-		cpu.BPL(offset);
+		cpu.write(0x1001, 5);
+		cpu.BPL(0x1001);
 		ASSERT_EQ(cpu.program_counter, 0x1000);
 	}
 
 	TEST_F(CPUBranchTest, BPL_BranchWithWrapAround) {
 		cpu.setNegativeFlag(false);
 		cpu.program_counter = 0x1000;
-		int8_t offset = -128;
-		cpu.BPL(offset);
-		ASSERT_EQ(cpu.program_counter, 0x0F80);
+		cpu.write(0x1001, -128);
+		cpu.BPL(0x1001);
+		ASSERT_EQ(cpu.program_counter, 0x0F82);
 	}
 
 	TEST_F(CPUBranchTest, BVC_BranchWithPositiveOffsetOverflowClear) {
 		cpu.setOverflowFlag(false);
 		cpu.program_counter = 0x1000;
-		int8_t offset = 10;
-		cpu.BVC(offset);
-		ASSERT_EQ(cpu.program_counter, 0x100A);
+		cpu.write(0x1001, 5);
+		cpu.BVC(0x1001);
+		ASSERT_EQ(cpu.program_counter, 0x1007);
 	}
 
 	TEST_F(CPUBranchTest, BVC_BranchWithNegativeOffsetOverflowClear) {
 		cpu.setOverflowFlag(false);
 		cpu.program_counter = 0x1000;
-		int8_t offset = -10;
-		cpu.BVC(offset);
-		ASSERT_EQ(cpu.program_counter, 0x0FF6);
+		cpu.write(0x1001, -3);
+		cpu.BVC(0x1001);
+		ASSERT_EQ(cpu.program_counter, 0x0FFF);
 	}
 
 	TEST_F(CPUBranchTest, BVC_OverflowSet) {
 		cpu.setOverflowFlag(true);
 		cpu.program_counter = 0x1000;
-		int8_t offset = 5;
-		cpu.BVC(offset);
+		cpu.write(0x1001, 5);
+		cpu.BVC(0x1001);
 		ASSERT_EQ(cpu.program_counter, 0x1000);
 	}
 
 	TEST_F(CPUBranchTest, BVC_BranchWithWrapAround) {
 		cpu.setOverflowFlag(false);
 		cpu.program_counter = 0x1000;
-		int8_t offset = -128;
-		cpu.BVC(offset);
-		ASSERT_EQ(cpu.program_counter, 0x0F80);
+		cpu.write(0x1001, -128);
+		cpu.BVC(0x1001);
+		ASSERT_EQ(cpu.program_counter, 0x0F82);
 	}
 
 	TEST_F(CPUBranchTest, BVS_BranchWithPositiveOffsetOverflowSet) {
 		cpu.setOverflowFlag(true);
 		cpu.program_counter = 0x1000;
-		int8_t offset = 10;
-		cpu.BVS(offset);
-		ASSERT_EQ(cpu.program_counter, 0x100A);
+		cpu.write(0x1001, 5);
+		cpu.BVS(0x1001);
+		ASSERT_EQ(cpu.program_counter, 0x1007);
 	}
 
 	TEST_F(CPUBranchTest, BVS_BranchWithNegativeOffsetOverflowSet) {
 		cpu.setOverflowFlag(true);
 		cpu.program_counter = 0x1000;
-		int8_t offset = -10;
-		cpu.BVS(offset);
-		ASSERT_EQ(cpu.program_counter, 0x0FF6);
+		cpu.write(0x1001, -3);
+		cpu.BVS(0x1001);
+		ASSERT_EQ(cpu.program_counter, 0x0FFF);
 	}
 
 	TEST_F(CPUBranchTest, BVS_OverflowCleared) {
 		cpu.setOverflowFlag(false);
 		cpu.program_counter = 0x1000;
-		int8_t offset = 5;
-		cpu.BVS(offset);
+		cpu.write(0x1001, 5);
+		cpu.BVS(0x1001);
 		ASSERT_EQ(cpu.program_counter, 0x1000);
 	}
 
 	TEST_F(CPUBranchTest, BVS_BranchWithWrapAround) {
 		cpu.setOverflowFlag(true);
 		cpu.program_counter = 0x1000;
-		int8_t offset = -128;
-		cpu.BVS(offset);
-		ASSERT_EQ(cpu.program_counter, 0x0F80);
+		cpu.write(0x1001, -128);
+		cpu.BVS(0x1001);
+		ASSERT_EQ(cpu.program_counter, 0x0F82);
 	}
+
+	TEST_F(CPUBranchTest, BNE_BrranchWithPositiveOffsetZeroFlagSet) {
+		cpu.setOverflowFlag(true);
+		cpu.program_counter = 0x1000;
+		cpu.write(0x1001, 5);
+		cpu.BNE(0x1001);
+		ASSERT_EQ(cpu.program_counter, 0x1007);
+	}
+
+	class CPUAddressingModes : public ::testing::Test {
+	protected:
+		void SetUp() override {
+			cpu.clearStatus();
+		}
+
+		void TearDown() override {
+		}
+
+		CPU cpu;
+	};
+
+	TEST_F(CPUAddressingModes, ImpliedAddressing) {
+		cpu.program_counter = 0x1000;
+		uint16_t test_addr = cpu.addr_implied();
+		ASSERT_EQ(test_addr, 0);
+		ASSERT_EQ(cpu.program_counter, 0x1000);
+	}
+
+	TEST_F(CPUAddressingModes, AccumulatorAddressing) {
+		cpu.program_counter = 0x1000;
+		cpu.accumulator = 0x42;
+		uint16_t test_addr = cpu.addr_accumulator();
+		ASSERT_EQ(test_addr, 0);
+		ASSERT_EQ(cpu.program_counter, 0x1000);
+		ASSERT_EQ(cpu.accumulator, 0x42);
+	}
+
+	TEST_F(CPUAddressingModes, ImmediateAddressing) {
+		cpu.program_counter = 0x1000;
+		cpu.write(0x1000, 0x42);
+		uint16_t test_addr = cpu.addr_immediate();
+		ASSERT_EQ(test_addr, 0x1000);
+		ASSERT_EQ(cpu.program_counter, 0x1001);
+		ASSERT_EQ(cpu.read(test_addr), 0x42);
+	}
+
+	TEST_F(CPUAddressingModes, ZeroPageAddressing) {
+		cpu.program_counter = 0x1000;
+		cpu.write(0x1000, 0x42);
+		cpu.write(0x0042, 0x78);
+		uint16_t test_addr = cpu.addr_zero_page();
+		ASSERT_EQ(test_addr, 0x42);
+		ASSERT_EQ(cpu.program_counter, 0x1001);
+		ASSERT_EQ(cpu.read(test_addr), 0x78);
+	}
+
+	TEST_F(CPUAddressingModes, ZeroPageXAddressing) {
+		cpu.program_counter = 0x1000;
+		cpu.x = 0x10;
+		cpu.write(0x1000, 0x42);
+		cpu.write(0x0052, 0x78); 
+		uint16_t test_addr = cpu.addr_zero_page_x();
+		ASSERT_EQ(test_addr, 0x52);  // 0x42 + 0x10 = 0x52
+		ASSERT_EQ(cpu.program_counter, 0x1001);
+		ASSERT_EQ(cpu.read(test_addr), 0x78);
+	}
+
+	TEST_F(CPUAddressingModes, ZeroPageXAddressingWraparound) {
+		cpu.program_counter = 0x1000;
+		cpu.x = 0xFF; 
+		cpu.write(0x1000, 0x80); 
+		cpu.write(0x007F, 0xAB); 
+		uint16_t test_addr = cpu.addr_zero_page_x();
+		ASSERT_EQ(test_addr, 0x7F);  // (0x80 + 0xFF) & 0xFF = 0x7F
+		ASSERT_EQ(cpu.program_counter, 0x1001);
+		ASSERT_EQ(cpu.read(test_addr), 0xAB);
+	}
+
+	TEST_F(CPUAddressingModes, ZeroPageYAddressing) {
+		cpu.program_counter = 0x1000;
+		cpu.y = 0x15;
+		cpu.write(0x1000, 0x40);
+		cpu.write(0x0055, 0x99);
+		uint16_t test_addr = cpu.addr_zero_page_y();
+		ASSERT_EQ(test_addr, 0x55);  // 0x40 + 0x15 = 0x55
+		ASSERT_EQ(cpu.program_counter, 0x1001);
+		ASSERT_EQ(cpu.read(test_addr), 0x99);
+	}
+
+	TEST_F(CPUAddressingModes, ZeroPageYAddressingWraparound) {
+		cpu.program_counter = 0x1000;
+		cpu.y = 0xF0; 
+		cpu.write(0x1000, 0x90);
+		cpu.write(0x0080, 0xCD);
+		uint16_t test_addr = cpu.addr_zero_page_y();
+		ASSERT_EQ(test_addr, 0x80);  // (0x90 + 0xF0) & 0xFF = 0x80
+		ASSERT_EQ(cpu.program_counter, 0x1001);
+		ASSERT_EQ(cpu.read(test_addr), 0xCD);
+	}
+
+	TEST_F(CPUAddressingModes, AbsoluteAddressing) {
+		cpu.program_counter = 0x1000;
+		cpu.write(0x1000, 0x34);  
+		cpu.write(0x1001, 0x12);  
+		cpu.write(0x1234, 0xAB);  
+		uint16_t test_addr = cpu.addr_absolute();
+		ASSERT_EQ(test_addr, 0x1234);
+		ASSERT_EQ(cpu.program_counter, 0x1002);
+		ASSERT_EQ(cpu.read(test_addr), 0xAB);
+	}
+
+	TEST_F(CPUAddressingModes, AbsoluteXAddressing) {
+		cpu.program_counter = 0x1000;
+		cpu.x = 0x10; 
+		cpu.write(0x1000, 0x34);  // Low byte of address
+		cpu.write(0x1001, 0x12);  // High byte of address
+		cpu.write(0x1244, 0xCD); 
+		uint16_t test_addr = cpu.addr_absolute_x();
+		ASSERT_EQ(test_addr, 0x1244);  // 0x1234 + 0x10 = 0x1244
+		ASSERT_EQ(cpu.program_counter, 0x1002);
+		ASSERT_EQ(cpu.read(test_addr), 0xCD);
+	}
+
+	TEST_F(CPUAddressingModes, AbsoluteXAddressingPageCrossing) {
+		cpu.program_counter = 0x1000;
+		cpu.x = 0xD0;
+		cpu.write(0x1000, 0x50);  // Low byte of address
+		cpu.write(0x1001, 0x12);  // High byte of address
+		cpu.write(0x1320, 0xEF); 
+		uint16_t test_addr = cpu.addr_absolute_x();
+		ASSERT_EQ(test_addr, 0x1320);  // 0x1250 + 0xD0 = 0x1320
+		ASSERT_EQ(cpu.program_counter, 0x1002);
+		ASSERT_EQ(cpu.read(test_addr), 0xEF);
+	}
+
+	TEST_F(CPUAddressingModes, AbsoluteYAddressing) {
+		cpu.program_counter = 0x1000;
+		cpu.y = 0x20;  // Set Y register
+		cpu.write(0x1000, 0x34);  // Low byte of address
+		cpu.write(0x1001, 0x12);  // High byte of address
+		cpu.write(0x1254, 0xDD);
+		uint16_t test_addr = cpu.addr_absolute_y();
+		ASSERT_EQ(test_addr, 0x1254);  // 0x1234 + 0x20 = 0x1254
+		ASSERT_EQ(cpu.program_counter, 0x1002);
+		ASSERT_EQ(cpu.read(test_addr), 0xDD);
+	}
+
+	TEST_F(CPUAddressingModes, AbsoluteYAddressingPageCrossing) {
+		cpu.program_counter = 0x1000;
+		cpu.y = 0xCC;  
+		cpu.write(0x1000, 0x40);  // Low byte of address
+		cpu.write(0x1001, 0x12);  // High byte of address
+		cpu.write(0x130C, 0xBB);  
+		uint16_t test_addr = cpu.addr_absolute_y();
+		ASSERT_EQ(test_addr, 0x130C);  // 0x1240 + 0xCC = 0x130C
+		ASSERT_EQ(cpu.program_counter, 0x1002);
+		ASSERT_EQ(cpu.read(test_addr), 0xBB);
+	}
+
+	TEST_F(CPUAddressingModes, IndirectAddressing) {
+		cpu.program_counter = 0x1000;
+		cpu.write(0x1000, 0x34);  // Low byte of pointer address
+		cpu.write(0x1001, 0x12);  // High byte of pointer address
+		cpu.write(0x1234, 0x78);  // Low byte of target address
+		cpu.write(0x1235, 0x56);  // High byte of target address
+		uint16_t test_addr = cpu.addr_indirect();
+		ASSERT_EQ(test_addr, 0x5678);  // The address read from 0x1234-0x1235
+		ASSERT_EQ(cpu.program_counter, 0x1002);
+	}
+
+	TEST_F(CPUAddressingModes, IndirectAddressingPageBoundaryBug) {
+		// The high byte is fetched from the same page, not the next page
+		// So instead of reading from 0x12FF and 0x1300, it reads from 0x12FF and 0x1200
+		cpu.program_counter = 0x1000;
+		cpu.write(0x1000, 0xFF);  // Low byte of pointer address 
+		cpu.write(0x1001, 0x12);  // High byte of pointer address
+		cpu.write(0x12FF, 0x78);  // Low byte at the correct address
+		cpu.write(0x1200, 0x56);  // High byte at the buggy address (should be 0x1300)
+		uint16_t test_addr = cpu.addr_indirect();
+		ASSERT_EQ(test_addr, 0x5678);
+		ASSERT_EQ(cpu.program_counter, 0x1002);
+	}
+
+	TEST_F(CPUAddressingModes, IndexedIndirectXAddressing) {
+		cpu.program_counter = 0x1000;
+		cpu.x = 0x10; 
+		cpu.write(0x1000, 0x20);
+		cpu.write(0x0030, 0x78);  // Low byte of target
+		cpu.write(0x0031, 0x56);  // High byte of target
+		cpu.write(0x5678, 0xBD);
+		uint16_t test_addr = cpu.addr_indexed_indirect_x();
+		ASSERT_EQ(test_addr, 0x5678);
+		ASSERT_EQ(cpu.program_counter, 0x1001);
+		ASSERT_EQ(cpu.read(test_addr), 0xBD);
+	}
+
+	// Test for zero page wrap in Indexed Indirect (X)
+	TEST_F(CPUAddressingModes, IndexedIndirectXAddressingWraparound) {
+		cpu.program_counter = 0x1000;
+		cpu.x = 0xFF;  
+		cpu.write(0x1000, 0x80);  
+		cpu.write(0x007F, 0x34);  // Low byte of target
+		cpu.write(0x0080, 0x12);  // High byte of target
+		cpu.write(0x1234, 0xAC);
+		uint16_t test_addr = cpu.addr_indexed_indirect_x();
+		ASSERT_EQ(test_addr, 0x1234);
+		ASSERT_EQ(cpu.program_counter, 0x1001);
+		ASSERT_EQ(cpu.read(test_addr), 0xAC);
+	}
+
+	TEST_F(CPUAddressingModes, IndirectIndexedYAddressing) {
+		cpu.program_counter = 0x1000;
+		cpu.y = 0x10;
+		cpu.write(0x1000, 0x40);
+		cpu.write(0x0040, 0x78);  // Low byte of base address
+		cpu.write(0x0041, 0x56);  // High byte of base address
+		cpu.write(0x5688, 0xEE);
+		uint16_t test_addr = cpu.addr_indirect_indexed_y();
+		ASSERT_EQ(test_addr, 0x5688);
+		ASSERT_EQ(cpu.program_counter, 0x1001);
+		ASSERT_EQ(cpu.read(test_addr), 0xEE);
+	}
+
+	TEST_F(CPUAddressingModes, IndirectIndexedYAddressingPageCrossing) {
+		cpu.program_counter = 0x1000;
+		cpu.y = 0xCC; 
+		cpu.write(0x1000, 0x50);  
+		cpu.write(0x0050, 0x40);  // Low byte of base address
+		cpu.write(0x0051, 0x56);  // High byte of base address
+		cpu.write(0x570C, 0xFF);
+		uint16_t test_addr = cpu.addr_indirect_indexed_y();
+		ASSERT_EQ(test_addr, 0x570C);
+		ASSERT_EQ(cpu.program_counter, 0x1001);
+		ASSERT_EQ(cpu.read(test_addr), 0xFF);
+	}
+
+	TEST_F(CPUAddressingModes, RelativeAddressingForwardBranch) {
+		cpu.program_counter = 0x1000;
+		cpu.write(0x1000, 0x0A);  // Positive offset: 10
+		uint16_t test_addr = cpu.addr_relative();
+		ASSERT_EQ(test_addr, 0x100B);// 0x1001 + 10 = 0x100B
+		ASSERT_EQ(cpu.program_counter, 0x1001);
+	}
+
+	TEST_F(CPUAddressingModes, RelativeAddressingBackwardBranch) {
+		cpu.program_counter = 0x1000;
+		cpu.write(0x1000, 0xF6);  // Negative offset: -10
+		uint16_t test_addr = cpu.addr_relative();
+		ASSERT_EQ(test_addr, 0x0FF7); // 0x1001 + (-10) = 0x0FF7
+		ASSERT_EQ(cpu.program_counter, 0x1001);
+	}
+
+	TEST_F(CPUAddressingModes, RelativeAddressingMaximumPositiveOffset) {
+		cpu.program_counter = 0x1000;
+		cpu.write(0x1000, 0x7F);
+		uint16_t test_addr = cpu.addr_relative();
+		ASSERT_EQ(test_addr, 0x1080); // 0x1001 + 127 = 0x1080
+		ASSERT_EQ(cpu.program_counter, 0x1001);
+	}
+
+	TEST_F(CPUAddressingModes, RelativeAddressingMaximumNegativeOffset) {
+		cpu.program_counter = 0x1000;
+		cpu.write(0x1000, 0x80);
+		uint16_t test_addr = cpu.addr_relative();
+		ASSERT_EQ(test_addr, 0x0F81); // 0x1001 + (-128) = 0x0F81
+		ASSERT_EQ(cpu.program_counter, 0x1001);
+	}
+
+	TEST_F(CPUAddressingModes, RelativeAddressingPageCrossingForward) {
+		cpu.program_counter = 0x10F8;
+		cpu.write(0x10F8, 0x0A);
+		uint16_t test_addr = cpu.addr_relative();
+		ASSERT_EQ(test_addr, 0x1103); // 0x10F9 + 10 = 0x1103
+		ASSERT_EQ(cpu.program_counter, 0x10F9);
+	}
+
+	TEST_F(CPUAddressingModes, RelativeAddressingPageCrossingBackward) {
+		cpu.program_counter = 0x1004;
+		cpu.write(0x1004, 0xF6);  
+		uint16_t test_addr = cpu.addr_relative();
+		ASSERT_EQ(test_addr, 0x0FFB); // 0x1005 + (-10) = 0x0FFB
+		ASSERT_EQ(cpu.program_counter, 0x1005);
+	}
+
 }

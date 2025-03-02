@@ -56,7 +56,7 @@ public: // Flag Operations - Sets, unsets, or clears status flags
 	void setOverflowFlag(bool value);
 	void setNegativeFlag(bool value);
 
-private: // Addressing Modes - Returns the effective address for each addressing mode
+public: // Addressing Modes - Returns the effective address for each addressing mode
 	uint16_t addr_implied();               // Implied
 	uint16_t addr_accumulator();           // Accumulator
 	uint16_t addr_immediate();             // Immediate 
@@ -149,7 +149,7 @@ public: // 6502 Opcodes - Base implementation of each opcode
 	void SEI();							// Set interrupt disable
 
 	// No Operation
-	void NOP()
+	void NOP();
 };
 
 #endif

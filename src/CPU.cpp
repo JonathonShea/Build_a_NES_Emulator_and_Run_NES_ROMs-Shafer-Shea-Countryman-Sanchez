@@ -808,8 +808,13 @@ void CPU::BEQ(uint16_t addr)
     }
 }
 
+// NOP - No Operation
+void CPU::NOP() {
+    // Does nothing
+}
+
 ///////////////////////////////////////////////////////////////////
-// INSTRUCTION EXECUTION LOOP
+// INSTRUCTION EXECUTION LOOP **UNHOLY** 
 ///////////////////////////////////////////////////////////////////
 
 uint8_t CPU::execute() {
