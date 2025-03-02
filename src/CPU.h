@@ -147,6 +147,9 @@ public: // 6502 Opcodes - Base implementation of each opcode
 	void SEC();							// Set carry
 	void SED();							// Set decimal
 	void SEI();							// Set interrupt disable
+
+	// No Operation
+	void NOP()
 };
 
 #endif

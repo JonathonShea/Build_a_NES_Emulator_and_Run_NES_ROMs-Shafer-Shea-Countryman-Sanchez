@@ -840,7 +840,7 @@ uint8_t CPU::execute() {
         case 0x31: // Indirect Y
             break;
 
-            // ASL
+        // ASL
         case 0x0A: // Accumulator
             break;
         case 0x06: // Zero Page
@@ -852,61 +852,376 @@ uint8_t CPU::execute() {
         case 0x1E: // Absolute X
             break;
 
-            // BCC
+        // BCC
         case 0x90: // Relative
             break;
 
-            // BCS 
+        // BCS 
         case 0xB0: // Relative
             break;
 
-            // BEQ
+        // BEQ
         case 0xF0: // Relative
             break;
 
-            // BIT
+        // BIT
         case 0x24: // Zero Page
             break;
         case 0x2C: // Absolute
             break;
 
-            // BMI
+        // BMI
         case 0x30: // Relative
             break;
 
-            // BNE    
+        // BNE    
         case 0xD0: // Realtive
             break;
 
-            // BPL
+        // BPL
         case 0x10: // Relative
             break;
 
-            // BRK
+        // BRK
         case 0x00: // Implied
             break;
 
-            // BVC
+        // BVC
         case 0x50: // Relative
             break;
 
-            // BVS
+        // BVS
         case 0x70: // Relative
             break;
 
-            // CLC
+        // CLC
         case 0x18: // Implied
             break;
 
-            // CLD
+        // CLD
         case 0xD8: // Implied
             break;
 
-            // CLI
+        // CLI
         case 0x58: // Implied
+            break;
+
+        // CLV
+        case 0xB8: // Implied
+            break;
+
+        // CMP
+        case 0xC9: // Immediate
+            break;
+        case 0xC5: // Zero Page
+            break;
+        case 0xD5: // Zero Page X
+            break;
+        case 0xCD: // Absolute
+            break;
+        case 0xDD: // Absolute X
+            break;
+        case 0xD9: // Absolute Y
+            break;
+        case 0xC1: // Indirect X
+            break;
+        case 0xD1: // Indirect Y
+            break;
+
+        // CPX
+        case 0xE0: // Immediate
+            break;
+        case 0xE4: // Zero Page
+            break;
+        case 0xEC: // Absolute
+            break;
+
+        // CPY
+        case 0xC0: // Immediate
+            break;
+        case 0xC4: // Zero Page
+            break;
+        case 0xCC: // Absolute
+            break;
+
+        // DEC
+        case 0xC6: // Absolute
+            break;
+        case 0xD6: // Zero Page X
+            break;
+        case 0xCE: // Absolute
+            break;
+        case 0xDE: // Absolute X
+            break;
+
+        // DEX
+        case 0xCA: // Implied
+            break;
+
+        // DEY
+        case 0x88: // Implied
+            break;
+
+        // EOR
+        case 0x49: // Immediate
+            break;
+        case 0x45: // Zero Page
+            break;
+        case 0x55: // Zero Page X
+            break;
+        case 0x4D: // Absolute
+            break;
+        case 0x5D: // Absolute X
+            break;
+        case 0x59: // Absolute Y
+            break;
+        case 0x41: // Indirect X
+            break;
+        case 0x51: // Indirect Y
+            break;
+
+        // INC
+        case 0xE6: // Zero Page
+            break;
+        case 0xF6: // Zero Page X
+            break;
+        case 0xEE: // Absolute
+            break;
+        case 0xFE: // Absolute X
+            break;
+
+        // INX
+        case 0xE8: // Implied
+            break;
+
+        // INY
+        case 0xC8: // Implied
+            break;
+
+        // JMP
+        case 0x4C: // Absolute
+            break;
+        case 0x6C: // Indirect
+            break;
+
+        // JSR
+        case 0x20: // Absolute
+            break;
+
+        // LDA
+        case 0xA9: // Immediate
+            break;
+        case 0xA5: // Zero Page
+            break;
+        case 0xB5: // Zero Page X
+            break;
+        case 0xAD: // Absolute
+            break;
+        case 0xBD: // Absolute X
+            break;
+        case 0xB9: // Absolute Y
+            break;
+        case 0xA1: // Indirect X
+            break;
+        case 0xB1: // Indirect Y
+            break;
+
+        // LDX
+        case 0xA2: // Immediate
+            break;
+        case 0xA6: // Zero Page
+            break;
+        case 0xB6: // Zero Page Y
+            break;
+        case 0xAE: // Absolute
+            break;
+        case 0xBE: // Absolute Y
+            break;
+
+        // LDY
+        case 0xA0: // Immediate
+            break;
+        case 0xA4: // Zero Page
+            break;
+        case 0xB4: // Zero Page X
+            break;
+        case 0xAC: // Absolute
+            break;
+        case 0xBC: // Absolute X
+            break;
+
+        // LSR
+        case 0x4A: // Accumulator
+            break;
+        case 0x46: // Zero Page
+            break;
+        case 0x56: // Zero Page X
+            break;
+        case 0x4E: // Absolute
+            break;
+        case 0x5E: // Absolute X
+            break;
+
+        // NOP
+        case 0xEA: // Implied
+            break;
+
+        // ORA
+        case 0x09: // Immediate
+            break;
+        case 0x05: // Zero Page
+            break;
+        case 0x15: // Zero Page X
+            break;
+        case 0x0D: // Absolute
+            break;
+        case 0x1D: // Absolute X
+            break;
+        case 0x19: // Absolute Y
+            break;
+        case 0x01: // Indirect X
+            break;
+        case 0x11: // Indirect Y
+            break;
+
+        // PHA
+        case 0x48: // Implied
+            break;
+
+        // PHP
+        case 0x08: // Implied
+            break;
+
+        // PLA
+        case 0x68: // Implied
+            break;
+
+        // PLP
+        case 0x28: // Implied
+            break;
+
+        // ROL
+        case 0x2A: // Accumulator
+            break;
+        case 0x26: // Zero Page
+            break;
+        case 0x36: // Zero Page X
+            break;
+        case 0x2E: // Absolute
+            break;
+        case 0x3E: // Absolute X
+            break;
+
+        // ROR
+        case 0x6A: // Accumulator
+            break;
+        case 0x66: // Zero PAge
+            break;
+        case 0x76: // Zero Page X
+            break;
+        case 0x6E: // Absolute
+            break;
+        case 0x7E: // Absolute X
+            break;
+
+        // RTI 
+        case 0x40: // Implied
+            break;
+
+        // RTS
+        case 0x60: // Implied
+            break;
+
+        // SBC
+        case 0xE9: // Immediate
+            break;
+        case 0xE5: // Zero Page
+            break;
+        case 0xF5: // Zero Page X
+            break;
+        case 0xED: // Absolute
+            break;
+        case 0xFD: // Absolute X
+            break;
+        case 0xF9: // Absolute Y
+            break;
+        case 0xE1: // Indirect X
+            break;
+        case 0xF1: // Indirect Y
+            break;
+
+        // SEC
+        case 0x38: // Implied
+            break;
+
+        // SED
+        case 0xF8: // Implied
+            break;
+
+        // SEI
+        case 0x78: // Implied
+            break;
+
+        // STA
+        case 0x85: // Zero Page
+            break;
+        case 0x95: // Zero Page X
+            break;
+        case 0x8D: // Absolute
+            break;
+        case 0x9D: // Absolute X
+            break;
+        case 0x99: // Absolute Y
+            break;
+        case 0x81: // Indirect X
+            break;
+        case 0x91: // Indirect Y
+            break;
+
+        // STX
+        case 0x86: // Zero Page
+            break;
+        case 0x96: // Zero Page Y
+            break;
+        case 0x8E: // Absolute
+            break;
+
+        // STY
+        case 0x84: // Zero Page
+            break;
+        case 0x94: // Zero Page X
+            break;
+        case 0x8C: // Absolute
+            break;
+
+        // TAX
+        case 0xAA: // Implied
+            break;
+
+        // TAY
+        case 0xA8: // Implied
+            break;
+
+        // TSX
+        case 0xBA: // Implied
+            break;
+
+        // TXA
+        case 0x8A: // Implied
+            break;
+
+        // TXS
+        case 0x9A: // Implied
+            break;
+
+        // TYA
+        case 0x98: // Implied
             break;
     }
 
     return cycles;
 }
+
+
+
 
