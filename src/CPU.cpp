@@ -70,7 +70,10 @@ void CPU::write(uint16_t addr, uint8_t data)
     memory[addr] = data;
 }
 
-// CPU Addressing Modes Implementation
+///////////////////////////////////////////////////////////////////
+// ADDRESSING MODES
+///////////////////////////////////////////////////////////////////
+
 // Implied 
 uint16_t CPU::addr_implied()
 {
@@ -207,8 +210,115 @@ uint16_t CPU::addr_relative()
     int8_t offset = static_cast<int8_t>(read(program_counter++));
     return program_counter + offset;
 }
+///////////////////////////////////////////////////////////////////
+// FLAG OPERATIONS
+///////////////////////////////////////////////////////////////////
 
-// shift instructions
+void CPU::setCarryFlag(bool value)
+{
+    if (value)
+        status |= 0x01;
+    else
+        status &= ~0x01;
+}
+
+bool CPU::getCarryFlag()
+{
+    return status & 0x01;
+}
+
+void CPU::setZeroFlag(bool value)
+{
+    if (value)
+        status |= 0x02;
+    else
+        status &= ~0x02;
+}
+
+void CPU::setInterruptDisableFlag(bool value)
+{
+    if (value)
+        status |= 0x04;
+    else
+        status &= ~0x04;
+}
+
+void CPU::setDecimalModeFlag(bool value)
+{
+    if (value)
+        status |= 0x08;
+    else
+        status &= ~0x08;
+}
+
+bool CPU::getDecimalModeFlag() const
+{
+    return status & decimal_mode_mask;
+}
+
+void CPU::setBreakCommandFlag(bool value)
+{
+    if (value)
+        status |= 0x10;
+    else
+        status &= ~0x10;
+}
+
+void CPU::setOverflowFlag(bool value)
+{
+    if (value)
+        status |= 0x40;
+    else
+        status &= ~0x40;
+}
+
+void CPU::setNegativeFlag(bool value)
+{
+    if (value)
+        status |= 0x80;
+    else
+        status &= ~0x80;
+}
+
+bool CPU::getOverFlowFlag() const
+{
+    return status & overflow_mask;
+}
+
+bool CPU::getNegativeFlag() const
+{
+    return status & negative_mask;
+}
+
+bool CPU::getZeroFlag() const
+{
+    return status & zero_mask;
+}
+
+bool CPU::getBreakCommandFlag() const
+{
+    return status & break_mask;
+}
+
+void CPU::clearStatus()
+{
+    status = 0;
+}
+
+std::vector<uint8_t> CPU::getStackTESTING() const {
+    return stack;
+}
+
+void CPU::setStackBackTESTING(uint8_t value) {
+    stack.push_back(value);
+    stack_pointer--;
+}
+
+///////////////////////////////////////////////////////////////////
+// OPCODES
+///////////////////////////////////////////////////////////////////
+
+// Shift Opcodes
 void CPU::ASL(uint16_t addr) // Arithmetic Shift Left
 {
     uint8_t value = read(addr);
@@ -251,6 +361,7 @@ void CPU::ROR(uint16_t addr) // Rotate Right
     setNegativeFlag(value & 0x80);
 }
 
+// Arithmetic Opcodes
 // Add with carry OP code
 void CPU::ADC(uint16_t addr) {
     uint16_t sum = accumulator + memory[addr] + getCarryFlag();
@@ -358,7 +469,7 @@ void CPU::DEY()
     }
 }
 
-
+// Flag Opcodes
 void CPU::CLC() // Clear Carry Flag
 {
     setCarryFlag(false);
@@ -394,108 +505,7 @@ void CPU::SED() // Set Decimal Mode Flag
     setDecimalModeFlag(true);
 }
 
-// flags
-void CPU::setCarryFlag(bool value) 
-{
-    if (value)
-        status |= 0x01;
-    else
-        status &= ~0x01;
-}
-
-bool CPU::getCarryFlag()
-{
-    return status & 0x01;
-}
-
-void CPU::setZeroFlag(bool value)
-{
-    if (value)
-        status |= 0x02;
-    else
-        status &= ~0x02;
-}
-
-void CPU::setInterruptDisableFlag(bool value)
-{
-    if (value)
-        status |= 0x04;
-    else
-        status &= ~0x04;
-}
-
-void CPU::setDecimalModeFlag(bool value)
-{
-    if (value)
-        status |= 0x08;
-    else
-        status &= ~0x08;
-}
-
-bool CPU::getDecimalModeFlag() const
-{
-    return status & decimal_mode_mask;
-}
-
-void CPU::setBreakCommandFlag(bool value)
-{
-    if (value)
-        status |= 0x10;
-    else
-        status &= ~0x10;
-}
-
-void CPU::setOverflowFlag(bool value)
-{
-    if (value)
-        status |= 0x40;
-    else
-        status &= ~0x40;
-}
-
-void CPU::setNegativeFlag(bool value)
-{
-    if (value)
-        status |= 0x80;
-    else
-        status &= ~0x80;
-}
-
-bool CPU::getOverFlowFlag() const
-{
-    return status & overflow_mask;
-}
-
-bool CPU::getNegativeFlag() const
-{
-    return status & negative_mask;
-}
-
-bool CPU::getZeroFlag() const
-{
-    return status & zero_mask;
-}
-
-bool CPU::getBreakCommandFlag() const
-{
-    return status & break_mask;
-}
-
-void CPU::clearStatus()
-{
-    status = 0;
-}
-
-std::vector<uint8_t> CPU::getStackTESTING() const {
-    return stack;
-}
-
-void CPU::setStackBackTESTING(uint8_t value) {
-    stack.push_back(value);
-    stack_pointer --;
-}
-
-//Bitwise Operations
+// Bitwise Opcodes
 void CPU::AND(uint16_t addr) {
     uint8_t value = read(addr);
     accumulator = accumulator & value;
@@ -529,7 +539,7 @@ void CPU::BIT(uint16_t addr) {
     setNegativeFlag(value & 0x80);
 }
 
-//Compare
+// Compare Opcodes
 void CPU::CMP(uint16_t addr) {
     uint8_t value = read(addr);
     uint8_t result = accumulator - value;
@@ -557,7 +567,7 @@ void CPU::CPY(uint16_t addr) {
     setNegativeFlag(result & 0x80);
 }
 
-//Access
+// Access Opcodes
 void CPU::LDA(uint16_t addr) {
     uint8_t value = read(addr);
     accumulator = value;
@@ -590,10 +600,16 @@ void CPU::LDY(uint16_t addr) {
     setNegativeFlag(result & 0x80);
 }
 
+void CPU::STY(uint16_t addr) {
+    write(addr, y);
+}
+
+// Stack Opcodes
 void CPU::PHA() { //Push accumulator value onto stack
     stack.push_back(accumulator);
     stack_pointer --;
 }
+
 void CPU::PLA() { //If stack not empty set accumulator to value at back of stack and set flags based on new accumulator value
     if (!stack.empty()) {
         accumulator = stack.back();
@@ -604,11 +620,13 @@ void CPU::PLA() { //If stack not empty set accumulator to value at back of stack
         setNegativeFlag(accumulator & negative_mask);
     }
 }
+
 void CPU::PHP() { //Set Break flag to 1 and push status register onto stack. Initialization of the extrabit found in status truncated due to being unnecessary
     setBreakCommandFlag(1);
     stack.push_back(status);
     stack_pointer --;
 }
+
 void CPU::PLP() { //If stack not empty assign status to value at back of stack and set flags based on new status value
     if (!stack.empty()) {
         status = stack.back();
@@ -635,10 +653,7 @@ void CPU::TSX() { //Transfer Stack Pointer to x
     setNegativeFlag(x & negative_mask);
 }
 
-void CPU::STY(uint16_t addr) {
-    write(addr, y);
-}
-
+// Transfer Opcodes
 void CPU::TXA()
 {
     accumulator = x;
@@ -668,6 +683,7 @@ void CPU::TAY()
     setNegativeFlag(y & negative_mask);
 }
 
+// Jump Opcodes
 void CPU::JMP_ABS(uint16_t addr)
 {
     // Program counter is 2 bytes, need to read in value in the next address as well.
