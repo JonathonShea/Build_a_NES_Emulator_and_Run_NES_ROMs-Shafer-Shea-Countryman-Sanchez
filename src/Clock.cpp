@@ -1,9 +1,8 @@
 #include "Clock.h"
 #include <thread>
 
-Clock::Clock() {
+Clock::Clock(uint64_t prescaler, const char* name) : mClockDivider(prescaler), mTicks(0), mName(name){
 	// Initialize the clock
-	ticks = 0;
 }
 
 Clock::~Clock() {
@@ -13,13 +12,14 @@ Clock::~Clock() {
 
 uint64_t Clock::getTicks() const {
 	// Return the number of ticks
-	return ticks;
+	return mTicks;
 }
 
 bool Clock::tick() {
 	// Increment the number of ticks
-	std::this_thread::sleep_for(Clock::clockInterval);
-	ticks++;
+	while (mTicks++ % mClockDivider != 0) {
+		std::this_thread::sleep_for(Clock::clockInterval);
+	}
 	return true;
 }
 

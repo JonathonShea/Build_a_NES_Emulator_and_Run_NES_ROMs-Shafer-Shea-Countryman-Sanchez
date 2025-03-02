@@ -1,7 +1,6 @@
 #pragma once
 #include <vector>
 #include <cstdint>
-#include "MemoryMapper.h"
 #include <filesystem>
 
 /**
@@ -17,11 +16,13 @@ public:
 	 */
 	Cartridge(std::vector<uint8_t> &romData);
 	~Cartridge();
-	inline int prgRomEnd() const { return prgRomStart + prgRomSize; }
-	inline int chrRomEnd() const { return chrRomStart + chrRomSize; }
-	inline bool getMirroring() const { return flag6 & mirroringMask; }
-	inline bool hasBattery() const { return flag6 & batteryMask; }
-	inline bool hasTrainer() const { return flag6 & trainerMask; }
+	inline int PrgRomEnd() const { return prgRomStart + prgRomSize; }
+	inline int ChrRomEnd() const { return chrRomStart + chrRomSize; }
+	inline bool GetMirroring() const { return flag6 & mirroringMask; }
+	inline bool HasBattery() const { return flag6 & batteryMask; }
+	inline bool HasTrainer() const { return flag6 & trainerMask; }
+	inline uint8_t ReadPrgRom(uint16_t addr) const { return prgRom[addr]; }
+	inline uint8_t ReadChrRom(uint16_t addr) const { return chrRom[addr]; }
 
 private:
 	// Constants for data sizes and offsets
@@ -33,7 +34,7 @@ private:
 	static constexpr int batteryMask = 0x02;
 	static constexpr int trainerMask = 0x04;
 
-
+	uint16_t resetVector;
 	int prgRomStart;
 	int chrRomStart;
 	int prgRomSize;
@@ -46,6 +47,5 @@ private:
 	std::vector<uint8_t> trainer;
 	std::vector<uint8_t> prgRom;
 	std::vector<uint8_t> chrRom;
-	memoryMapper::MemoryMapper mapper;
 };
 
