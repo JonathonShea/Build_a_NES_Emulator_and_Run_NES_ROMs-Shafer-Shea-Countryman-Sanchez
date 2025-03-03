@@ -53,14 +53,21 @@ void CPU::respTest()
     std::cout << "Expected value after ROR: " << std::hex << static_cast<int>(0x2A) << std::endl;
 }
 
-CPU::CPU() : stack_pointer(0xFF), memory(65536, 0) // Initialize 64KB of memory
+CPU::CPU() : stack_pointer(0xFF), memory(65536, 0), program_counter(reset_vector) // Initialize 64KB of memory
 {
+
 }
 
 
 uint8_t CPU::read(uint16_t addr)
 {
-    return memory[addr];
+    if (addr > 0x8000) {
+        return cart->ReadPrgRom(addr - 0x8000);
+    }
+    else {
+        return memory[addr];
+    }
+
 }
 
 void CPU::write(uint16_t addr, uint8_t data)
@@ -1226,6 +1233,11 @@ uint8_t CPU::execute() {
     return cycles;
 }
 
-
-
-
+void CPU::SetCartridge(std::shared_ptr<Cartridge> cartridge)
+{
+    this->cart = cartridge;
+    uint16_t temp = read(program_counter++);
+    temp << 1;
+    temp |= read(program_counter);
+    program_counter = Utilities::ByteSwap(temp); // Now we jump!!!!
+}

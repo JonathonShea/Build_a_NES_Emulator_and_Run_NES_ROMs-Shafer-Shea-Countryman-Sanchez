@@ -7,7 +7,7 @@
 
 #include <cstdint>
 #define SDL_MAIN_HANDLED
-#include <C:/SDL2/include/SDL.h>
+#include <SDL2/SDL.h>
 
 class APU
 {

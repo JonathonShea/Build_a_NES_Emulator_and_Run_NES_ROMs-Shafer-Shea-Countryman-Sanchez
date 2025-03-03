@@ -37,3 +37,10 @@ std::string Utilities::OpenFileDialog() {
     }
     return filePath;
 }
+
+
+uint16_t Utilities::ByteSwap(uint16_t num) {
+    uint16_t swapped = (0x00FF & num) << 8;
+    swapped |= ((0xFF00 & num) >> 8);
+    return swapped;
+}

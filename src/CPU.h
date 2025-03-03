@@ -3,6 +3,11 @@
 
 #include <cstdint>
 #include <vector>
+#include <memory>
+#include "Cartridge.h"
+#include "Utilities.h"
+
+class Bus;
 
 class CPU
 {
