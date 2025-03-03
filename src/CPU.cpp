@@ -1,6 +1,4 @@
 #include "CPU.h"
-#include "MemoryMapper.h"
-#include "Clock.h"
 #include <iostream>
 
 void CPU::respTest()
@@ -58,7 +56,6 @@ CPU::CPU() : stack_pointer(0xFF), memory(65536, 0), program_counter(reset_vector
 
 }
 
-
 uint8_t CPU::read(uint16_t addr)
 {
     if (addr > 0x8000) {
@@ -67,7 +64,6 @@ uint8_t CPU::read(uint16_t addr)
     else {
         return memory[addr];
     }
-
 }
 
 void CPU::write(uint16_t addr, uint8_t data)
@@ -1240,4 +1236,9 @@ void CPU::SetCartridge(std::shared_ptr<Cartridge> cartridge)
     temp << 1;
     temp |= read(program_counter);
     program_counter = Utilities::ByteSwap(temp); // Now we jump!!!!
+}
+
+void CPU::Execute()
+{
+    uint8_t opcode = read(program_counter);
 }
