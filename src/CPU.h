@@ -40,6 +40,7 @@ private:
 	static constexpr uint8_t interrupt_disable_mask = 0x04;
 	static constexpr uint8_t zero_mask = 0x02;
 	static constexpr uint8_t carry_mask = 0x01;
+	static constexpr uint16_t reset_vector = 0xFFFc; // It all starts here!!!
 
 	std::vector<uint8_t> memory;
 	std::vector<uint8_t> stack;
