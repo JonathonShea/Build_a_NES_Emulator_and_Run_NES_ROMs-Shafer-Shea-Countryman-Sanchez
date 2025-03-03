@@ -132,7 +132,7 @@ uint16_t CPU::addr_absolute_x()
     return addr;
 }
 
-// Absolute Y - Use 16-bit address from next two bytes + Y
+// Absolute Y 
 uint16_t CPU::addr_absolute_y()
 {
     uint16_t low_byte = read(program_counter++);
@@ -163,7 +163,6 @@ uint16_t CPU::addr_indirect()
         high_byte = read(ptr & 0xFF00); 
     }
     else {
-        // Normal case
         low_byte = read(ptr);
         high_byte = read(ptr + 1);
     }

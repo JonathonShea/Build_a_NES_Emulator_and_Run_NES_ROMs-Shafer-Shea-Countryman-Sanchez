@@ -1501,7 +1501,6 @@ namespace ProcessorTests {
 		ASSERT_EQ(cpu.read(test_addr), 0xBD);
 	}
 
-	// Test for zero page wrap in Indexed Indirect (X)
 	TEST_F(CPUAddressingModes, IndexedIndirectXAddressingWraparound) {
 		cpu.program_counter = 0x1000;
 		cpu.x = 0xFF;  
