@@ -1,4 +1,5 @@
-#include <C:/SDL2/include/SDL.h>
+#define SDL_MAIN_HANDLED
+#include <SDL2/SDL.h>
 #include <iostream>
 #include "input.h" // Include the InputHandler class
 

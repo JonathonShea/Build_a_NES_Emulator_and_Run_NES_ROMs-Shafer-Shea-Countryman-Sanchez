@@ -1,6 +1,8 @@
 #pragma once
-#include <C:/SDL2/include/SDL.h>
-#include <C:/SDL2/include/SDL_mixer.h>
+//#include <C:/SDL2/include/SDL.h>
+#include <SDL2/SDL.h>
+//#include <C:/SDL2/include/SDL_mixer.h>
+#include <SDL_Mixer.h>
 
 class InputHandler {
 public:
