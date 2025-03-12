@@ -922,6 +922,64 @@ uint8_t CPU::execute() {
     uint8_t cycles = 0;
 
     switch (opcode) {
+        // ADC 
+        case 0x69:
+            addr = addr_immediate();
+            ADC(addr);
+            cycles = 2;
+            break;
+
+        case 0x65:
+            addr = addr_zero_page();
+            ADC(addr);
+            cycles = 3;
+            break;
+
+        case 0x75:
+            addr = addr_zero_page_x();
+            ADC(addr);
+            cycles = 4;
+            break;
+
+        case 0x6D:
+            addr = addr_absolute();
+            ADC(addr);
+            cycles = 4;
+            break;
+
+        case 0x7D:
+            addr = addr_absolute_x();
+            ADC(addr);
+            cycles = 4;
+            if ((addr & 0xFF00) != ((addr - x) & 0xFF00)) {
+                cycles += 1;
+            }
+            break;
+
+        case 0x79:
+            addr = addr_absolute_y();
+            ADC(addr);
+            cycles = 4;
+            if ((addr & 0xFF00) != ((addr - x) & 0xFF00)) {
+                cycles += 1;
+            }
+            break;
+
+        case 0x61:
+            addr = addr_indexed_indirect_x();
+            ADC(addr);
+            cycles = 6;
+            break;
+
+        case 0x71:
+            addr = addr_indexed_indirect_x();
+            ADC(addr);
+            cycles = 5;
+            if ((addr & 0xFF00) != ((addr - x) & 0xFF00)) {
+                cycles += 1;
+            }
+            break;
+
         // AND
         case 0x29: // Immediate
             addr = addr_immediate();
@@ -950,18 +1008,20 @@ uint8_t CPU::execute() {
         case 0x3D: // Absolute X
             addr = addr_absolute_x();
             AND(addr);
+            cycles = 4;
             // Check if page boundry was crossed
             if ((addr & 0xFF00) != ((addr - x) & 0xFF00)) {
-                cycles += 4;
+                cycles += 1;
             }
             break;
        
         case 0x39: // Absolute Y
             addr = addr_absolute_y();
             AND(addr);
+            cycles = 4;
             // Check if page boundry was crossed
             if ((addr & 0xFF00) != ((addr - x) & 0xFF00)) {
-                cycles += 4;
+                cycles += 1;
             }
             break;
        
@@ -974,9 +1034,10 @@ uint8_t CPU::execute() {
         case 0x31: // Indirect Y
             addr = addr_indirect_indexed_y();
             AND(addr);
+            cycles = 5;
             // Check if page boundry was crossed
             if ((addr & 0xFF00) != ((addr - x) & 0xFF00)) {
-                cycles += 5;
+                cycles += 1;
             }
             break;
 
