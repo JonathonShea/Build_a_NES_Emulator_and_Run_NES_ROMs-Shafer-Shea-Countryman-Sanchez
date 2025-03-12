@@ -2021,7 +2021,7 @@ void CPU::SetCartridge(std::shared_ptr<Cartridge> cartridge)
   
     temp = temp << 8;
     temp |= read(program_counter);
-
+    program_counter = Utilities::ByteSwap(temp); // Now we jump!!!!
   
 }
   
