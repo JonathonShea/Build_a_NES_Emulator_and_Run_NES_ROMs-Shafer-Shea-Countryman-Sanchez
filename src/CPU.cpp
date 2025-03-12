@@ -773,7 +773,8 @@ void CPU::TAY()
 void CPU::JMP_ABS(uint16_t addr)
 {
     // Program counter is 2 bytes, need to read in value in the next address as well.
-    std::memcpy(&program_counter, memory.data() + addr, sizeof(program_counter));
+
+    program_counter = addr;
 }
 
 void CPU::JMP_IND(uint16_t addr)
@@ -792,7 +793,7 @@ void CPU::JSR(uint16_t addr)
     stack.push_back(program_counter >> 1); // MSB
     stack.push_back(program_counter & 0xFF); // LSB
     stack_pointer -= 2;
-    JMP_ABS(addr);
+    program_counter = addr;
 }
 
 void CPU::RTS(uint16_t addr)
@@ -907,7 +908,7 @@ void CPU::NOP() {
 }
 
 ///////////////////////////////////////////////////////////////////
-// INSTRUCTION EXECUTION LOOP **UNHOLY** 
+// INSTRUCTION EXECUTION LOOP **UNHOLY**
 ///////////////////////////////////////////////////////////////////
 
 uint8_t CPU::execute() {
@@ -916,7 +917,7 @@ uint8_t CPU::execute() {
 
     // Fetch the next instruction
     uint8_t opcode = read(program_counter++);
-
+    std::cout << opcodeMap[opcode] << std::endl;;
     uint16_t addr = 0;
     uint16_t addr_abs = 0;
     uint8_t cycles = 0;
@@ -1101,11 +1102,12 @@ uint8_t CPU::execute() {
             }
             break;
 
-        // BEQ
+            // BEQ
         case 0xF0: // Relative
             addr = addr_relative();
             BEQ(addr);
             cycles = 2;
+
             // Check if zero flag is set
             if (getZeroFlag()) {
                 cycles += 1;
@@ -2016,8 +2018,10 @@ void CPU::SetCartridge(std::shared_ptr<Cartridge> cartridge)
 {
     this->cart = cartridge;
     uint16_t temp = read(program_counter++);
-    temp = temp << 1;
+  
+    temp = temp << 8;
     temp |= read(program_counter);
-    program_counter = Utilities::ByteSwap(temp); // Now we jump!!!!
 
+  
 }
+  
