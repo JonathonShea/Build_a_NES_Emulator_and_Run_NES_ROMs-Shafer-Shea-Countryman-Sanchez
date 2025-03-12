@@ -16,28 +16,4 @@ if (CMAKE_IMPORT_LIBRARY_SUFFIX)
     )
 endif ()
 
-add_executable(APU_Test ../src/APU.cpp)
-find_package(SDL2 CONFIG REQUIRED)
-    target_link_libraries(APU_Test
-        PRIVATE
-        $<TARGET_NAME_IF_EXISTS:SDL2::SDL2main>
-        $<IF:$<TARGET_EXISTS:SDL2::SDL2>,SDL2::SDL2,SDL2::SDL2-static>
-    )
-target_link_libraries(APU_Test PRIVATE SDL2::SDL2main)
 
-if (CMAKE_IMPORT_LIBRARY_SUFFIX)
-    add_custom_command(
-        TARGET APU_Test POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_RUNTIME_DLLS:APU_Test> $<TARGET_FILE_DIR:APU_Test>
-        COMMAND_EXPAND_LISTS
-    )
-endif()
-
-#add_executable(CPU_Test ../src/CPU.cpp ../src/Utilities.cpp)
-#if (CMAKE_IMPORT_LIBRARY_SUFFIX)
- #   add_custom_command(
-  #      TARGET CPU_Test POST_BUILD
-   #     COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_RUNTIME_DLLS:APU_Test> $<TARGET_FILE_DIR:APU_Test>
-    #    COMMAND_EXPAND_LISTS
-    #)
-#endif()
