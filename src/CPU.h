@@ -19,6 +19,11 @@ public:
 	uint16_t program_counter;				// 16-bit register that contains a pointer to the next instruction
 	uint8_t status = 0x00;					// 8-bit register that contains status flags
 
+	// Interrupt signals
+	bool irq_signal = false;
+	bool nmi_signal = false;
+	bool reset_signal = false;
+
 	CPU();
 
 	void respTest();
@@ -28,9 +33,15 @@ public:
 	std::vector<uint8_t> getStackTESTING() const;
 	void setStackBackTESTING(uint8_t value);
 
+	// Execution 
 	uint8_t execute();
-	void Execute();
 	void SetCartridge(std::shared_ptr<Cartridge> cartridge);
+
+	// Interrupt signal setters and handler
+	void setIRQ(bool state);   
+	void setNMI(bool state);    
+	void setRESET(bool state);  
+	void handleInterrupts();
 
 private:
 	// Masks for status register
@@ -41,7 +52,10 @@ private:
 	static constexpr uint8_t interrupt_disable_mask = 0x04;
 	static constexpr uint8_t zero_mask = 0x02;
 	static constexpr uint8_t carry_mask = 0x01;
-	static constexpr uint16_t reset_vector = 0xFFFc; // It all starts here!!! 7ffc
+
+	static constexpr uint16_t reset_vector = 0xFFFc; // It all starts here!!!
+	static constexpr uint16_t irq_vector = 0xFFFE;   // IRQ/BRK vector
+	static constexpr uint16_t nmi_vector = 0xFFFA;   // NMI vector
 
 	std::vector<uint8_t> memory;
 	std::vector<uint8_t> stack;
