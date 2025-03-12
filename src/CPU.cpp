@@ -1854,9 +1854,9 @@ void CPU::SetCartridge(std::shared_ptr<Cartridge> cartridge)
 {
     this->cart = cartridge;
     uint16_t temp = read(program_counter++);
-    temp << 1;
+    temp = temp << 1;
     temp |= read(program_counter);
-    program_counter = Utilities::ByteSwap(temp); // Now we jump!!!!
+    //program_counter = Utilities::ByteSwap(temp); // Now we jump!!!!
 }
 
 void CPU::Execute()
