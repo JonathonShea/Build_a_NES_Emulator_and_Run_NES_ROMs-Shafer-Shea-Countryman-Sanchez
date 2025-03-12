@@ -33,7 +33,7 @@ SDL_Texture* LoadBMP(const std::string& filePath, SDL_Renderer* renderer) {
 }
 
 int main(int argc, const char * argv[]){
-	Clock clock(3000, "CPU Clock");
+	Clock clock(300, "CPU Clock");
 	CPU cpu;
 	std::ifstream romFile; 
 	std::vector<uint8_t> romData;
@@ -81,7 +81,7 @@ int main(int argc, const char * argv[]){
 	}
 
 	// execute script
-	int result = std::system("python3 ../../src/patterntablerender.py chr_data.bin output.bmp -P DK");
+	int result = std::system("python ../../src/patterntablerender.py chr_data.bin output.bmp -P DK");
 	if (result != 0) {
 		std::cerr << "Python script execution failed!" << std::endl;
 		return -1;
@@ -127,7 +127,11 @@ int main(int argc, const char * argv[]){
 		SDL_RenderClear(renderer);
 		SDL_RenderCopy(renderer, texture, nullptr, nullptr);
 		SDL_RenderPresent(renderer);
-
+		int cycles = cpu.execute();
+		while (cycles > 0) {
+			clock.tick();
+			cycles--;
+		}
 		SDL_Delay(16); // Add a small delay to prevent CPU overuse
 	}
 
