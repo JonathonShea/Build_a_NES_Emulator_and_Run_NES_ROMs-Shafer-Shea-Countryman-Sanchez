@@ -1588,4 +1588,288 @@ namespace ProcessorTests {
 		ASSERT_EQ(cpu.program_counter, 0x1005);
 	}
 
+	class ExecuteAND : public ::testing::Test {
+	protected:
+		void SetUp() override {
+			cpu.clearStatus();
+
+			// Reset CPU registers
+			cpu.accumulator = 0;
+			cpu.x = 0;
+			cpu.y = 0;
+			cpu.program_counter = 0x0200;
+		}
+
+		void TearDown() override {
+			// Empty
+		}
+
+		CPU cpu;
+	};
+
+	// AND (immediate) resulting in zero
+	TEST_F(ExecuteAND, ImmediateZeroResult) {
+		cpu.accumulator = 0x55;    // 01010101
+		cpu.write(0x0200, 0x29);   // AND Immediate opcode
+		cpu.write(0x0201, 0xAA);   // 10101010 (operand)
+
+		uint8_t cycles = cpu.execute();
+
+		EXPECT_EQ(cpu.accumulator, 0x00);
+		EXPECT_TRUE(cpu.getZeroFlag());
+		EXPECT_FALSE(cpu.getNegativeFlag());
+		EXPECT_EQ(cycles, 2);      // Immediate addressing takes 2 cycles
+	}
+
+	// AND (immediate) resulting in a negative
+	TEST_F(ExecuteAND, ImmediateNegativeResult) {
+		cpu.accumulator = 0xFF;    // 11111111
+		cpu.write(0x0200, 0x29);   // AND Immediate opcode
+		cpu.write(0x0201, 0x85);   // 10000101 (operand)
+
+		uint8_t cycles = cpu.execute();
+
+		EXPECT_EQ(cpu.accumulator, 0x85);
+		EXPECT_FALSE(cpu.getZeroFlag());
+		EXPECT_TRUE(cpu.getNegativeFlag());
+		EXPECT_EQ(cycles, 2);
+	}
+
+	// AND (zero page) resulting in non-zero, non-negative
+	TEST_F(ExecuteAND, ZeroPageNormalResult) {
+		cpu.accumulator = 0x55;    // 01010101
+		cpu.write(0x0030, 0x33);   // 00110011
+		cpu.write(0x0200, 0x25);   // AND Zero Page opcode
+		cpu.write(0x0201, 0x30);   // Zero Page address
+
+		uint8_t cycles = cpu.execute();
+
+		EXPECT_EQ(cpu.accumulator, 0x11);
+		EXPECT_FALSE(cpu.getZeroFlag());
+		EXPECT_FALSE(cpu.getNegativeFlag());
+		EXPECT_EQ(cycles, 3);
+	}
+
+	// AND (zero page) resulting in negative
+	TEST_F(ExecuteAND, ZeroPageNegativeResult) {
+		cpu.accumulator = 0xFF;    // 11111111
+		cpu.write(0x0030, 0x85);   // 10000101
+		cpu.write(0x0200, 0x25);   // AND Zero Page opcode
+		cpu.write(0x0201, 0x30);   // Zero Page address
+
+		uint8_t cycles = cpu.execute();
+
+		EXPECT_EQ(cpu.accumulator, 0x85);
+		EXPECT_FALSE(cpu.getZeroFlag());
+		EXPECT_TRUE(cpu.getNegativeFlag());
+		EXPECT_EQ(cycles, 3);
+	}
+
+	// AND (zero page x) without wrap
+	TEST_F(ExecuteAND, ZeroPageXNoWrap) {
+		cpu.accumulator = 0x55;    // 01010101
+		cpu.x = 0x05;
+		cpu.write(0x0035, 0x33);   // 00110011
+		cpu.write(0x0200, 0x35);   // AND Zero Page X opcode
+		cpu.write(0x0201, 0x30);   // Zero Page address before X offset
+
+		uint8_t cycles = cpu.execute();
+
+		EXPECT_EQ(cpu.accumulator, 0x11);
+		EXPECT_FALSE(cpu.getZeroFlag());
+		EXPECT_FALSE(cpu.getNegativeFlag());
+		EXPECT_EQ(cycles, 4);
+	}
+
+	// AND (zero page x) with wrap
+	TEST_F(ExecuteAND, ZeroPageXWithWrap) {
+		cpu.accumulator = 0x55;    // 01010101
+		cpu.x = 0x20;
+		cpu.write(0x0010, 0x33);   // 00110011 (at address 0xF0 + 0x20 = 0x110, which wraps to 0x10)
+		cpu.write(0x0200, 0x35);   // AND Zero Page X opcode
+		cpu.write(0x0201, 0xF0);   // Zero Page address before X offset
+
+		uint8_t cycles = cpu.execute();
+
+		EXPECT_EQ(cpu.accumulator, 0x11);
+		EXPECT_FALSE(cpu.getZeroFlag());
+		EXPECT_FALSE(cpu.getNegativeFlag());
+		EXPECT_EQ(cycles, 4);
+	}
+
+	// AND (absolute)
+	TEST_F(ExecuteAND, AbsoluteMode) {
+		cpu.accumulator = 0x55;    // 01010101
+		cpu.write(0x1234, 0x33);   // 00110011
+		cpu.write(0x0200, 0x2D);   // AND Absolute opcode
+		cpu.write(0x0201, 0x34);   // Low byte of address
+		cpu.write(0x0202, 0x12);   // High byte of address
+
+		uint8_t cycles = cpu.execute();
+
+		EXPECT_EQ(cpu.accumulator, 0x11);
+		EXPECT_FALSE(cpu.getZeroFlag());
+		EXPECT_FALSE(cpu.getNegativeFlag());
+		EXPECT_EQ(cycles, 4);
+	}
+
+	// AND (absolute x) without page crossing
+	TEST_F(ExecuteAND, AbsoluteXNoPageCrossing) {
+		cpu.accumulator = 0x33;    // 00110011
+		cpu.x = 0x02;              // X register offset
+		cpu.write(0x1202, 0x0F);   // Value at address 0x1200 + 0x02 = 0x1202 (00001111)
+		cpu.write(0x0200, 0x3D);   // AND Absolute X opcode
+		cpu.write(0x0201, 0x00);   // Low byte of address
+		cpu.write(0x0202, 0x12);   // High byte of address
+
+		uint8_t cycles = cpu.execute();
+
+		EXPECT_EQ(cpu.accumulator, 0x03);
+		EXPECT_FALSE(cpu.getZeroFlag());
+		EXPECT_FALSE(cpu.getNegativeFlag());
+		EXPECT_EQ(cycles, 4);
+	}
+
+	// AND (absolute x) with page crossing
+	TEST_F(ExecuteAND, AbsoluteXPageCrossing) {
+		cpu.accumulator = 0x33;    // 00110011
+		cpu.x = 0x02;              // X register offset
+		cpu.write(0x1301, 0x0F);   // Value at address 0x12FF + 0x02 = 0x1301 (00001111)
+		cpu.write(0x0200, 0x3D);   // AND Absolute X opcode
+		cpu.write(0x0201, 0xFF);   // Low byte of address
+		cpu.write(0x0202, 0x12);   // High byte of address
+
+		uint8_t cycles = cpu.execute();
+
+		EXPECT_EQ(cpu.accumulator, 0x03);
+		EXPECT_FALSE(cpu.getZeroFlag());
+		EXPECT_FALSE(cpu.getNegativeFlag());
+		EXPECT_EQ(cycles, 5);
+	}
+
+	// AND (absolute y) without page crossing
+	TEST_F(ExecuteAND, AbsoluteYNoPageCrossing) {
+		cpu.accumulator = 0x33;    // 00110011
+		cpu.y = 0x02;              // Y register offset
+		cpu.write(0x1202, 0x0F);   // Value at address 0x1200 + 0x02 = 0x1202 (00001111)
+		cpu.write(0x0200, 0x39);   // AND Absolute Y opcode
+		cpu.write(0x0201, 0x00);   // Low byte of address
+		cpu.write(0x0202, 0x12);   // High byte of address
+
+		uint8_t cycles = cpu.execute();
+
+		EXPECT_EQ(cpu.accumulator, 0x03);
+		EXPECT_FALSE(cpu.getZeroFlag());
+		EXPECT_FALSE(cpu.getNegativeFlag());
+		EXPECT_EQ(cycles, 4);
+	}
+
+	// AND (absolute y) with page crossing
+	TEST_F(ExecuteAND, AbsoluteYPageCrossing) {
+		cpu.accumulator = 0x33;    // 00110011
+		cpu.y = 0x02;              // Y register offset
+		cpu.write(0x1301, 0x0F);   // Value at address 0x12FF + 0x02 = 0x1301 (00001111)
+		cpu.write(0x0200, 0x39);   // AND Absolute Y opcode
+		cpu.write(0x0201, 0xFF);   // Low byte of address
+		cpu.write(0x0202, 0x12);   // High byte of address
+
+		uint8_t cycles = cpu.execute();
+
+		EXPECT_EQ(cpu.accumulator, 0x03);
+		EXPECT_FALSE(cpu.getZeroFlag());
+		EXPECT_FALSE(cpu.getNegativeFlag());
+		EXPECT_EQ(cycles, 5);
+	}
+
+	// AND (indirect x)
+	TEST_F(ExecuteAND, IndexedIndirectX) {
+		cpu.accumulator = 0x55;    // 01010101
+		cpu.x = 0x05;
+
+		// Setup the indirection pointers in zero page
+		cpu.write(0x0047, 0x34);   // Low byte of address at (0x42 + 0x05)
+		cpu.write(0x0048, 0x12);   // High byte of address at (0x42 + 0x05 + 1)
+
+		// Setup the target value
+		cpu.write(0x1234, 0x33);   // 00110011
+
+		cpu.write(0x0200, 0x21);   // AND Indexed Indirect X opcode
+		cpu.write(0x0201, 0x42);   // Zero page address before X offset
+
+		uint8_t cycles = cpu.execute();
+
+		EXPECT_EQ(cpu.accumulator, 0x11);
+		EXPECT_FALSE(cpu.getZeroFlag());
+		EXPECT_FALSE(cpu.getNegativeFlag());
+		EXPECT_EQ(cycles, 6);
+	}
+
+	// AND (indirect x) with zero page wrap
+	TEST_F(ExecuteAND, IndexedIndirectXWithWrap) {
+		cpu.accumulator = 0x55;    // 01010101
+		cpu.x = 0x0F;
+
+		// Setup the indirection pointers in zero page, with wrap
+		cpu.write(0x00FF, 0x34);   // Low byte of address at (0xF0 + 0x0F = 0xFF -> 0x0F with wrap)
+		cpu.write(0x0000, 0x12);   // High byte of address at (0x0F + 1)
+
+		// Setup the target value
+		cpu.write(0x1234, 0x33);   // 00110011
+
+		cpu.write(0x0200, 0x21);   // AND Indexed Indirect X opcode
+		cpu.write(0x0201, 0xF0);   // Zero page address before X offset
+
+		uint8_t cycles = cpu.execute();
+
+		EXPECT_EQ(cpu.accumulator, 0x11);
+		EXPECT_FALSE(cpu.getZeroFlag());
+		EXPECT_FALSE(cpu.getNegativeFlag());
+		EXPECT_EQ(cycles, 6);
+	}
+
+	// AND (inidirect y) without page crossing
+	TEST_F(ExecuteAND, IndirectIndexedYNoPageCrossing) {
+		cpu.accumulator = 0x55;    // 01010101
+		cpu.y = 0x05;
+
+		// Setup the indirection pointers in zero page
+		cpu.write(0x0042, 0x34);   // Low byte of address
+		cpu.write(0x0043, 0x12);   // High byte of address
+
+		// Setup the target value
+		cpu.write(0x1239, 0x33);   // 00110011 at address 0x1234 + 0x05
+
+		cpu.write(0x0200, 0x31);   // AND Indirect Indexed Y opcode
+		cpu.write(0x0201, 0x42);   // Zero page address for indirection
+
+		uint8_t cycles = cpu.execute();
+
+		EXPECT_EQ(cpu.accumulator, 0x11);
+		EXPECT_FALSE(cpu.getZeroFlag());
+		EXPECT_FALSE(cpu.getNegativeFlag());
+		EXPECT_EQ(cycles, 5);
+	}
+
+	// AND (indirect y) with page crossing
+	TEST_F(ExecuteAND, IndirectIndexedYPageCrossing) {
+		cpu.accumulator = 0x55;    // 01010101
+		cpu.y = 0x05;
+
+		// Setup the indirection pointers in zero page
+		cpu.write(0x0042, 0xFE);   // Low byte of address
+		cpu.write(0x0043, 0x12);   // High byte of address
+
+		// Setup the target value
+		cpu.write(0x1303, 0x33);   // 00110011 at address 0x12FE + 0x05 = 0x1303 (page boundary crossed)
+
+		cpu.write(0x0200, 0x31);   // AND Indirect Indexed Y opcode
+		cpu.write(0x0201, 0x42);   // Zero page address for indirection
+
+		uint8_t cycles = cpu.execute();
+
+		EXPECT_EQ(cpu.accumulator, 0x11);
+		EXPECT_FALSE(cpu.getZeroFlag());
+		EXPECT_FALSE(cpu.getNegativeFlag());
+		EXPECT_EQ(cycles, 6);
+	}
 }
