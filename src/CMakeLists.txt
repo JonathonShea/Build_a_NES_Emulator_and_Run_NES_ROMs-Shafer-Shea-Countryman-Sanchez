@@ -13,5 +13,5 @@ find_package(SDL2 CONFIG REQUIRED)
     )
 
 
-find_package(SDL2_mixer CONFIG REQUIRED)
-target_link_libraries(NES PUBLIC $<IF:$<TARGET_EXISTS:SDL2_mixer::SDL2_mixer>,SDL2_mixer::SDL2_mixer,SDL2_mixer::SDL2_mixer-static>)
+# find_package(SDL2_mixer CONFIG REQUIRED)
+# target_link_libraries(NES PUBLIC $<IF:$<TARGET_EXISTS:SDL2_mixer::SDL2_mixer>,SDL2_mixer::SDL2_mixer,SDL2_mixer::SDL2_mixer-static>)

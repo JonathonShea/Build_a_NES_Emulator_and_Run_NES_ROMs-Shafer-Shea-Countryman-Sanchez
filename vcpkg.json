@@ -1,7 +1,6 @@
 {
   "dependencies": [
     "gtest",
-    "sdl2",
-    "sdl2-mixer"
+    "sdl2"
   ]
 }

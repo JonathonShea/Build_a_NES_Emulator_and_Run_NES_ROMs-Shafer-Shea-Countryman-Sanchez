@@ -2,7 +2,7 @@
 //#include <C:/SDL2/include/SDL.h>
 #include <SDL2/SDL.h>
 //#include <C:/SDL2/include/SDL_mixer.h>
-#include <SDL_Mixer.h>
+//#include <SDL_Mixer.h>
 
 class InputHandler {
 public:
@@ -12,6 +12,5 @@ public:
 
 private:
     SDL_GameController* controller = nullptr;
-    Mix_Chunk* soundEffect = nullptr;
     static const char* buttonNames[];
 };

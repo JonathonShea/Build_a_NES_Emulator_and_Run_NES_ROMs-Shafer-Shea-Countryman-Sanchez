@@ -12,17 +12,6 @@ bool InputHandler::initialize() {
         return false;
     }
 
-    if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048) < 0) {
-        std::cerr << "SDL_mixer could not initialize! SDL_mixer Error: " << Mix_GetError() << std::endl;
-        return false;
-    }
-
-    soundEffect = Mix_LoadWAV("../resources/click.wav");
-    if (soundEffect == nullptr) {
-        std::cerr << "Failed to load sound effect! SDL_mixer Error: " << Mix_GetError() << std::endl;
-        return false;
-    }
-
     if (SDL_NumJoysticks() < 1) {
         std::cerr << "Warning: No joysticks connected!" << std::endl;
     } else {
@@ -51,7 +40,6 @@ void InputHandler::processEvent(const SDL_Event& event) {
             if (key == SDLK_w || key == SDLK_a || key == SDLK_s || key == SDLK_d || key == SDLK_j || key == SDLK_k || key == SDLK_SPACE || key == SDLK_RETURN) {
                 if (event.type == SDL_KEYDOWN) {
                     std::cout << "Key Pressed: " << SDL_GetKeyName(key) << std::endl;
-                    Mix_PlayChannel(-1, soundEffect, 0);
                 } else if (event.type == SDL_KEYUP) {
                     std::cout << "Key Released: " << SDL_GetKeyName(key) << std::endl;
                 }
@@ -70,7 +58,6 @@ void InputHandler::processEvent(const SDL_Event& event) {
             const char* buttonName = buttonNames[event.cbutton.button];
             if (event.type == SDL_CONTROLLERBUTTONDOWN) {
                 std::cout << "Controller Button Pressed: " << buttonName << std::endl;
-                Mix_PlayChannel(-1, soundEffect, 0);
             } else if (event.type == SDL_CONTROLLERBUTTONUP) {
                 std::cout << "Controller Button Released: " << buttonName << std::endl;
             }

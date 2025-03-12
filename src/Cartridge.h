@@ -23,6 +23,7 @@ public:
 	inline bool HasTrainer() const { return flag6 & trainerMask; }
 	inline uint8_t ReadPrgRom(uint16_t addr) const { return prgRom[addr]; }
 	inline uint8_t ReadChrRom(uint16_t addr) const { return chrRom[addr]; }
+	std::vector<uint8_t> chrRom;
 
 private:
 	// Constants for data sizes and offsets
@@ -46,6 +47,5 @@ private:
 	uint8_t flag10;
 	std::vector<uint8_t> trainer;
 	std::vector<uint8_t> prgRom;
-	std::vector<uint8_t> chrRom;
 };
 

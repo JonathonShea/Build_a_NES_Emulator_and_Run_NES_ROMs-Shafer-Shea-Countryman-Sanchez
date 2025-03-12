@@ -15,6 +15,23 @@
 
 static constexpr std::array<uint8_t, 4> magicNumbers = { 0x4E, 0x45, 0x53, 0x1A }; // NES<EOF> magic numbers to identify a NES ROM file
 
+SDL_Texture* LoadBMP(const std::string& filePath, SDL_Renderer* renderer) {
+	SDL_Surface* imageSurface = SDL_LoadBMP(filePath.c_str());
+	if (!imageSurface) {
+		std::cerr << "Failed to load BMP: " << SDL_GetError() << std::endl;
+		return nullptr;
+	}
+
+	SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, imageSurface);
+	SDL_FreeSurface(imageSurface); // Free surface after creating texture
+
+	if (!texture) {
+		std::cerr << "Failed to create texture from BMP: " << SDL_GetError() << std::endl;
+	}
+
+	return texture;
+}
+
 int main(int argc, const char * argv[]){
 	Clock clock(3000, "CPU Clock");
 	CPU cpu;
@@ -52,9 +69,41 @@ int main(int argc, const char * argv[]){
 		return -1;
 	}
 
-	SDL_Window* window = SDL_CreateWindow("NES Emulator", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 640, 480, SDL_WINDOW_SHOWN);
+	std::ofstream chrFile("chr_data.bin", std::ios::binary);
+	if (chrFile.is_open()) {
+		chrFile.write(reinterpret_cast<const char*>(cart->chrRom.data()), cart->chrRom.size());
+		chrFile.close();
+	}
+	else {
+		std::cerr << "Failed to write CHR ROM data to file!" << std::endl;
+		return -1;
+	}
+
+	int result = std::system("python3 ../../src/patterntablerender.py chr_data.bin output.bmp -P DK");
+	if (result != 0) {
+		std::cerr << "Python script execution failed!" << std::endl;
+		return -1;
+	}
+
+	SDL_Window* window = SDL_CreateWindow("NES Emulator", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 1024, 512, SDL_WINDOW_SHOWN);
 	if (!window) {
 		std::cerr << "Window could not be created! SDL_Error: " << SDL_GetError() << std::endl;
+		SDL_Quit();
+		return -1;
+	}
+
+	SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+	if (!renderer) {
+		std::cerr << "Renderer could not be created! SDL_Error: " << SDL_GetError() << std::endl;
+		SDL_DestroyWindow(window);
+		SDL_Quit();
+		return -1;
+	}
+
+	SDL_Texture* texture = LoadBMP("output.bmp", renderer);
+	if (!texture) {
+		SDL_DestroyRenderer(renderer);
+		SDL_DestroyWindow(window);
 		SDL_Quit();
 		return -1;
 	}
@@ -69,6 +118,10 @@ int main(int argc, const char * argv[]){
 			}
 			inputHandler.processEvent(event); // Use the InputHandler class
 		}
+		SDL_RenderClear(renderer);
+		SDL_RenderCopy(renderer, texture, nullptr, nullptr);
+		SDL_RenderPresent(renderer);
+
 		SDL_Delay(16); // Add a small delay to prevent CPU overuse
 	}
 
