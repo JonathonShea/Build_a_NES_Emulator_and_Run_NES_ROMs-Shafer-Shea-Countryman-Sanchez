@@ -316,6 +316,91 @@ void CPU::setStackBackTESTING(uint8_t value) {
 }
 
 ///////////////////////////////////////////////////////////////////
+// INTERRUPT OPERATIONS
+///////////////////////////////////////////////////////////////////
+
+void CPU::setIRQ(bool state)
+{
+    irq_signal = state;
+    if (state && !(status & interrupt_disable_mask)) {
+        handleInterrupts();
+    }
+}
+
+void CPU::setNMI(bool state)
+{
+    // NMI is edge-triggered (only triggered on transition)
+    static bool previous_nmi_state = false;
+    if (!previous_nmi_state && state) {
+        nmi_signal = true;
+        handleInterrupts();
+    }
+
+    previous_nmi_state = state;
+}
+
+void CPU::setRESET(bool state)
+{
+    reset_signal = state;
+    if (state) {
+        // Reset CPU state
+        stack_pointer = 0xFF;
+        program_counter = reset_vector;
+        setInterruptDisableFlag(true);
+        status = status & (~break_mask);  // Clear break flag
+
+        // Reset signal flags
+        irq_signal = false;
+        nmi_signal = false;
+        reset_signal = false;
+    }
+}
+
+void CPU::handleInterrupts()
+{
+    // Process interrupts in priority order: RESET > NMI > IRQ
+    if (reset_signal) {
+        setRESET(true);
+        return;
+    }
+
+    if (nmi_signal) {
+        // Push program counter to the stack
+        stack.push_back((program_counter >> 8) & 0xFF); 
+        stack.push_back(program_counter & 0xFF);         
+
+        // Push status to the stack
+        uint8_t status_copy = status;
+        status_copy &= ~break_mask;  // Clear break flag
+        stack.push_back(status_copy);
+
+        stack_pointer -= 3;
+        setInterruptDisableFlag(true);
+        program_counter = read(0xFFFA) | (read(0xFFFB) << 8); // NMI vector
+        nmi_signal = false;
+
+        return;
+    }
+
+    if (irq_signal && !(status & interrupt_disable_mask)) {
+        // Push program counter to the stack
+        stack.push_back((program_counter >> 8) & 0xFF); 
+        stack.push_back(program_counter & 0xFF);        
+
+        // Push status to the stack
+        uint8_t status_copy = status;
+        status_copy &= ~break_mask; // Clear break flag
+        stack.push_back(status_copy);
+
+        stack_pointer -= 3;
+        setInterruptDisableFlag(true);
+        program_counter = read(0xFFFE) | (read(0xFFFF) << 8); // IRQ vector
+
+        return;
+    }
+}
+
+///////////////////////////////////////////////////////////////////
 // OPCODES
 ///////////////////////////////////////////////////////////////////
 
@@ -750,6 +835,7 @@ void CPU::BCC(uint16_t addr)
 {
     if (!getCarryFlag())
     {
+        // Signed value, need to cast
         program_counter += static_cast<int8_t>(memory[addr]) + 2;
     }
 }
@@ -758,6 +844,7 @@ void CPU::BCS(uint16_t addr)
 {
     if (getCarryFlag())
     {
+        // Signed value, need to cast
         program_counter += static_cast<int8_t>(memory[addr]) + 2;
     }
 }
@@ -766,6 +853,7 @@ void CPU::BMI(uint16_t addr)
 {
     if (getNegativeFlag()) 
     {
+        // Signed value, need to cast
         program_counter += static_cast<int8_t>(memory[addr]) + 2;
     }
 }
@@ -774,6 +862,7 @@ void CPU::BPL(uint16_t addr)
 {
     if (!getNegativeFlag())
     {
+        // Signed value, need to cast
         program_counter += static_cast<int8_t>(memory[addr]) + 2;
     }
 }
@@ -782,6 +871,7 @@ void CPU::BVC(uint16_t addr)
 {
     if (!getOverFlowFlag())
     {
+        // Signed value, need to cast
         program_counter += static_cast<int8_t>(memory[addr]) + 2;
     }
 }
@@ -790,6 +880,7 @@ void CPU::BVS(uint16_t addr)
 {
     if (getOverFlowFlag())
     {
+        // Signed value, need to cast
         program_counter += static_cast<int8_t>(memory[addr]) + 2;
     }
 }
@@ -820,13 +911,15 @@ void CPU::NOP() {
 ///////////////////////////////////////////////////////////////////
 
 uint8_t CPU::execute() {
+    // Handle interrupts prior to executing instructions
+    handleInterrupts();
+
     // Fetch the next instruction
     uint8_t opcode = read(program_counter++);
 
     uint16_t addr = 0;
     uint16_t addr_abs = 0;
     uint8_t cycles = 0;
-    bool page_crossed = false;
 
     switch (opcode) {
         // AND
@@ -855,18 +948,21 @@ uint8_t CPU::execute() {
             break;
         
         case 0x3D: // Absolute X
-            // Check if page boundry was crossed
             addr = addr_absolute_x();
-            page_crossed = ((addr & 0xFF00) != ((addr - x) & 0xFF00));
             AND(addr);
-            cycles = 4 + (page_crossed ? 1 : 0);
+            // Check if page boundry was crossed
+            if ((addr & 0xFF00) != ((addr - x) & 0xFF00)) {
+                cycles += 4;
+            }
             break;
        
         case 0x39: // Absolute Y
             addr = addr_absolute_y();
-            page_crossed = ((addr & 0xFF00) != ((addr - y) & 0xFF00));
             AND(addr);
-            cycles = 4 + (page_crossed ? 1 : 0);
+            // Check if page boundry was crossed
+            if ((addr & 0xFF00) != ((addr - x) & 0xFF00)) {
+                cycles += 4;
+            }
             break;
        
         case 0x21: // Indiredct X
@@ -877,17 +973,16 @@ uint8_t CPU::execute() {
         
         case 0x31: // Indirect Y
             addr = addr_indirect_indexed_y();
-            page_crossed = ((addr & 0xFF00) != ((addr - y) & 0xFF00));
             AND(addr);
-            cycles = 5 + (page_crossed ? 1 : 0);
+            // Check if page boundry was crossed
+            if ((addr & 0xFF00) != ((addr - x) & 0xFF00)) {
+                cycles += 5;
+            }
             break;
 
         // ASL
         case 0x0A: // Accumulator
-            setCarryFlag(accumulator & 0x80);
-            accumulator <<= 1;
-            setZeroFlag(accumulator == 0);
-            setNegativeFlag(accumulator & 0x80);
+            ASL(0); // Call with 0 to indicate accumulator mode
             cycles = 2;
             break;
         
@@ -918,41 +1013,45 @@ uint8_t CPU::execute() {
         // BCC
         case 0x90: // Relative
             addr = addr_relative();
-            // Check if zero flag is set
+            BCC(addr);
+            cycles = 2;
+            // Check if carry flag is set
             if (!getCarryFlag()) {
-                // Check if branch crosses page boundary
-                page_crossed = ((program_counter & 0xFF00) != (addr & 0xFF00));
-                program_counter = addr;
-                cycles = 3 + (page_crossed ? 1 : 0);
-            }
-            else {
-                cycles = 2;
+                cycles += 1;
+                // Check if page boundry was crossed
+                if ((addr & 0xFF00) != (program_counter & 0xFF00)) {
+                    cycles += 1;
+                }
             }
             break;
 
         // BCS
         case 0xB0: // Relative
             addr = addr_relative();
+            BCS(addr);
+            cycles = 2;
+            // Check if carry flag is set
             if (getCarryFlag()) {
-                page_crossed = ((program_counter & 0xFF00) != (addr & 0xFF00));
-                program_counter = addr;
-                cycles = 3 + (page_crossed ? 1 : 0);
-            }
-            else {
-                cycles = 2;
+                cycles += 1;
+                // Check if page boundry was crossed
+                if ((addr & 0xFF00) != (program_counter & 0xFF00)) {
+                    cycles += 1;
+                }
             }
             break;
 
         // BEQ
         case 0xF0: // Relative
             addr = addr_relative();
+            BEQ(addr);
+            cycles = 2;
+            // Check if zero flag is set
             if (getZeroFlag()) {
-                page_crossed = ((program_counter & 0xFF00) != (addr & 0xFF00));
-                program_counter = addr;
-                cycles = 3 + (page_crossed ? 1 : 0);
-            }
-            else {
-                cycles = 2;
+                cycles += 1;
+                // Check if page boundry was crossed
+                if ((addr & 0xFF00) != (program_counter & 0xFF00)) {
+                    cycles += 1;
+                }
             }
             break;
 
@@ -1039,7 +1138,7 @@ uint8_t CPU::execute() {
         case 0x70: // Relative
             addr = addr_relative();
             BVS(addr);
-            cycles = 2; // Base cycles
+            cycles = 2;
             // Check if overflow flag is set
             if (getOverFlowFlag()) {
                 cycles += 1;
@@ -1103,6 +1202,7 @@ uint8_t CPU::execute() {
             addr = addr_absolute_x();
             CMP(addr);
             cycles = 4;
+            // Check if page boundry was crossed
             if ((addr & 0xFF00) != ((addr - x) & 0xFF00)) {
                 cycles += 1;
             }
@@ -1112,6 +1212,7 @@ uint8_t CPU::execute() {
             addr = addr_absolute_y();
             CMP(addr);
             cycles = 4;
+            // Check if page boundry was crossed
             if ((addr & 0xFF00) != ((addr - y) & 0xFF00)) {
                 cycles += 1;
             }
@@ -1127,6 +1228,7 @@ uint8_t CPU::execute() {
             addr = addr_indirect_indexed_y();
             CMP(addr);
             cycles = 5;
+            // Check if page boundry was crossed
             if ((addr & 0xFF00) != ((addr - y) & 0xFF00)) {
                 cycles += 1;
             }
@@ -1236,6 +1338,7 @@ uint8_t CPU::execute() {
             addr = addr_absolute_x();
             EOR(addr);
             cycles = 4;
+            // Check if page boundry was crossed
             if ((addr & 0xFF00) != ((addr - x) & 0xFF00)) {
                 cycles += 1;
             }
@@ -1245,6 +1348,7 @@ uint8_t CPU::execute() {
             addr = addr_absolute_y();
             EOR(addr);
             cycles = 4;
+            // Check if page boundry was crossed
             if ((addr & 0xFF00) != ((addr - y) & 0xFF00)) {
                 cycles += 1;
             }
@@ -1260,6 +1364,7 @@ uint8_t CPU::execute() {
             addr = addr_indirect_indexed_y();
             EOR(addr);
             cycles = 5;
+            // Check if page boundry was crossed
             if ((addr & 0xFF00) != ((addr - y) & 0xFF00)) {
                 cycles += 1;
             }
@@ -1351,6 +1456,7 @@ uint8_t CPU::execute() {
             addr = addr_absolute_x();
             LDA(addr);
             cycles = 4;
+            // Check if page boundry was crossed
             if ((addr & 0xFF00) != ((addr - x) & 0xFF00)) {
                 cycles += 1;
             }
@@ -1360,6 +1466,7 @@ uint8_t CPU::execute() {
             addr = addr_absolute_y();
             LDA(addr);
             cycles = 4;
+            // Check if page boundry was crossed
             if ((addr & 0xFF00) != ((addr - y) & 0xFF00)) {
                 cycles += 1;
             }
@@ -1375,6 +1482,7 @@ uint8_t CPU::execute() {
             addr = addr_indirect_indexed_y();
             LDA(addr);
             cycles = 5;
+            // Check if page boundry was crossed
             if ((addr & 0xFF00) != ((addr - y) & 0xFF00)) {
                 cycles += 1;
             }
@@ -1409,6 +1517,7 @@ uint8_t CPU::execute() {
             addr = addr_absolute_y();
             LDX(addr);
             cycles = 4;
+            // Check if page boundry was crossed
             if ((addr & 0xFF00) != ((addr - y) & 0xFF00)) {
                 cycles += 1;
             }
@@ -1443,6 +1552,7 @@ uint8_t CPU::execute() {
             addr = addr_absolute_x();
             LDY(addr);
             cycles = 4;
+            // Check if page boundry was crossed
             if ((addr & 0xFF00) != ((addr - x) & 0xFF00)) {
                 cycles += 1;
             }
@@ -1450,10 +1560,7 @@ uint8_t CPU::execute() {
 
         // LSR
         case 0x4A: // Accumulator
-            setCarryFlag(accumulator & 0x01);
-            accumulator >>= 1;
-            setZeroFlag(accumulator == 0);
-            setNegativeFlag(0);
+            LSR(0); // Call with 0 to indicate accumulator mode
             cycles = 2;
             break;
 
@@ -1516,6 +1623,7 @@ uint8_t CPU::execute() {
             addr = addr_absolute_x();
             ORA(addr);
             cycles = 4;
+            // Check if page boundry was crossed
             if ((addr & 0xFF00) != ((addr - x) & 0xFF00)) {
                 cycles += 1;
             }
@@ -1525,6 +1633,7 @@ uint8_t CPU::execute() {
             addr = addr_absolute_y();
             ORA(addr);
             cycles = 4;
+            // Check if page boundry was crossed
             if ((addr & 0xFF00) != ((addr - y) & 0xFF00)) {
                 cycles += 1;
             }
@@ -1540,6 +1649,7 @@ uint8_t CPU::execute() {
             addr = addr_indirect_indexed_y();
             ORA(addr);
             cycles = 5;
+            // Check if page boundry was crossed
             if ((addr & 0xFF00) != ((addr - y) & 0xFF00)) {
                 cycles += 1;
             }
@@ -1571,15 +1681,10 @@ uint8_t CPU::execute() {
 
         // ROL
         case 0x2A: // Accumulator
-        {
-            bool oldCarry = getCarryFlag();
-            setCarryFlag(accumulator & 0x80);
-            accumulator = (accumulator << 1) | oldCarry;
-            setZeroFlag(accumulator == 0);
-            setNegativeFlag(accumulator & 0x80);
+            ROL(0); // Call with 0 to indicate accumulator mode
             cycles = 2;
-        }
-        break;
+            break;
+       
 
         case 0x26: // Zero Page
             addr = addr_zero_page();
@@ -1607,15 +1712,9 @@ uint8_t CPU::execute() {
 
         // ROR
         case 0x6A: // Accumulator
-        {
-            bool oldCarry = getCarryFlag();
-            setCarryFlag(accumulator & 0x01);
-            accumulator = (accumulator >> 1) | (oldCarry << 7);
-            setZeroFlag(accumulator == 0);
-            setNegativeFlag(accumulator & 0x80);
+            ROR(0); // Pass 0 to indicate accumulator mode
             cycles = 2;
-        }
-        break;
+            break;
 
         case 0x66: // Zero Page
             addr = addr_zero_page();
@@ -1682,6 +1781,7 @@ uint8_t CPU::execute() {
             addr = addr_absolute_x();
             SBC(addr);
             cycles = 4;
+            // Check if page boundry was crossed
             if ((addr & 0xFF00) != ((addr - x) & 0xFF00)) {
                 cycles += 1;
             }
@@ -1706,6 +1806,7 @@ uint8_t CPU::execute() {
             addr = addr_indirect_indexed_y();
             SBC(addr);
             cycles = 5;
+            // Check if page boundry was crossed
             if ((addr & 0xFF00) != ((addr - y) & 0xFF00)) {
                 cycles += 1;
             }
@@ -1857,9 +1958,4 @@ void CPU::SetCartridge(std::shared_ptr<Cartridge> cartridge)
     temp << 1;
     temp |= read(program_counter);
     program_counter = Utilities::ByteSwap(temp); // Now we jump!!!!
-}
-
-void CPU::Execute()
-{
-    uint8_t opcode = read(program_counter);
 }
