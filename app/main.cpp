@@ -46,9 +46,12 @@ int main(int argc, const char * argv[]){
 	cpu.SetCartridge(cart);
 
 	while (true) {
-		clock.tick();
-		int test =  cpu.read(0xfffc);
-		std::cout << test << std::endl;
+		int cycles = cpu.execute();
+		while (cycles > 0) {
+			clock.tick();
+			cycles--;
+		}
+
 	}
 	
 

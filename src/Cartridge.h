@@ -2,6 +2,7 @@
 #include <vector>
 #include <cstdint>
 #include <filesystem>
+#include "Utilities.h"
 
 /**
  * @brief Class representing NES cartridge. Contains the memory mapper and the ROM data.
