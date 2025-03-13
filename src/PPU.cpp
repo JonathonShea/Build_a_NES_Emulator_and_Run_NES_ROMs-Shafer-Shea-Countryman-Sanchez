@@ -112,7 +112,7 @@ int main(){
     
     std::ifstream romFile;
     std::vector<uint8_t> romData;
-    std::string filePath = "Donkey Kong (USA) (Rev 1) (e-Reader Edition).nes";
+    std::string filePath = /INSERT PATH TO ROM
     std::cout << "ATTEMPTING TO OPEN\t" << filePath << std::endl;
     //filePath = Utilities::OpenFileDialog();
 
@@ -136,7 +136,7 @@ int main(){
     ///auto path = Utilities::OpenFileDialog();
     PPU testPPU;
     Cartridge cartridge(romData);
-    createHexDump(cartridge.chrRom, "dk_hexdump.txt");
+    createHexDump(cartridge.chrRom, "chrrom_hexdump.txt");
 
     testPPU.loadPatternTable(cartridge.chrRom);
     
