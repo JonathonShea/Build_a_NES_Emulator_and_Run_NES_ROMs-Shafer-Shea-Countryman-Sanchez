@@ -85,7 +85,6 @@ int main(int argc, const char * argv[]){
 	int result = std::system("python3 ../../src/patterntablerender.py chr_data.bin output.bmp -P DK");
 	if (result != 0) {
 		std::cerr << "Python script execution failed!" << std::endl;
-		return -1;
 	} else {
 		renderImage = true;
 	}
