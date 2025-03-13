@@ -80,11 +80,14 @@ int main(int argc, const char * argv[]){
 		return -1;
 	}
 
+	bool renderImage = false;
 	// execute script
 	int result = std::system("python3 ../../src/patterntablerender.py chr_data.bin output.bmp -P DK");
 	if (result != 0) {
 		std::cerr << "Python script execution failed!" << std::endl;
 		return -1;
+	} else {
+		renderImage = true;
 	}
 
 	// initialize window
@@ -108,10 +111,9 @@ int main(int argc, const char * argv[]){
 	SDL_Texture* texture = LoadBMP("output.bmp", renderer);
 	if (!texture) {
 		SDL_DestroyRenderer(renderer);
-		SDL_DestroyWindow(window);
-		SDL_Quit();
-		return -1;
+		std::cerr << "Failed to load texture!" << std::endl;
 	}
+
 
 	bool running = true;
 	SDL_Event event;
@@ -124,9 +126,12 @@ int main(int argc, const char * argv[]){
 			inputHandler.processEvent(event); // Use the InputHandler class
 		}
 		// render the texture
-		SDL_RenderClear(renderer);
-		SDL_RenderCopy(renderer, texture, nullptr, nullptr);
-		SDL_RenderPresent(renderer);
+		if(renderImage){
+			SDL_RenderClear(renderer);
+			SDL_RenderCopy(renderer, texture, nullptr, nullptr);
+			SDL_RenderPresent(renderer);
+		}
+		
 
 		SDL_Delay(16); // Add a small delay to prevent CPU overuse
 	}
