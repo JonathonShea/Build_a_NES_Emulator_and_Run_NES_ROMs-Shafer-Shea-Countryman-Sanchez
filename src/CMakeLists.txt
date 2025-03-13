@@ -3,7 +3,7 @@ add_library(NES SHARED
          "NesRam.h" "NesRam.cpp" "Cartridge.h" "Cartridge.cpp" "Clock.h" "Clock.cpp" "Utilities.h" "Utilities.cpp" "input.h" "input.cpp"
         CPU.h CPU.cpp )
 add_library(CPU SHARED
-            CPU.h CPU.cpp)
+            CPU.h CPU.cpp "Utilities.h" "Utilities.cpp")
 
 find_package(SDL2 CONFIG REQUIRED)
     target_link_libraries(NES
