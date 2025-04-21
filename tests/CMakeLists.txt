@@ -10,7 +10,7 @@ find_package(GTest CONFIG REQUIRED)
     add_test(AllTestsInMain main)
 add_test(NAME example_test COMMAND nes_tests)
 add_executable(nes_tests Run_Tests.cpp
-              Cpu_Instruction_tests.cpp)
+              Cpu_Instruction_tests.cpp Ppu_Tests.cpp)
 target_link_libraries(nes_tests PRIVATE GTest::gtest GTest::gtest_main GTest::gmock GTest::gmock_main NES)
 
 
