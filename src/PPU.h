@@ -10,6 +10,11 @@
 #include "Cartridge.h"
 #include "Utilities.h"
 
+struct RGB {
+	uint8_t r, g, b;
+};
+
+
 class PPU
 {
 public:
@@ -23,12 +28,15 @@ public:
 	uint8_t PPUDATA = 0x00; //VRAM Data (Read / Write) 
 	uint8_t OAMDMA = 0x00; //Sprite DMA (Write) Suspend CPU to begin DMA
     
+	static const RGB nes_color_palette[64]; //Global NES palette
 	std::vector<std::vector<uint8_t>> patternTables; //Vector chosen over arrray for modern adapation of PatternTables
 
 	PPU();
 
-	void respTest();
+	RGB getColor(uint8_t paletteIndex) const;
 	void loadPatternTable(const std::vector<uint8_t>& chrROM);
+	
+	// Local + Test Functions
 	void printPatternTables();
 
 };
