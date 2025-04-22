@@ -2010,7 +2010,7 @@ uint8_t CPU::execute() {
             cycles = 2;
             break;
     }
-
+    std::copy(memory.begin() + oamAddr, memory.begin() + oamEnd, m_oam->sprites) 
     return cycles;
 }
 
@@ -2024,4 +2024,4 @@ void CPU::SetCartridge(std::shared_ptr<Cartridge> cartridge)
     program_counter = Utilities::ByteSwap(temp); // Now we jump!!!!
   
 }
-  
+

@@ -7,6 +7,7 @@
 #include "Cartridge.h"
 #include "Utilities.h"
 #include <unordered_map>
+#include "OAM.h"
 
 class CPU
 {
@@ -36,7 +37,7 @@ public:
 	// Execution 
 	uint8_t execute();
 	void SetCartridge(std::shared_ptr<Cartridge> cartridge);
-
+  void SetOAM(std::shared_ptr<OAM> oam) {m_oam = oam;}
 	// Interrupt signal setters and handler
 	void setIRQ(bool state);   
 	void setNMI(bool state);    
@@ -53,13 +54,16 @@ private:
 	static constexpr uint8_t zero_mask = 0x02;
 	static constexpr uint8_t carry_mask = 0x01;
 
-	static constexpr uint16_t reset_vector = 0xFFFc; // It all starts here!!!
+	static constexpr uint16_t reset_vector = 0xFFFC; // It all starts here!!!
 	static constexpr uint16_t irq_vector = 0xFFFE;   // IRQ/BRK vector
 	static constexpr uint16_t nmi_vector = 0xFFFA;   // NMI vector
-
-	std::vector<uint8_t> memory;
+  
+  static constexpr int oamAddr = 0x200; // 256 bytes starting here for OAM 
+  static constexpr int oamEnd = oamAddr + (oamSize * sizeof(Sprite)); // OAM size is 64 sprites, each sprite is 4 bytes
+  std::vector<uint8_t> memory;
 	std::vector<uint8_t> stack;
 	std::shared_ptr<Cartridge> cart;
+  std::shared_ptr<OAM> m_oam;
 
 public: // Flag Operations - Sets, unsets, or clears status flags
 	bool getOverFlowFlag() const;
