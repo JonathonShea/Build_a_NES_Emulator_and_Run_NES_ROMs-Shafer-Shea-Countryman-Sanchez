@@ -81,7 +81,7 @@ int main(int argc, const char * argv[]){
 	}
 
 	// execute script
-	int result = std::system("python ../../src/patterntablerender.py chr_data.bin output.bmp -P DK");
+	int result = std::system("py ../../src/patterntablerender.py chr_data.bin output.bmp -P DK");
 	if (result != 0) {
 		std::cerr << "Python script execution failed!" << std::endl;
 		return -1;
