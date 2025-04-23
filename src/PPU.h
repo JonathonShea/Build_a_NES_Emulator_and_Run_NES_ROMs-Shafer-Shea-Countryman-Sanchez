@@ -9,6 +9,7 @@
 #include <cstdint>
 #include "Cartridge.h"
 #include "Utilities.h"
+#include "OAM.h"
 
 struct RGB {
 	uint8_t r, g, b;
@@ -38,6 +39,11 @@ public:
 	
 	// Local + Test Functions
 	void printPatternTables();
+	void step();
+	void SetOam(std::shared_ptr<OAM> oam) { m_oam = oam; }
+
+private:
+std::shared_ptr<OAM> m_oam;
 
 };
 
