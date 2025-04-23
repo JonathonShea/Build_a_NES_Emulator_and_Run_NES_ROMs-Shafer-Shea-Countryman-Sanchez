@@ -1,7 +1,9 @@
+#ifndef OAM_H
+#define OAM_H
 #include <array>
 #include <cstdint>
 
-inline constexpr oamSize = 64;
+static constexpr int oamSize = 64;
 struct Sprite {
   int8_t y_pos;
   int8_t tile_index;
@@ -14,3 +16,4 @@ struct OAM{
   std::array<Sprite, oamSize> sprites;
 };
 
+#endif // OAM_H

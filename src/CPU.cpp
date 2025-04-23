@@ -2010,7 +2010,7 @@ uint8_t CPU::execute() {
             cycles = 2;
             break;
     }
-    std::copy(memory.begin() + oamAddr, memory.begin() + oamEnd, m_oam->sprites) 
+    std::memcpy(m_oam->sprites.data(), memory.data() + oamAddr, oamSize);
     return cycles;
 }
 
