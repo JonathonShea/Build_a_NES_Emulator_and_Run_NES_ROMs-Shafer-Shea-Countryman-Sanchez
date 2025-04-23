@@ -35,6 +35,8 @@ SDL_Texture* LoadBMP(const std::string& filePath, SDL_Renderer* renderer) {
 int main(int argc, const char * argv[]){
 	Clock clock(300, "CPU Clock");
 	CPU cpu;
+	auto oam = std::make_shared<OAM>();
+	cpu.SetOAM(oam); // Set OAM for the CPU
 	std::ifstream romFile; 
 	std::vector<uint8_t> romData;
 	std::string filePath;
@@ -81,7 +83,7 @@ int main(int argc, const char * argv[]){
 	}
 
 	// execute script
-	int result = std::system("python ../../src/patterntablerender.py chr_data.bin output.bmp -P DK");
+	int result = std::system("python patterntablerender.py chr_data.bin output.bmp -P DK");
 	if (result != 0) {
 		std::cerr << "Python script execution failed!" << std::endl;
 		return -1;

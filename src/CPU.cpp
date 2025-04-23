@@ -2010,7 +2010,10 @@ uint8_t CPU::execute() {
             cycles = 2;
             break;
     }
-    std::memcpy(m_oam->sprites.data(), memory.data() + oamAddr, oamSize);
+    // Copy sprite data from memory into OAM
+    if (m_oam != nullptr) {
+        std::memcpy(m_oam->sprites.data(), memory.data() + oamAddr, oamSize);
+    }
     return cycles;
 }
 
