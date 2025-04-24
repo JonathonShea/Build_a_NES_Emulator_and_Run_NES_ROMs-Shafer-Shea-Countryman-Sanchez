@@ -9,10 +9,11 @@
 #include <Cartridge.h>
 #include <Utilities.h>
 #include "CPU.h"
+#include "PPU.h"
 #include <memory>
 #include "event/EventDispatcher.h"
 #include "input.h"
-
+#include <OAM.h>
 static constexpr std::array<uint8_t, 4> magicNumbers = { 0x4E, 0x45, 0x53, 0x1A }; // NES<EOF> magic numbers to identify a NES ROM file
 
 SDL_Texture* LoadBMP(const std::string& filePath, SDL_Renderer* renderer) {
@@ -33,8 +34,12 @@ SDL_Texture* LoadBMP(const std::string& filePath, SDL_Renderer* renderer) {
 }
 
 int main(int argc, const char * argv[]){
-	Clock clock(300, "CPU Clock");
+	Clock clock(1, "CPU Clock");
 	CPU cpu;
+	PPU ppu; // Create PPU instance
+	auto oam = std::make_shared<OAM>();
+	cpu.SetOAM(oam); // Set OAM for the CPU
+	ppu.SetOam(oam); // Set OAM for the PPU
 	std::ifstream romFile; 
 	std::vector<uint8_t> romData;
 	std::string filePath;
@@ -81,7 +86,7 @@ int main(int argc, const char * argv[]){
 	}
 
 	// execute script
-	int result = std::system("python ../../src/patterntablerender.py chr_data.bin output.bmp -P DK");
+	int result = std::system("python patterntablerender.py chr_data.bin output.bmp -P DK");
 	if (result != 0) {
 		std::cerr << "Python script execution failed!" << std::endl;
 		return -1;
@@ -131,6 +136,9 @@ int main(int argc, const char * argv[]){
 		while (cycles > 0) {
 			clock.tick();
 			cycles--;
+			ppu.step(); // Step the PPU
+			ppu.step(); // There are 3 PPU steps per cycle
+			ppu.step(); // Calling this three times as a "catch-up" method of keeping them in sync
 		}
 		SDL_Delay(16); // Add a small delay to prevent CPU overuse
 	}
@@ -138,17 +146,6 @@ int main(int argc, const char * argv[]){
 	SDL_DestroyWindow(window);
 	SDL_Quit();
 	return 0;
-	while (true) {
-		int cycles = cpu.execute();
-		while (cycles > 0) {
-			clock.tick();
-			cycles--;
-		}
-
-	}
-	
-
-  return 0;
 }
 
 

@@ -174,6 +174,9 @@ void PPU::writePaletteMemory(uint16_t address, uint8_t data) {
     paletteMemory[address] = data & 0x3F;
 }
 
+void PPU::step(){
+    
+}
 
 /* USED FOR LOCALIZED DEBUGGING / UTILITY
  static constexpr std::array<uint8_t, 4> magicNumbers = { 0x4E, 0x45, 0x53, 0x1A }; // NES<EOF> magic numbers to identify a NES ROM file

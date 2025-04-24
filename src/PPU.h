@@ -13,6 +13,7 @@
 #include <iomanip>
 #include "Cartridge.h"
 #include "Utilities.h"
+#include "OAM.h"
 
 struct RGB {
 	uint8_t r, g, b;
@@ -40,6 +41,11 @@ public:
 	// Local + Test Functions
 	void loadPatternTable(const std::vector<uint8_t>& chrROM);
 	void printPatternTables();
+	void step();
+	void SetOam(std::shared_ptr<OAM> oam) { m_oam = oam; }
+
+private:
+std::shared_ptr<OAM> m_oam;
 
 	// Palette memory functions
 	uint8_t readPaletteMemory(uint16_t address);
