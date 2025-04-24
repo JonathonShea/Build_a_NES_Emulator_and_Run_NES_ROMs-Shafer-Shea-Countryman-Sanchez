@@ -7,6 +7,10 @@
 
 #include <vector>
 #include <cstdint>
+#include <string>
+#include <unordered_map>
+#include <iostream>
+#include <iomanip>
 #include "Cartridge.h"
 #include "Utilities.h"
 #include "OAM.h"
@@ -14,7 +18,6 @@
 struct RGB {
 	uint8_t r, g, b;
 };
-
 
 class PPU
 {
@@ -31,13 +34,12 @@ public:
     
 	static const RGB nes_color_palette[64]; //Global NES palette
 	std::vector<std::vector<uint8_t>> patternTables; //Vector chosen over arrray for modern adapation of PatternTables
+	std::vector<uint8_t> paletteMemory; // Palette Memory
 
 	PPU();
-
-	RGB getColor(uint8_t paletteIndex) const;
-	void loadPatternTable(const std::vector<uint8_t>& chrROM);
 	
 	// Local + Test Functions
+	void loadPatternTable(const std::vector<uint8_t>& chrROM);
 	void printPatternTables();
 	void step();
 	void SetOam(std::shared_ptr<OAM> oam) { m_oam = oam; }
@@ -45,6 +47,10 @@ public:
 private:
 std::shared_ptr<OAM> m_oam;
 
+	// Palette memory functions
+	uint8_t readPaletteMemory(uint16_t address);
+	void writePaletteMemory(uint16_t address, uint8_t data);
+	RGB getColor(uint8_t paletteIndex) const;
 };
 
 #endif

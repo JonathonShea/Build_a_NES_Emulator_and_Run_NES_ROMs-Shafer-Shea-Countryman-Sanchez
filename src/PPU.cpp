@@ -10,9 +10,9 @@
 #include <SDL2/SDL.h>
 #include <iomanip>
 
-
 PPU::PPU(){
     patternTables.resize(2, std::vector<uint8_t>(256 * 8 * 8, 0)); //Left and Right Pattern Tables initialized with tile map
+    paletteMemory.resize(32, 0x0F); // Initialize with black (0x0F)
 }
 
 void PPU::loadPatternTable(const std::vector<uint8_t>& chrROM) {
@@ -48,6 +48,7 @@ void PPU::loadPatternTable(const std::vector<uint8_t>& chrROM) {
     }
 
 }
+
 //Global NES color palette with specified RGB values
 const RGB PPU::nes_color_palette[64] = {
     {84, 84, 84},   // $00
@@ -146,6 +147,31 @@ void PPU::printPatternTables() {
             std::cout << std::endl; // End of tile
         }
     }
+}
+
+// Read from palette memory
+uint8_t PPU::readPaletteMemory(uint16_t address) {
+    // Ensure the address is in the palette range (0-31)
+    address &= 0x1F;
+
+    // Handle palette mirroring
+    if (address >= 0x10 && (address & 0x03) == 0) {
+        address &= 0x0F;
+    }
+
+    return paletteMemory[address];
+}
+
+// Write to palette memory
+void PPU::writePaletteMemory(uint16_t address, uint8_t data) {
+    address &= 0x1F;
+
+    // Handle palette mirroring
+    if (address >= 0x10 && (address & 0x03) == 0) {
+        address &= 0x0F;
+    }
+
+    paletteMemory[address] = data & 0x3F;
 }
 
 void PPU::step(){
