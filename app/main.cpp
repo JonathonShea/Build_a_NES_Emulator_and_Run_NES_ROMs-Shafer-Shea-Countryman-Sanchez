@@ -9,6 +9,7 @@
 #include <Cartridge.h>
 #include <Utilities.h>
 #include "CPU.h"
+#include "PPU.h"
 #include <memory>
 #include "event/EventDispatcher.h"
 #include "input.h"
@@ -33,10 +34,12 @@ SDL_Texture* LoadBMP(const std::string& filePath, SDL_Renderer* renderer) {
 }
 
 int main(int argc, const char * argv[]){
-	Clock clock(300, "CPU Clock");
+	Clock clock(1, "CPU Clock");
 	CPU cpu;
+	PPU ppu; // Create PPU instance
 	auto oam = std::make_shared<OAM>();
 	cpu.SetOAM(oam); // Set OAM for the CPU
+	ppu.SetOam(oam); // Set OAM for the PPU
 	std::ifstream romFile; 
 	std::vector<uint8_t> romData;
 	std::string filePath;
@@ -140,17 +143,6 @@ int main(int argc, const char * argv[]){
 	SDL_DestroyWindow(window);
 	SDL_Quit();
 	return 0;
-	while (true) {
-		int cycles = cpu.execute();
-		while (cycles > 0) {
-			clock.tick();
-			cycles--;
-		}
-
-	}
-	
-
-  return 0;
 }
 
 

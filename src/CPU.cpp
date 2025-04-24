@@ -207,8 +207,7 @@ uint16_t CPU::addr_indirect_indexed_y()
 // Relative addressing mode
 uint16_t CPU::addr_relative()
 {
-    int8_t offset = static_cast<int8_t>(read(program_counter++));
-    return program_counter + offset;
+    return program_counter++;
 }
 
 ///////////////////////////////////////////////////////////////////
@@ -837,7 +836,8 @@ void CPU::BCC(uint16_t addr)
     if (!getCarryFlag())
     {
         // Signed value, need to cast
-        program_counter += static_cast<int8_t>(memory[addr]) + 2;
+        int8_t offset = static_cast<int8_t>(read(addr));
+        program_counter += offset;
     }
 }
 
@@ -846,7 +846,8 @@ void CPU::BCS(uint16_t addr)
     if (getCarryFlag())
     {
         // Signed value, need to cast
-        program_counter += static_cast<int8_t>(memory[addr]) + 2;
+        int8_t offset = static_cast<int8_t>(read(addr));
+        program_counter += offset;
     }
 }
 
@@ -855,7 +856,8 @@ void CPU::BMI(uint16_t addr)
     if (getNegativeFlag()) 
     {
         // Signed value, need to cast
-        program_counter += static_cast<int8_t>(memory[addr]) + 2;
+        int8_t offset = static_cast<int8_t>(read(addr));
+        program_counter += offset;
     }
 }
 
@@ -864,7 +866,8 @@ void CPU::BPL(uint16_t addr)
     if (!getNegativeFlag())
     {
         // Signed value, need to cast
-        program_counter += static_cast<int8_t>(memory[addr]) + 2;
+        int8_t offset = static_cast<int8_t>(read(addr));
+        program_counter += offset;
     }
 }
 
@@ -873,7 +876,8 @@ void CPU::BVC(uint16_t addr)
     if (!getOverFlowFlag())
     {
         // Signed value, need to cast
-        program_counter += static_cast<int8_t>(memory[addr]) + 2;
+        int8_t offset = static_cast<int8_t>(read(addr));
+        program_counter += offset;
     }
 }
 
@@ -882,7 +886,8 @@ void CPU::BVS(uint16_t addr)
     if (getOverFlowFlag())
     {
         // Signed value, need to cast
-        program_counter += static_cast<int8_t>(memory[addr]) + 2;
+        int8_t offset = static_cast<int8_t>(read(addr));
+        program_counter += offset;
     }
 }
 
@@ -890,7 +895,8 @@ void CPU::BNE(uint16_t addr)
 {
     if (!getZeroFlag()) {
         // Signed value, need to cast
-        program_counter += static_cast<int8_t>(memory[addr]) + 2;
+        int8_t offset = static_cast<int8_t>(read(addr));
+        program_counter += offset;
     }
 }
 
@@ -898,7 +904,8 @@ void CPU::BEQ(uint16_t addr)
 {
     if (getZeroFlag()) {
         // Signed value, need to cast
-        program_counter += static_cast<int8_t>(memory[addr]) + 2;
+        int8_t offset = static_cast<int8_t>(read(addr));
+        program_counter += offset;
     }
 }
 
@@ -2013,6 +2020,9 @@ uint8_t CPU::execute() {
     // Copy sprite data from memory into OAM
     if (m_oam != nullptr) {
         std::memcpy(m_oam->sprites.data(), memory.data() + oamAddr, oamSize);
+        // for (const auto& val : m_oam->sprites) {
+        //     std::cout << "Sprite: " << val << std::endl;
+        // }
     }
     return cycles;
 }
