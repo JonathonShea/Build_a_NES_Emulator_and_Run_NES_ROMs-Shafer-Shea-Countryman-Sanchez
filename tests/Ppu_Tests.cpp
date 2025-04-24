@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 #include <PPU.h>
+#include <ostream> 
 
 namespace PPUTests {
 	class PPUColorIndexTest : public testing::Test {
@@ -128,5 +129,117 @@ namespace PPUTests {
 		ASSERT_EQ(color.r, expected.r);
 		ASSERT_EQ(color.g, expected.g);
 		ASSERT_EQ(color.b, expected.b);
+	}
+
+	class PPUPaletteReadingTest : public ::testing::Test {
+	protected:
+		PPU ppu;
+	};
+
+	// Basic reading/writing
+	TEST_F(PPUPaletteReadingTest, PaletteWriteRead) {
+		// Write to a background palette entry ($3F01)
+		ppu.writePaletteMemory(0x3F01, 0x15);
+		EXPECT_EQ(ppu.readPaletteMemory(0x3F01), 0x15);
+
+		// Write to a sprite palette entry ($3F17)
+		ppu.writePaletteMemory(0x3F17, 0x2A);
+		EXPECT_EQ(ppu.readPaletteMemory(0x3F17), 0x2A);
+
+		// Overwrite a value
+		ppu.writePaletteMemory(0x3F01, 0x01);
+		EXPECT_EQ(ppu.readPaletteMemory(0x3F01), 0x01);
+	}
+
+	// Test case to verify palette mirroring behavior
+	TEST_F(PPUPaletteReadingTest, PaletteMirroring) {
+		// Test mirroring $3F00 <-> $3F10
+		ppu.writePaletteMemory(0x3F00, 0x01); 
+		EXPECT_EQ(ppu.readPaletteMemory(0x3F00), 0x01);
+		EXPECT_EQ(ppu.readPaletteMemory(0x3F10), 0x01);
+
+		// Write to the mirror address $3F10
+		ppu.writePaletteMemory(0x3F10, 0x11);
+		EXPECT_EQ(ppu.readPaletteMemory(0x3F00), 0x11);
+		EXPECT_EQ(ppu.readPaletteMemory(0x3F10), 0x11);
+
+		// Test mirroring $3F04 <-> $3F14
+		ppu.writePaletteMemory(0x3F04, 0x02);
+		EXPECT_EQ(ppu.readPaletteMemory(0x3F14), 0x02);
+		ppu.writePaletteMemory(0x3F14, 0x12);
+		EXPECT_EQ(ppu.readPaletteMemory(0x3F04), 0x12);
+
+		// Test mirroring $3F08 <-> $3F18
+		ppu.writePaletteMemory(0x3F08, 0x03); 
+		EXPECT_EQ(ppu.readPaletteMemory(0x3F18), 0x03);
+		ppu.writePaletteMemory(0x3F18, 0x13);
+		EXPECT_EQ(ppu.readPaletteMemory(0x3F08), 0x13);
+
+		// Test mirroring $3F0C <-> $3F1C
+		ppu.writePaletteMemory(0x3F0C, 0x04);
+		EXPECT_EQ(ppu.readPaletteMemory(0x3F1C), 0x04);
+		ppu.writePaletteMemory(0x3F1C, 0x14);
+		EXPECT_EQ(ppu.readPaletteMemory(0x3F0C), 0x14);
+	}
+
+	// Test case to verify data masking (writes should be masked to 6 bits)
+	TEST_F(PPUPaletteReadingTest, PaletteDataMasking) {
+		// Write a value larger than 6 bits
+		ppu.writePaletteMemory(0x3F02, 0xFF);
+		// Expect the read value to be masked to 6 bits (0x3F = 00111111)
+		EXPECT_EQ(ppu.readPaletteMemory(0x3F02), 0x3F);
+		
+		// Write a value larger than 6 bits
+		ppu.writePaletteMemory(0x3F05, 0x5A);
+		// Expect the read value to be masked to 6 bits
+		EXPECT_EQ(ppu.readPaletteMemory(0x3F05), 0x1A);
+	}
+
+	// Test case to verify the initial state of the palette memory
+	TEST_F(PPUPaletteReadingTest, PaletteInitialization) {
+		// Palette memory should be initialized to 0x0F (Black)
+		EXPECT_EQ(ppu.readPaletteMemory(0x3F00), 0x0F) << "Initial value at 0x3F00 is not 0x0F";
+		EXPECT_EQ(ppu.readPaletteMemory(0x3F08), 0x0F) << "Initial value at 0x3F08 is not 0x0F";
+		EXPECT_EQ(ppu.readPaletteMemory(0x3F11), 0x0F) << "Initial value at 0x3F11 is not 0x0F";
+		EXPECT_EQ(ppu.readPaletteMemory(0x3F1F), 0x0F) << "Initial value at 0x3F1F is not 0x0F";
+
+		// Check a mirrored address initial value
+		EXPECT_EQ(ppu.readPaletteMemory(0x3F10), 0x0F);
+	}
+
+	class PPUIndexTest : public ::testing::Test {
+	protected:
+		PPU ppu;
+	};
+
+	TEST_F(PPUIndexTest, PaletteMaskingLogic) { // Using renamed fixture 'PPUIndexTest'.
+
+		// Test writing 0x40
+		ppu.writePaletteMemory(0x3F01, 0x40);
+		EXPECT_EQ(ppu.readPaletteMemory(0x3F01), 0x00);
+
+		// Test writing 0x5A
+		ppu.writePaletteMemory(0x3F02, 0x5A);
+		EXPECT_EQ(ppu.readPaletteMemory(0x3F02), 0x1A);
+
+		// Test writing 0xC5
+		ppu.writePaletteMemory(0x3F03, 0xC5);
+		EXPECT_EQ(ppu.readPaletteMemory(0x3F03), 0x05);
+
+		// Test writing 0xFF
+		ppu.writePaletteMemory(0x3F04, 0xFF);
+		EXPECT_EQ(ppu.readPaletteMemory(0x3F04), 0x3F);
+
+		// 5. Test writing 0x3F
+		ppu.writePaletteMemory(0x3F05, 0x3F);
+		EXPECT_EQ(ppu.readPaletteMemory(0x3F05), 0x3F);
+
+		// 6. Test writing 0x00 (binary 00000000) - Should remain 0x00
+		ppu.writePaletteMemory(0x3F06, 0x00);
+		EXPECT_EQ(ppu.readPaletteMemory(0x3F06), 0x00);
+
+		// 7. Test writing 0x1B
+		ppu.writePaletteMemory(0x3F07, 0x1B);
+		EXPECT_EQ(ppu.readPaletteMemory(0x3F07), 0x1B);
 	}
 }
