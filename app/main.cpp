@@ -136,6 +136,9 @@ int main(int argc, const char * argv[]){
 		while (cycles > 0) {
 			clock.tick();
 			cycles--;
+			ppu.step(); // Step the PPU
+			ppu.step(); // There are 3 PPU steps per cycle
+			ppu.step(); // Calling this three times as a "catch-up" method of keeping them in sync
 		}
 		SDL_Delay(16); // Add a small delay to prevent CPU overuse
 	}
