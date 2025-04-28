@@ -1,13 +1,13 @@
 /*
     Created by Ryan Countryman on 11/17/2024
-    Last Updated: 3/11/2025
+    Last Updated: 3/23/2025
 */
 #include "PPU.h"
 #include <iostream>
 #include <fstream>
 #include <string> 
 #include <array>
-#include <SDL2/SDL.h>
+//#include <SDL2/SDL.h>
 #include <iomanip>
 
 PPU::PPU(){
@@ -47,6 +47,22 @@ void PPU::loadPatternTable(const std::vector<uint8_t>& chrROM) {
        }
     }
 
+}
+
+std::array<uint8_t, 64> PPU::getPatternTile(int tableIndex, int tileIndex) const {
+    std::array<uint8_t, 64> tile{};
+
+    if (tableIndex < 0 || tableIndex >= 2 || tileIndex < 0 || tileIndex >= 256) {
+        throw std::out_of_range("Invalide Pattern Table or index");
+    }
+
+    const int offset = tileIndex * 64;
+
+    for (int i = 0; i < 64; ++i) {
+        tile[i] = patternTables[tableIndex][offset + i];
+    }
+
+    return tile;
 }
 
 //Global NES color palette with specified RGB values
@@ -176,6 +192,60 @@ void PPU::writePaletteMemory(uint16_t address, uint8_t data) {
 
 void PPU::step(){
     
+}
+
+//Access Proper NameTable/AttributeTable
+int PPU::getTableIndex(uint16_t address) const{
+    address &= 0x0FFF; //Restricting access to only 0x2000 - 0x3FFF
+
+    int tableIndex = -1;
+
+    //Vertical Mirroring
+    if (address < 0x0400) {
+        tableIndex = 0; //NameTable 0
+    }
+    else if (address < 0x0800){
+        tableIndex = 1; //NameTable 1
+    }
+    else if (address < 0x0C00) {
+        tableIndex = 0; //Mirrored NameTable 0
+    }
+    else {
+        tableIndex = 1; //Mirrored NameTable 1
+    }
+
+    return tableIndex;
+
+}
+
+//Write to NameTable and AttributeTable
+void PPU::writeNameTable(uint16_t address, uint8_t data) {
+    int tableIndex = getTableIndex(address);
+    if (tableIndex == -1) return; //Non-valid Index
+
+    uint16_t offset = address & 0x03FF;
+
+    if (offset < 960) { //First 960 Bytes for Name Table
+        nameTables[tableIndex].tiles[offset] = data;
+    }
+    else { //Last 64 bytes for Attributes Table
+        nameTables[tableIndex].attributes[offset - 960] = data;
+    }
+}
+
+//Read NameTable and AtrributeTable
+uint8_t PPU::readNameTable(uint16_t address) const {
+    int tableIndex = getTableIndex(address);
+    if (tableIndex == -1) return 0xFF; //Non-valid Index
+
+    uint16_t offset = address & 0x03FF;
+
+    if (offset < 960) { //First 960 Bytes for Name Table
+        return nameTables[tableIndex].tiles[offset];
+    }
+    else { //Last 64 bytes for Attributes Table
+        return nameTables[tableIndex].attributes[offset - 960];
+    }
 }
 
 /* USED FOR LOCALIZED DEBUGGING / UTILITY
