@@ -43,6 +43,10 @@ public:
 	void printPatternTables();
 	void step();
 	void SetOam(std::shared_ptr<OAM> oam) { m_oam = oam; }
+	void setPixel(std::vector<uint8_t>& pixelBuffer, int x, int y, const RGB& color, int imageWidth, int imageHeight);
+	void dumpPatternTablesToBitmap(const std::string& filename);
+	void writePixel(int x, int y, const RGB& color, const std::string& filename);
+
 
 private:
 std::shared_ptr<OAM> m_oam;
@@ -51,6 +55,8 @@ std::shared_ptr<OAM> m_oam;
 	uint8_t readPaletteMemory(uint16_t address);
 	void writePaletteMemory(uint16_t address, uint8_t data);
 	RGB getColor(uint8_t paletteIndex) const;
+	void writeBMP(const std::vector<uint8_t>& pixelBuffer, int imageWidth, int imageHeight, const std::string& filename);
+	bool readBMP(const std::string& filename, std::vector<uint8_t>& pixelBuffer, int& imageWidth, int& imageHeight);
 };
 
 #endif
