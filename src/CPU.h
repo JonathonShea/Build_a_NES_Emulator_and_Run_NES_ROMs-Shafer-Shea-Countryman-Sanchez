@@ -20,6 +20,13 @@ public:
 	uint16_t program_counter;				// 16-bit register that contains a pointer to the next instruction
 	uint8_t status = 0x00;					// 8-bit register that contains status flags
 
+    // controller info
+    uint8_t controller1_state = 0;   // Latest button input (from InputHandler)
+    uint8_t controller1_shift = 0;   // Shifting register for serial reads
+    bool controller_strobe = false;  // True if strobe is active
+    uint8_t controller2_state = 0;   // Latest button input (from InputHandler)
+    uint8_t controller2_shift = 0;   // Shifting register for serial reads
+
 	// Interrupt signals
 	bool irq_signal = false;
 	bool nmi_signal = false;

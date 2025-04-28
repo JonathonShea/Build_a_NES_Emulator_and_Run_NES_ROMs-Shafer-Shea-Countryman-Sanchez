@@ -14,6 +14,7 @@
 #include "event/EventDispatcher.h"
 #include "input.h"
 #include <OAM.h>
+
 static constexpr std::array<uint8_t, 4> magicNumbers = { 0x4E, 0x45, 0x53, 0x1A }; // NES<EOF> magic numbers to identify a NES ROM file
 
 SDL_Texture* LoadBMP(const std::string& filePath, SDL_Renderer* renderer) {
@@ -95,6 +96,7 @@ int main(int argc, const char* argv[]) {
 
 	bool running = true;
 	SDL_Event event;
+	int scanline = 0;
 
 	while (running) {
 		while (SDL_PollEvent(&event)) {
@@ -104,9 +106,36 @@ int main(int argc, const char* argv[]) {
 			inputHandler.processEvent(event); // Use the InputHandler class
 		}
 
-		int randomX = std::rand() % 256;  // Random X coordinate
-		int randomY = std::rand() % 128;   // Random Y coordinate
-		ppu.writePixel(randomX, randomY, { 255,0,0 }, "output.bmp");
+		cpu.controller1_state = inputHandler.getControllerState();
+
+		bool redpixels = true;
+
+		if (cpu.controller1_state & 0x01) {
+			redpixels = false;
+		}
+
+		if (redpixels) {
+			int randomX = std::rand() % 256;  // Random X coordinate
+			int randomY = std::rand() % 128;   // Random Y coordinate
+			ppu.writePixel(randomX, randomY, { 255,0,0 }, "output.bmp");
+		} else {
+			static int rainbowIndex = 0;
+			std::array<std::array<uint8_t, 3>, 7> rainbowColors = {{
+				{255, 0, 0},   // Red
+				{255, 127, 0}, // Orange
+				{255, 255, 0}, // Yellow
+				{0, 255, 0},   // Green
+				{0, 0, 255},   // Blue
+				{75, 0, 130},  // Indigo
+				{148, 0, 211}  // Violet
+			}};
+
+			std::vector<RGB> scanlineColors(256, { rainbowColors[rainbowIndex][0], rainbowColors[rainbowIndex][1], rainbowColors[rainbowIndex][2] });
+			ppu.writeScanline(scanline, scanlineColors, "output.bmp");
+			rainbowIndex = (rainbowIndex + 1) % rainbowColors.size();
+			scanline = (scanline + 1) % 128; // Reset scanline after 240 (NES screen height)
+		}
+		
 
 
 		SDL_Texture* texture = LoadBMP("output.bmp", renderer);

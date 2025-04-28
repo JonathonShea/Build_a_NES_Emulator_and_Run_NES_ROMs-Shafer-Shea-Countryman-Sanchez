@@ -56,6 +56,7 @@ public:
 	void setPixel(std::vector<uint8_t>& pixelBuffer, int x, int y, const RGB& color, int imageWidth, int imageHeight);
 	void dumpPatternTablesToBitmap(const std::string& filename);
 	void writePixel(int x, int y, const RGB& color, const std::string& filename);
+	void writeScanline(int scanline, const std::vector<RGB>& colors, const std::string& filename);
   
 	std::array<uint8_t, 64> getPatternTile(int tableIndex, int tileIndex) const;
 
