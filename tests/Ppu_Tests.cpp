@@ -242,4 +242,49 @@ namespace PPUTests {
 		ppu.writePaletteMemory(0x3F07, 0x1B);
 		EXPECT_EQ(ppu.readPaletteMemory(0x3F07), 0x1B);
 	}
+
+	class PPUNameTableTest : public ::testing::Test {
+	protected:
+		PPU ppu;
+	};
+
+	TEST_F(PPUNameTableTest, WriteReadNameTable0Tiles) {
+		uint16_t addr = 0x2000; // First byte of NameTable 0
+		uint8_t value = 0x42;
+
+		ppu.writeNameTable(addr, value);
+		EXPECT_EQ(ppu.readNameTable(addr), value);
+	}
+	// Test writing and reading to tile section of NameTable 1
+	TEST_F(PPUNameTableTest, WriteReadNameTable1Tiles) {
+		uint16_t addr = 0x2400; // Start of NameTable 1
+		uint8_t value = 0xAA;
+
+		ppu.writeNameTable(addr, value);
+		EXPECT_EQ(ppu.readNameTable(addr), value);
+	}
+
+	// Test writing and reading to attribute table of NameTable 0
+	TEST_F(PPUNameTableTest, WriteReadAttributeTable0) {
+		uint16_t addr = 0x23C0; // Attribute table region of NT0
+		uint8_t value = 0x55;
+
+		ppu.writeNameTable(addr, value);
+		EXPECT_EQ(ppu.readNameTable(addr), value);
+	}
+
+	// Test writing and reading to attribute table of NameTable 1
+	TEST_F(PPUNameTableTest, WriteReadAttributeTable1) {
+		uint16_t addr = 0x27C0; // Attribute table region of NT1
+		uint8_t value = 0x99;
+
+		ppu.writeNameTable(addr, value);
+		EXPECT_EQ(ppu.readNameTable(addr), value);
+	}
+
+	// Test out-of-range address (outside 0x2000-0x2FFF), should return something safe
+	TEST_F(PPUNameTableTest, InvalidAddressReturnsDefault) {
+		uint16_t addr = 0x3FFF; // Not in NameTable space
+		EXPECT_NO_THROW(ppu.readNameTable(addr));
+	}
 }
