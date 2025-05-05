@@ -61,6 +61,47 @@ void PPU::writePixel(int x, int y, const RGB& color, const std::string& filename
     writeBMP(pixelBuffer, imageWidth, imageHeight, filename);
 }
 
+void PPU::writeScanline(int scanline, const std::vector<RGB>& colors, const std::string& filename) {
+    std::vector<uint8_t> pixelBuffer;
+    int imageWidth, imageHeight;
+
+    // Step 1: Read the existing BMP image into the pixel buffer
+    if (!readBMP(filename, pixelBuffer, imageWidth, imageHeight)) {
+        std::cerr << "Failed to read BMP file!" << std::endl;
+        return;
+    }
+
+    // Step 2: Validate scanline number
+    if (scanline < 0 || scanline >= imageHeight) {
+        std::cerr << "Invalid scanline: " << scanline
+                  << " out of bounds (height: " << imageHeight << ")" << std::endl;
+        return;
+    }
+
+    // Step 3: Validate color list length
+    if (colors.size() != static_cast<size_t>(imageWidth)) {
+        std::cerr << "Color list size (" << colors.size()
+                  << ") does not match image width (" << imageWidth << ")" << std::endl;
+        return;
+    }
+
+    // Step 4: Calculate padding and row size
+    int paddingSize = (4 - (imageWidth * 3) % 4) % 4;
+    int rowSize = (imageWidth * 3) + paddingSize;
+    int rowStartIndex = scanline * rowSize;
+
+    // Step 5: Update each pixel in the scanline
+    for (int x = 0; x < imageWidth; ++x) {
+        int index = rowStartIndex + (x * 3);
+        pixelBuffer[index + 0] = colors[x].b; // Blue
+        pixelBuffer[index + 1] = colors[x].g; // Green
+        pixelBuffer[index + 2] = colors[x].r; // Red
+    }
+
+    // Step 6: Write the updated pixel buffer back to the BMP file
+    writeBMP(pixelBuffer, imageWidth, imageHeight, filename);
+}
+
 void PPU::writeBMP(const std::vector<uint8_t>& pixelBuffer, int imageWidth, int imageHeight, const std::string& filename) {
     std::ofstream out(filename, std::ios::binary);
     if (!out.is_open()) {

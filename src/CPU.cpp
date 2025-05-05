@@ -58,7 +58,23 @@ CPU::CPU() : stack_pointer(0xFF), memory(65536, 0), program_counter(reset_vector
 
 uint8_t CPU::read(uint16_t addr)
 {
-    if (addr > 0x8000) {
+    if (addr == 0x4016) {
+        // Controller 1 serial read
+        uint8_t value = (controller1_shift & 1);
+        if (!controller_strobe) {
+            controller1_shift >>= 1;
+        }
+        return value | 0x40; // Often returns high bits set to 1 or open bus
+    }
+    else if (addr == 0x4017) {
+        // (Optional) Controller 2 serial read (if you have a second controller)
+        uint8_t value = (controller2_shift & 1);
+        if (!controller_strobe) {
+            controller2_shift >>= 1;
+        }
+        return value | 0x40;
+    }
+    else if (addr >= 0x8000) {
         return cart->ReadPrgRom(addr - 0x8000);
     }
     else {
@@ -68,9 +84,18 @@ uint8_t CPU::read(uint16_t addr)
 
 void CPU::write(uint16_t addr, uint8_t data)
 {
-    memory[addr] = data;
+    if (addr == 0x4016) {
+        controller_strobe = data & 1;
+        if (controller_strobe) {
+            // On strobe high (1), latch the current input state into the shift register
+            controller1_shift = controller1_state;
+            controller2_shift = controller2_state; // if you have controller 2
+        }
+    }
+    else {
+        memory[addr] = data;
+    }
 }
-
 ///////////////////////////////////////////////////////////////////
 // ADDRESSING MODES
 ///////////////////////////////////////////////////////////////////
