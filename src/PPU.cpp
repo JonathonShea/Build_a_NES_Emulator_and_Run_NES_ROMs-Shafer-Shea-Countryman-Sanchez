@@ -61,6 +61,21 @@ void PPU::writePixel(int x, int y, const RGB& color, const std::string& filename
     writeBMP(pixelBuffer, imageWidth, imageHeight, filename);
 }
 
+/*
+Function to write a scanline to the BMP file
+To create the colors vector:
+
+std::vector<RGB> colors;
+colors.reserve(256); // Nes scanline is 256 pixels wide
+
+to add a color to the vector:
+colors.emplace_back(RGB{r, g, b}); // where r, g, b are the RGB values for the color
+
+Then call the function:
+writeScanline(scanline, colors, filename);
+where scanline is the y-coordinate of the scanline to write (0-239 for a 240p image) and filename is the path to the BMP file.
+*/
+
 void PPU::writeScanline(int scanline, const std::vector<RGB>& colors, const std::string& filename) {
     std::vector<uint8_t> pixelBuffer;
     int imageWidth, imageHeight;

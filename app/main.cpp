@@ -34,6 +34,39 @@ SDL_Texture* LoadBMP(const std::string& filePath, SDL_Renderer* renderer) {
 	return texture;
 }
 
+void runAnimationTests(CPU& cpu, PPU& ppu, int& scanline) {
+    bool redpixels = true;
+    if (cpu.controller1_state & 0x01) {
+        redpixels = false;
+    }
+
+    if (cpu.controller1_state & 0x2) {
+        ppu.dumpPatternTablesToBitmap("output.bmp");
+    }
+
+    if (redpixels) {
+        int randomX = std::rand() % 256;  // Random X coordinate
+        int randomY = std::rand() % 128; // Random Y coordinate
+        ppu.writePixel(randomX, randomY, { 255, 0, 0 }, "output.bmp");
+    } else {
+        static int rainbowIndex = 0;
+        std::array<std::array<uint8_t, 3>, 7> rainbowColors = {{
+            {255, 0, 0},   // Red
+            {255, 127, 0}, // Orange
+            {255, 255, 0}, // Yellow
+            {0, 255, 0},   // Green
+            {0, 0, 255},   // Blue
+            {75, 0, 130},  // Indigo
+            {148, 0, 211}  // Violet
+        }};
+
+        std::vector<RGB> scanlineColors(256, { rainbowColors[rainbowIndex][0], rainbowColors[rainbowIndex][1], rainbowColors[rainbowIndex][2] });
+        ppu.writeScanline(scanline, scanlineColors, "output.bmp");
+        rainbowIndex = (rainbowIndex + 1) % rainbowColors.size();
+        scanline = (scanline + 1) % 128;
+    }
+}
+
 int main(int argc, const char* argv[]) {
 	Clock clock(1, "CPU Clock");
 	CPU cpu;
@@ -78,7 +111,7 @@ int main(int argc, const char* argv[]) {
 	}
 
 	// initialize window
-	SDL_Window* window = SDL_CreateWindow("NES Emulator", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 1024, 512, SDL_WINDOW_SHOWN);
+	SDL_Window* window = SDL_CreateWindow("NES Emulator", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 256 * 3, 240 * 3, SDL_WINDOW_SHOWN);
 	if (!window) {
 		std::cerr << "Window could not be created! SDL_Error: " << SDL_GetError() << std::endl;
 		SDL_Quit();
@@ -108,35 +141,8 @@ int main(int argc, const char* argv[]) {
 
 		cpu.controller1_state = inputHandler.getControllerState();
 
-		bool redpixels = true;
-
-		if (cpu.controller1_state & 0x01) {
-			redpixels = false;
-		}
-
-		if (redpixels) {
-			int randomX = std::rand() % 256;  // Random X coordinate
-			int randomY = std::rand() % 128;   // Random Y coordinate
-			ppu.writePixel(randomX, randomY, { 255,0,0 }, "output.bmp");
-		} else {
-			static int rainbowIndex = 0;
-			std::array<std::array<uint8_t, 3>, 7> rainbowColors = {{
-				{255, 0, 0},   // Red
-				{255, 127, 0}, // Orange
-				{255, 255, 0}, // Yellow
-				{0, 255, 0},   // Green
-				{0, 0, 255},   // Blue
-				{75, 0, 130},  // Indigo
-				{148, 0, 211}  // Violet
-			}};
-
-			std::vector<RGB> scanlineColors(256, { rainbowColors[rainbowIndex][0], rainbowColors[rainbowIndex][1], rainbowColors[rainbowIndex][2] });
-			ppu.writeScanline(scanline, scanlineColors, "output.bmp");
-			rainbowIndex = (rainbowIndex + 1) % rainbowColors.size();
-			scanline = (scanline + 1) % 128; // Reset scanline after 240 (NES screen height)
-		}
-		
-
+		// anim tests (disabled for now)
+		// runAnimationTests(cpu, ppu, scanline);
 
 		SDL_Texture* texture = LoadBMP("output.bmp", renderer);
 		if (!texture) {
@@ -157,7 +163,6 @@ int main(int argc, const char* argv[]) {
 			ppu.step(); // There are 3 PPU steps per cycle
 			ppu.step(); // Calling this three times as a "catch-up" method of keeping them in sync
 		}
-		SDL_Delay(16); // Add a small delay to prevent CPU overuse
 	}
 
 	SDL_DestroyWindow(window);
