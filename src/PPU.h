@@ -50,6 +50,8 @@ public:
 
 	PPU();
 
+	void cpuWrite(uint16_t address, uint8_t data);
+	void write(uint16_t address, uint8_t data);
 	void loadPatternTable(const std::vector<uint8_t>& chrROM);
 	void step();
 	void SetOam(std::shared_ptr<OAM> oam) { m_oam = oam; }

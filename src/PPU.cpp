@@ -460,6 +460,37 @@ uint8_t PPU::readNameTable(uint16_t address) const {
     }
 }
 
+void PPU::write(uint16_t address, uint8_t data) {
+    if (address < 0x2000) {
+        //Possible overhaul of current PatternTable write logic
+    }
+    else if (address >= 2000 && address <= 0x3EFF){
+        writeNameTable(address,data);
+    }
+    else if (address >= 0x3F00 && address <= 0x3FFF) {
+        writePaletteMemory(address, data);
+    }
+    else {
+        std::cerr << "Invalid PPU Write to address: $" << address << std::endl;
+    }
+}
+
+//PPU MMIO Registers - - https://www.nesdev.org/wiki/PPU_registers -- For ref
+void PPU::cpuWrite(uint16_t address, uint8_t data) {
+    switch (address & 0x2007) {
+        case 0x2000: PPUCTRL = data; break;
+        case 0x2001: PPUMASK = data; break;
+        case 0x2002: break; //PPUSTATUS Read only from CPU
+        case 0x2003: OAMADDR = data; break;
+        case 0x2004: break; //OAMDATA Read/Write to OAM Data
+        case 0x2005: break; //PPUSCROLL Write
+        case 0x2006: break; // PPUADDR Need to set up High Bit stash awaiting lowbit for full address
+        case 0x2007: break; //PPUDATA write(PPUADDR,data) Get 0x2006 working for the lower and higher 8bits of address
+        default: std::cerr << "Unknown PPU MMIO write $" << address << std::endl;
+    }
+}
+
+
 /* USED FOR LOCALIZED DEBUGGING / UTILITY
  static constexpr std::array<uint8_t, 4> magicNumbers = { 0x4E, 0x45, 0x53, 0x1A }; // NES<EOF> magic numbers to identify a NES ROM file
 
