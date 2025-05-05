@@ -37,6 +37,19 @@ void InputHandler::processEvent(const SDL_Event& event) {
         // JK for A and B
         // RETURN and SPACE for Start and Select
         if (!shiftPressed) {
+            bool pressed = (event.type == SDL_KEYDOWN);
+            switch (key) {
+            case SDLK_j: setButtonState(0, pressed); break; // A
+            case SDLK_k: setButtonState(1, pressed); break; // B
+            case SDLK_SPACE: setButtonState(2, pressed); break; // Select
+            case SDLK_RETURN: setButtonState(3, pressed); break; // Start
+            case SDLK_w: setButtonState(4, pressed); break; // Up
+            case SDLK_s: setButtonState(5, pressed); break; // Down
+            case SDLK_a: setButtonState(6, pressed); break; // Left
+            case SDLK_d: setButtonState(7, pressed); break; // Right
+            }
+        }
+        if (!shiftPressed) {
             if (key == SDLK_w || key == SDLK_a || key == SDLK_s || key == SDLK_d || key == SDLK_j || key == SDLK_k || key == SDLK_SPACE || key == SDLK_RETURN) {
                 if (event.type == SDL_KEYDOWN) {
                     std::cout << "Key Pressed: " << SDL_GetKeyName(key) << std::endl;
@@ -71,4 +84,15 @@ InputHandler::~InputHandler() {
         controller = nullptr;
     }
     SDL_Quit();
+}
+
+uint8_t InputHandler::getControllerState() const {
+    return controllerState;
+}
+
+void InputHandler::setButtonState(int button, bool pressed) {
+    if (pressed)
+        controllerState |= (1 << button);
+    else
+        controllerState &= ~(1 << button);
 }

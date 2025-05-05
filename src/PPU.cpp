@@ -1,24 +1,231 @@
 /*
     Created by Ryan Countryman on 11/17/2024
-    Last Updated: 3/11/2025
+    Last Updated: 3/23/2025
 */
 #include "PPU.h"
 #include <iostream>
 #include <fstream>
 #include <string> 
 #include <array>
-#include <SDL2/SDL.h>
+//#include <SDL2/SDL.h>
 #include <iomanip>
-
-
-void PPU::respTest()
-{
-    std::cout << "Hello from the PPU" << std::endl;
-}
 
 PPU::PPU(){
     patternTables.resize(2, std::vector<uint8_t>(256 * 8 * 8, 0)); //Left and Right Pattern Tables initialized with tile map
+    paletteMemory.resize(32, 0x0F); // Initialize with black (0x0F)
 }
+
+void PPU::setPixel(std::vector<uint8_t>& pixelBuffer, int x, int y, const RGB& color, int imageWidth, int imageHeight) {
+    // BMP stores pixels bottom-up, so we invert y
+    int flippedY = (imageHeight - 1) - y;
+
+    int bytesPerPixel = 3; // RGB
+    int index = (flippedY * imageWidth + x) * bytesPerPixel;
+
+    if (index + 2 < pixelBuffer.size()) { // Bounds check
+        pixelBuffer[index + 0] = color.b; // BMP uses BGR format
+        pixelBuffer[index + 1] = color.g;
+        pixelBuffer[index + 2] = color.r;
+    }
+}
+
+void PPU::writePixel(int x, int y, const RGB& color, const std::string& filename) {
+    std::vector<uint8_t> pixelBuffer;
+    int imageWidth, imageHeight;
+
+    // Step 1: Read the existing BMP image into the pixel buffer
+    if (!readBMP(filename, pixelBuffer, imageWidth, imageHeight)) {
+        std::cerr << "Failed to read BMP file!" << std::endl;
+        return;
+    }
+
+    // Step 2: Ensure that (x, y) is within bounds
+    if (x < 0 || x >= imageWidth || y < 0 || y >= imageHeight) {
+        std::cerr << "Invalid coordinates: (" << x << ", " << y
+            << ") out of bounds (width: " << imageWidth
+            << ", height: " << imageHeight << ")" << std::endl;
+        return;
+    }
+
+    // Step 3: Calculate the index in the pixel buffer for the given (x, y)
+    int paddingSize = (4 - (imageWidth * 3) % 4) % 4;
+    int rowSize = (imageWidth * 3) + paddingSize;
+    int index = (y * rowSize) + (x * 3);
+
+    // Step 4: Update the pixel at the given position (x, y)
+    pixelBuffer[index + 0] = color.b; // Blue
+    pixelBuffer[index + 1] = color.g; // Green
+    pixelBuffer[index + 2] = color.r; // Red
+
+    // Step 5: Write the updated pixel buffer back to the BMP file
+    writeBMP(pixelBuffer, imageWidth, imageHeight, filename);
+}
+
+void PPU::writeScanline(int scanline, const std::vector<RGB>& colors, const std::string& filename) {
+    std::vector<uint8_t> pixelBuffer;
+    int imageWidth, imageHeight;
+
+    // Step 1: Read the existing BMP image into the pixel buffer
+    if (!readBMP(filename, pixelBuffer, imageWidth, imageHeight)) {
+        std::cerr << "Failed to read BMP file!" << std::endl;
+        return;
+    }
+
+    // Step 2: Validate scanline number
+    if (scanline < 0 || scanline >= imageHeight) {
+        std::cerr << "Invalid scanline: " << scanline
+                  << " out of bounds (height: " << imageHeight << ")" << std::endl;
+        return;
+    }
+
+    // Step 3: Validate color list length
+    if (colors.size() != static_cast<size_t>(imageWidth)) {
+        std::cerr << "Color list size (" << colors.size()
+                  << ") does not match image width (" << imageWidth << ")" << std::endl;
+        return;
+    }
+
+    // Step 4: Calculate padding and row size
+    int paddingSize = (4 - (imageWidth * 3) % 4) % 4;
+    int rowSize = (imageWidth * 3) + paddingSize;
+    int rowStartIndex = scanline * rowSize;
+
+    // Step 5: Update each pixel in the scanline
+    for (int x = 0; x < imageWidth; ++x) {
+        int index = rowStartIndex + (x * 3);
+        pixelBuffer[index + 0] = colors[x].b; // Blue
+        pixelBuffer[index + 1] = colors[x].g; // Green
+        pixelBuffer[index + 2] = colors[x].r; // Red
+    }
+
+    // Step 6: Write the updated pixel buffer back to the BMP file
+    writeBMP(pixelBuffer, imageWidth, imageHeight, filename);
+}
+
+void PPU::writeBMP(const std::vector<uint8_t>& pixelBuffer, int imageWidth, int imageHeight, const std::string& filename) {
+    std::ofstream out(filename, std::ios::binary);
+    if (!out.is_open()) {
+        std::cerr << "Failed to open " << filename << " for writing.\n";
+        return;
+    }
+
+    // Calculate padding for row alignment
+    int paddingSize = (4 - (imageWidth * 3) % 4) % 4;
+    int rowSize = (imageWidth * 3) + paddingSize;
+    int pixelDataSize = rowSize * imageHeight;
+    int fileSize = 54 + pixelDataSize;
+
+    // BMP Header
+    out.put('B').put('M');
+    out.write(reinterpret_cast<const char*>(&fileSize), 4);
+    int reserved = 0;
+    out.write(reinterpret_cast<const char*>(&reserved), 4);
+    int dataOffset = 54;
+    out.write(reinterpret_cast<const char*>(&dataOffset), 4);
+
+    // DIB Header
+    int headerSize = 40;
+    out.write(reinterpret_cast<const char*>(&headerSize), 4);
+    out.write(reinterpret_cast<const char*>(&imageWidth), 4);
+    out.write(reinterpret_cast<const char*>(&imageHeight), 4);
+    uint16_t planes = 1;
+    out.write(reinterpret_cast<const char*>(&planes), 2);
+    uint16_t bitsPerPixel = 24;
+    out.write(reinterpret_cast<const char*>(&bitsPerPixel), 2);
+    int compression = 0;
+    out.write(reinterpret_cast<const char*>(&compression), 4);
+    out.write(reinterpret_cast<const char*>(&pixelDataSize), 4);
+    int ppm = 2835; // 72 DPI
+    out.write(reinterpret_cast<const char*>(&ppm), 4);
+    out.write(reinterpret_cast<const char*>(&ppm), 4);
+    int colorsUsed = 0;
+    int importantColors = 0;
+    out.write(reinterpret_cast<const char*>(&colorsUsed), 4);
+    out.write(reinterpret_cast<const char*>(&importantColors), 4);
+
+    // Pixel Data
+    for (int y = 0; y < imageHeight; ++y) {
+        out.write(reinterpret_cast<const char*>(&pixelBuffer[y * imageWidth * 3]), imageWidth * 3);
+        // Write padding
+        for (int p = 0; p < paddingSize; ++p)
+            out.put(0);
+    }
+
+    out.close();
+}
+
+bool PPU::readBMP(const std::string& filename, std::vector<uint8_t>& pixelBuffer, int& imageWidth, int& imageHeight) {
+    std::ifstream in(filename, std::ios::binary);
+    if (!in.is_open()) {
+        std::cerr << "Failed to open " << filename << " for reading.\n";
+        return false;
+    }
+
+    // Read BMP Header
+    char header[54];
+    in.read(header, 54);
+
+    // Get image dimensions
+    imageWidth = *reinterpret_cast<int*>(&header[18]);
+    imageHeight = *reinterpret_cast<int*>(&header[22]);
+
+    // Calculate padding for row alignment
+    int paddingSize = (4 - (imageWidth * 3) % 4) % 4;
+
+    // Prepare the pixel buffer
+    int rowSize = (imageWidth * 3) + paddingSize;
+    int pixelDataSize = rowSize * imageHeight;
+    pixelBuffer.resize(pixelDataSize);
+
+    // Read pixel data into the buffer
+    in.read(reinterpret_cast<char*>(pixelBuffer.data()), pixelDataSize);
+    in.close();
+
+    return true;
+}
+
+void PPU::dumpPatternTablesToBitmap(const std::string& filename) {
+    const int tileSize = 8;         // 8x8 tiles
+    const int tilesPerRow = 16;     // 16 tiles per row
+    const int tableWidth = tileSize * tilesPerRow; // 128 pixels
+    const int tableHeight = tileSize * tilesPerRow; // 128 pixels
+    const int imageWidth = tableWidth * 2;  // Two tables side by side
+    const int imageHeight = tableHeight;
+
+    // Fill the pixel buffer with black (initial value)
+    std::vector<uint8_t> pixelBuffer(imageWidth * imageHeight * 3, 0);
+
+    for (int table = 0; table < 2; ++table) {
+        for (int tile = 0; tile < 256; ++tile) {
+            int tileX = tile % 16;
+            int tileY = tile / 16;
+
+            for (int row = 0; row < 8; ++row) {
+                for (int col = 0; col < 8; ++col) {
+                    int index = (tile * 64) + (row * 8) + col;
+                    uint8_t pixelVal = patternTables[table][index];
+
+                    RGB color;
+                    switch (pixelVal) {
+                    case 0: color = { 0, 0, 0 }; break; // Black (transparent)
+                    case 1: color = { 85, 85, 85 }; break; // Dark gray
+                    case 2: color = { 170, 170, 170 }; break; // Light gray
+                    case 3: color = { 255, 255, 255 }; break; // White
+                    }
+
+                    int x = (table * tableWidth) + (tileX * tileSize) + col;
+                    int y = (tileY * tileSize) + row;
+                    setPixel(pixelBuffer, x, y, color, imageWidth, imageHeight);
+                }
+            }
+        }
+    }
+
+    // Write the pixel buffer to BMP file
+    writeBMP(pixelBuffer, imageWidth, imageHeight, filename);
+}
+
+
 
 void PPU::loadPatternTable(const std::vector<uint8_t>& chrROM) {
     if (chrROM.size() < 8192) { // Ensure pattern table is correct size
@@ -54,6 +261,98 @@ void PPU::loadPatternTable(const std::vector<uint8_t>& chrROM) {
 
 }
 
+std::array<uint8_t, 64> PPU::getPatternTile(int tableIndex, int tileIndex) const {
+    std::array<uint8_t, 64> tile{};
+
+    if (tableIndex < 0 || tableIndex >= 2 || tileIndex < 0 || tileIndex >= 256) {
+        throw std::out_of_range("Invalide Pattern Table or index");
+    }
+
+    const int offset = tileIndex * 64;
+
+    for (int i = 0; i < 64; ++i) {
+        tile[i] = patternTables[tableIndex][offset + i];
+    }
+
+    return tile;
+}
+
+//Global NES color palette with specified RGB values
+const RGB PPU::nes_color_palette[64] = {
+    {84, 84, 84},   // $00
+    {0, 30, 116},   // $01
+    {8, 16, 144},   // $02
+    {48, 0, 136},   // $03
+    {68, 0, 100},   // $04
+    {92, 0, 48},    // $05
+    {84, 4, 0},     // $06
+    {60, 24, 0},    // $07
+    {32, 42, 0},    // $08
+    {8, 58, 0},     // $09
+    {0, 64, 0},     // $0A
+    {0, 60, 0},     // $0B
+    {0, 50, 60},    // $0C
+    {0, 0, 0},      // $0D
+    {0, 0, 0},      // $0E
+    {0, 0, 0},      // $0F
+
+    {152, 150, 152},// $10
+    {8, 76, 196},   // $11
+    {48, 50, 236},  // $12
+    {92, 30, 228},  // $13
+    {136, 20, 176}, // $14
+    {160, 20, 100}, // $15
+    {152, 34, 32},  // $16
+    {120, 60, 0},   // $17
+    {84, 90, 0},    // $18
+    {40, 114, 0},   // $19
+    {8, 124, 0},    // $1A
+    {0, 118, 40},   // $1B
+    {0, 102, 120},  // $1C
+    {0, 0, 0},      // $1D
+    {0, 0, 0},      // $1E
+    {0, 0, 0},      // $1F
+
+    {236, 238, 236},// $20
+    {76, 154, 236}, // $21
+    {120, 124, 236},// $22
+    {176, 98, 236}, // $23
+    {228, 84, 236}, // $24
+    {236, 88, 180}, // $25
+    {236, 106, 100},// $26
+    {212, 136, 32}, // $27
+    {160, 170, 0},  // $28
+    {116, 196, 0},  // $29
+    {76, 208, 32},  // $2A
+    {56, 204, 108}, // $2B
+    {56, 180, 204}, // $2C
+    {60, 60, 60},   // $2D
+    {0, 0, 0},      // $2E
+    {0, 0, 0},      // $2F
+
+    {236, 238, 236},// $30
+    {168, 204, 236},// $31
+    {188, 188, 236},// $32
+    {212, 178, 236},// $33
+    {236, 174, 236},// $34
+    {236, 174, 212},// $35
+    {236, 180, 176},// $36
+    {228, 196, 144},// $37
+    {204, 210, 120},// $38
+    {180, 222, 120},// $39
+    {168, 226, 144},// $3A
+    {152, 226, 180},// $3B
+    {160, 214, 228},// $3C
+    {160, 162, 160},// $3D
+    {0, 0, 0},      // $3E
+    {0, 0, 0}       // $3F
+};
+
+//Obtain RGB Value from provided Hex Index
+RGB PPU::getColor(uint8_t paletteIndex) const {
+    return nes_color_palette[paletteIndex & 0x3F];
+}
+
 void PPU::printPatternTables() {
     for (int table = 0; table < 2; table++) {
         std::cout << "Pattern Table " << table << ":\n";
@@ -78,30 +377,118 @@ void PPU::printPatternTables() {
     }
 }
 
+// Read from palette memory
+uint8_t PPU::readPaletteMemory(uint16_t address) {
+    // Ensure the address is in the palette range (0-31)
+    address &= 0x1F;
 
-void createHexDump(const std::vector<uint8_t>& chrRom, const std::string& outputFile) {
-    std::ofstream file(outputFile);
-
-    if (!file.is_open()) {
-        std::cerr << "Error opening file for output" << std::endl;
-        return;
+    // Handle palette mirroring
+    if (address >= 0x10 && (address & 0x03) == 0) {
+        address &= 0x0F;
     }
 
-    const int bytesPerRow = 16;  
-    for (size_t i = 0; i < chrRom.size(); i += bytesPerRow) {
-        file << std::hex << std::setw(6) << std::setfill('0') << i << ": "; // Print offset
-
-        for (size_t j = 0; j < bytesPerRow && (i + j) < chrRom.size(); ++j) {
-            file << std::hex << std::setw(2) << std::setfill('0') << (int)chrRom[i + j] << " ";
-        }
-
-        file << "\n";
-    }
-
-    file.close();
-    std::cout << "Hex dump written to " << outputFile << std::endl;
+    return paletteMemory[address];
 }
 
+// Write to palette memory
+void PPU::writePaletteMemory(uint16_t address, uint8_t data) {
+    address &= 0x1F;
+
+    // Handle palette mirroring
+    if (address >= 0x10 && (address & 0x03) == 0) {
+        address &= 0x0F;
+    }
+
+    paletteMemory[address] = data & 0x3F;
+}
+
+void PPU::step(){
+    
+}
+
+//Access Proper NameTable/AttributeTable
+int PPU::getTableIndex(uint16_t address) const{
+    address &= 0x0FFF; //Restricting access to only 0x2000 - 0x3FFF
+
+    int tableIndex = -1;
+
+    //Vertical Mirroring
+    if (address < 0x0400) {
+        tableIndex = 0; //NameTable 0
+    }
+    else if (address < 0x0800){
+        tableIndex = 1; //NameTable 1
+    }
+    else if (address < 0x0C00) {
+        tableIndex = 0; //Mirrored NameTable 0
+    }
+    else {
+        tableIndex = 1; //Mirrored NameTable 1
+    }
+
+    return tableIndex;
+
+}
+
+//Write to NameTable and AttributeTable
+void PPU::writeNameTable(uint16_t address, uint8_t data) {
+    int tableIndex = getTableIndex(address);
+    if (tableIndex == -1) return; //Non-valid Index
+
+    uint16_t offset = address & 0x03FF;
+
+    if (offset < 960) { //First 960 Bytes for Name Table
+        nameTables[tableIndex].tiles[offset] = data;
+    }
+    else { //Last 64 bytes for Attributes Table
+        nameTables[tableIndex].attributes[offset - 960] = data;
+    }
+}
+
+//Read NameTable and AtrributeTable
+uint8_t PPU::readNameTable(uint16_t address) const {
+    int tableIndex = getTableIndex(address);
+    if (tableIndex == -1) return 0xFF; //Non-valid Index
+
+    uint16_t offset = address & 0x03FF;
+
+    if (offset < 960) { //First 960 Bytes for Name Table
+        return nameTables[tableIndex].tiles[offset];
+    }
+    else { //Last 64 bytes for Attributes Table
+        return nameTables[tableIndex].attributes[offset - 960];
+    }
+}
+
+void PPU::write(uint16_t address, uint8_t data) {
+    if (address < 0x2000) {
+        //Possible overhaul of current PatternTable write logic
+    }
+    else if (address >= 2000 && address <= 0x3EFF){
+        writeNameTable(address,data);
+    }
+    else if (address >= 0x3F00 && address <= 0x3FFF) {
+        writePaletteMemory(address, data);
+    }
+    else {
+        std::cerr << "Invalid PPU Write to address: $" << address << std::endl;
+    }
+}
+
+//PPU MMIO Registers - - https://www.nesdev.org/wiki/PPU_registers -- For ref
+void PPU::cpuWrite(uint16_t address, uint8_t data) {
+    switch (address & 0x2007) {
+        case 0x2000: PPUCTRL = data; break;
+        case 0x2001: PPUMASK = data; break;
+        case 0x2002: break; //PPUSTATUS Read only from CPU
+        case 0x2003: OAMADDR = data; break;
+        case 0x2004: break; //OAMDATA Read/Write to OAM Data
+        case 0x2005: break; //PPUSCROLL Write
+        case 0x2006: break; // PPUADDR Need to set up High Bit stash awaiting lowbit for full address
+        case 0x2007: break; //PPUDATA write(PPUADDR,data) Get 0x2006 working for the lower and higher 8bits of address
+        default: std::cerr << "Unknown PPU MMIO write $" << address << std::endl;
+    }
+}
 
 
 /* USED FOR LOCALIZED DEBUGGING / UTILITY

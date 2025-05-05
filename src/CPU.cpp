@@ -58,7 +58,23 @@ CPU::CPU() : stack_pointer(0xFF), memory(65536, 0), program_counter(reset_vector
 
 uint8_t CPU::read(uint16_t addr)
 {
-    if (addr > 0x8000) {
+    if (addr == 0x4016) {
+        // Controller 1 serial read
+        uint8_t value = (controller1_shift & 1);
+        if (!controller_strobe) {
+            controller1_shift >>= 1;
+        }
+        return value | 0x40; // Often returns high bits set to 1 or open bus
+    }
+    else if (addr == 0x4017) {
+        // (Optional) Controller 2 serial read (if you have a second controller)
+        uint8_t value = (controller2_shift & 1);
+        if (!controller_strobe) {
+            controller2_shift >>= 1;
+        }
+        return value | 0x40;
+    }
+    else if (addr >= 0x8000) {
         return cart->ReadPrgRom(addr - 0x8000);
     }
     else {
@@ -68,9 +84,18 @@ uint8_t CPU::read(uint16_t addr)
 
 void CPU::write(uint16_t addr, uint8_t data)
 {
-    memory[addr] = data;
+    if (addr == 0x4016) {
+        controller_strobe = data & 1;
+        if (controller_strobe) {
+            // On strobe high (1), latch the current input state into the shift register
+            controller1_shift = controller1_state;
+            controller2_shift = controller2_state; // if you have controller 2
+        }
+    }
+    else {
+        memory[addr] = data;
+    }
 }
-
 ///////////////////////////////////////////////////////////////////
 // ADDRESSING MODES
 ///////////////////////////////////////////////////////////////////
@@ -207,8 +232,7 @@ uint16_t CPU::addr_indirect_indexed_y()
 // Relative addressing mode
 uint16_t CPU::addr_relative()
 {
-    int8_t offset = static_cast<int8_t>(read(program_counter++));
-    return program_counter + offset;
+    return program_counter++;
 }
 
 ///////////////////////////////////////////////////////////////////
@@ -837,7 +861,8 @@ void CPU::BCC(uint16_t addr)
     if (!getCarryFlag())
     {
         // Signed value, need to cast
-        program_counter += static_cast<int8_t>(memory[addr]) + 2;
+        int8_t offset = static_cast<int8_t>(read(addr));
+        program_counter += offset;
     }
 }
 
@@ -846,7 +871,8 @@ void CPU::BCS(uint16_t addr)
     if (getCarryFlag())
     {
         // Signed value, need to cast
-        program_counter += static_cast<int8_t>(memory[addr]) + 2;
+        int8_t offset = static_cast<int8_t>(read(addr));
+        program_counter += offset;
     }
 }
 
@@ -855,7 +881,8 @@ void CPU::BMI(uint16_t addr)
     if (getNegativeFlag()) 
     {
         // Signed value, need to cast
-        program_counter += static_cast<int8_t>(memory[addr]) + 2;
+        int8_t offset = static_cast<int8_t>(read(addr));
+        program_counter += offset;
     }
 }
 
@@ -864,7 +891,8 @@ void CPU::BPL(uint16_t addr)
     if (!getNegativeFlag())
     {
         // Signed value, need to cast
-        program_counter += static_cast<int8_t>(memory[addr]) + 2;
+        int8_t offset = static_cast<int8_t>(read(addr));
+        program_counter += offset;
     }
 }
 
@@ -873,7 +901,8 @@ void CPU::BVC(uint16_t addr)
     if (!getOverFlowFlag())
     {
         // Signed value, need to cast
-        program_counter += static_cast<int8_t>(memory[addr]) + 2;
+        int8_t offset = static_cast<int8_t>(read(addr));
+        program_counter += offset;
     }
 }
 
@@ -882,7 +911,8 @@ void CPU::BVS(uint16_t addr)
     if (getOverFlowFlag())
     {
         // Signed value, need to cast
-        program_counter += static_cast<int8_t>(memory[addr]) + 2;
+        int8_t offset = static_cast<int8_t>(read(addr));
+        program_counter += offset;
     }
 }
 
@@ -890,7 +920,8 @@ void CPU::BNE(uint16_t addr)
 {
     if (!getZeroFlag()) {
         // Signed value, need to cast
-        program_counter += static_cast<int8_t>(memory[addr]) + 2;
+        int8_t offset = static_cast<int8_t>(read(addr));
+        program_counter += offset;
     }
 }
 
@@ -898,7 +929,8 @@ void CPU::BEQ(uint16_t addr)
 {
     if (getZeroFlag()) {
         // Signed value, need to cast
-        program_counter += static_cast<int8_t>(memory[addr]) + 2;
+        int8_t offset = static_cast<int8_t>(read(addr));
+        program_counter += offset;
     }
 }
 
@@ -2010,7 +2042,13 @@ uint8_t CPU::execute() {
             cycles = 2;
             break;
     }
-
+    // Copy sprite data from memory into OAM
+    if (m_oam != nullptr) {
+        std::memcpy(m_oam->sprites.data(), memory.data() + oamAddr, oamSize);
+        // for (const auto& val : m_oam->sprites) {
+        //     std::cout << "Sprite: " << val << std::endl;
+        // }
+    }
     return cycles;
 }
 
@@ -2024,4 +2062,4 @@ void CPU::SetCartridge(std::shared_ptr<Cartridge> cartridge)
     program_counter = Utilities::ByteSwap(temp); // Now we jump!!!!
   
 }
-  
+

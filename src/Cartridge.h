@@ -25,6 +25,7 @@ public:
 	inline uint8_t ReadPrgRom(uint16_t addr) const { return prgRom[addr]; }
 	inline uint8_t ReadChrRom(uint16_t addr) const { return chrRom[addr]; }
 	std::vector<uint8_t> chrRom;
+	const std::vector<uint8_t>& getCHRROM() const { return chrRom; }
 
 private:
 	// Constants for data sizes and offsets
