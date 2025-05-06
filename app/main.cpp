@@ -74,6 +74,7 @@ int main(int argc, const char* argv[]) {
 	auto oam = std::make_shared<OAM>();
 	cpu.SetOAM(oam); // Set OAM for the CPU
 	ppu.SetOam(oam); // Set OAM for the PPU
+	Bus bus(std::make_shared<CPU>(cpu), std::make_shared<PPU>(ppu));
 	std::ifstream romFile;
 	std::vector<uint8_t> romData;
 	std::string filePath;
@@ -104,6 +105,7 @@ int main(int argc, const char* argv[]) {
 	cpu.SetCartridge(cart);
 	ppu.loadPatternTable(cart->getCHRROM()); // load the CHR ROM into PPU's pattern tables
 	ppu.dumpPatternTablesToBitmap("output.bmp"); // dump the pattern tables to BMP
+	ppu.SetCartridge(cart); // Set the cartridge for the PPU
 	InputHandler inputHandler; // Create an InputHandler instance
 
 	if (!inputHandler.initialize()) {

@@ -10,7 +10,8 @@
 //#include <SDL2/SDL.h>
 #include <iomanip>
 
-PPU::PPU(){
+
+PPU::PPU() : cycle(0) {
     patternTables.resize(2, std::vector<uint8_t>(256 * 8 * 8, 0)); //Left and Right Pattern Tables initialized with tile map
     paletteMemory.resize(32, 0x0F); // Initialize with black (0x0F)
     scroll_latch = false;
@@ -464,7 +465,125 @@ void PPU::writePaletteMemory(uint16_t address, uint8_t data) {
     paletteMemory[address] = data & 0x3F;
 }
 
+// Read from palette memory
+uint8_t PPU::readPaletteMemory(uint16_t address) {
+    // Ensure the address is in the palette range (0-31)
+    address &= 0x1F;
+
+    // Handle palette mirroring
+    if (address >= 0x10 && (address & 0x03) == 0) {
+        address &= 0x0F;
+    }
+
+    return paletteMemory[address];
+}
+
+// Write to palette memory
+void PPU::writePaletteMemory(uint16_t address, uint8_t data) {
+    address &= 0x1F;
+
+    // Handle palette mirroring
+    if (address >= 0x10 && (address & 0x03) == 0) {
+        address &= 0x0F;
+    }
+
+    paletteMemory[address] = data & 0x3F;
+}
+
+/**
+ * This is the function that performs each "tick" of the PPU. Certain actions are performed based on the current cycle.
+ * stepScanLine() is also called which performs additional operations based on a different set of cycle values.
+ * Cycle wraps around at the end.
+ */
 void PPU::step(){
+
+    if(cycle == 0){
+        // fill shift registers with first two scanlines
+    }
+
+    else if(cycle <= 256){
+        // these are from NESDEV wiki right now
+        auto addr = 0x2000 | (internalRegs.v & 0x0FFF); // think this comes from VRAM
+        auto nameTableByte = read(addr);
+        auto attribute address = 0x23C0 | (internalRegs.v & 0x0C00) | ((internalRegs.v >> 4) & 0x38) | ((internalRegs.v >> 2) & 0x07)
+
+
+    }
+    else if(cycle <= 320){
+        // fetch sprites for next scaline
+    }
+    else if(cycle <= 336){
+        // fetch first two tiles for next scanline
+    }
+    else{
+        // fetch some nametable bytes
+    }
+    stepScanline();
+    RenderScanline();
+    cycle++ % maxCycles; // Increment cycle, wrap around at maxCycles
+}
+
+
+// Might bake into step, this is just breaking up the PPU step function
+void PPU::stepScanline()
+{
+    if(cycle < 240){
+
+    }
+    else if (cycle == 240){
+        // do nothing!
+    }
+    else if(cycle == 241){
+        setNMI(); // These happen once at scanline 241
+        setVBlank();
+    }
+}
+
+void PPU::RenderScanline(){
+    uint8_t scanlineCycle = 0;
+    while (scanlineCycle < 341){
+        if(cycle == 256 && RenderingEnabled()){
+            internalRegs.yIncrement();
+        }
+        if(cycle == 257 && RenderingEnabled()){
+            v &= 0x7FE; // clearing these out before copying horizontal bits
+            v |= (0x1F & t); // copying horizontal bits
+        }
+        scanlineCycle++;
+    }
+}
+
+int PPU::Read(uint16_t addr) const
+{
+    /**
+     * 0000-0FFF: Pattern table 0
+     * 1000-1FFF: Pattern table 1
+     * 2000-23FF: Nametable 0
+     * 2400-27FF: Nametable 1
+     * 2800-2BFF: Nametable 2
+     * 2C00-2FFF: Nametable 3
+     * 3000-3EFF: Unused
+     * 3F00-3F1F: Palette RAM indexes
+     * 3F20-3FFF: Mirrors of 3F00-3F1F
+     */
+    if(addr < 0x1FFF){
+        return m_cart->ReadChrRom(addr); // Read from CHR ROM
+    }
+    else if(addr >= 0x2000 && addr < 0x2FFF){
+        return 0 // vram read for nametables
+    }
+    else if(addr >= 0x3000 && addr < 0x3EFF){
+        return 0 // mirror
+    }
+    else{
+    }
+}
+
+
+
+void PPU::setNMI(){
+
+}
     
 }
 
