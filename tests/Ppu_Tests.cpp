@@ -287,4 +287,58 @@ namespace PPUTests {
 		uint16_t addr = 0x3FFF; // Not in NameTable space
 		EXPECT_NO_THROW(ppu.readNameTable(addr));
 	}
+	
+	class PPUPatternTableTest : public ::testing::Test {
+	protected:
+		PPU ppu;
+	};
+
+	// Test writing to the pattern table
+	TEST_F(PPUPatternTableTest, WritePatternTable_ValidData) {
+		// Write data to address 0x1000, which is the start of the left table
+		uint16_t address = 0x1000;
+		uint8_t data = 0xAB; 
+
+		ppu.writePatternTable(address, data);
+
+		// Check that chrRam at address 0x1000 contains the correct data
+		EXPECT_EQ(ppu.chrRam[address], data);
+
+		// Check that the data has been written to the correct position in tilePlaneLow or tilePlaneHigh
+		int tableIndex = address / 0x1000;  // 0 -> Left Table
+		int tileIndex = (address % 0x1000) / 16;  // Calculate the tile index based on address
+		int row = (address % 16) % 8;
+		EXPECT_EQ(ppu.tilePlaneLow[tableIndex][tileIndex][row], data);
+	}
+	
+	// Test for valid pattern retrieval
+	TEST_F(PPUPatternTableTest, GetPatternTile_ValidTile) {
+		// Write low plane for row 0 of tile 1
+		uint16_t baseAddr = 0x1000 + (1 * 16); // tile index 1 in right table
+		ppu.writePatternTable(baseAddr + 0, 0xAB); // low byte for row 0
+		ppu.writePatternTable(baseAddr + 8, 0xCD); // high byte for row 0
+
+		std::array<uint8_t, 64> tile = ppu.getPatternTile(1, 1); // tableIndex 1 (right table), tileIndex 1
+
+		// Now expect correct pixel values for row 0 (first 8 bytes in the tile array)
+		EXPECT_EQ(tile[0], ((0xCD >> 7 & 1) << 1) | (0xAB >> 7 & 1));
+		EXPECT_EQ(tile[1], ((0xCD >> 6 & 1) << 1) | (0xAB >> 6 & 1));
+		EXPECT_EQ(tile[2], ((0xCD >> 5 & 1) << 1) | (0xAB >> 5 & 1));
+		EXPECT_EQ(tile[3], ((0xCD >> 4 & 1) << 1) | (0xAB >> 4 & 1));
+		EXPECT_EQ(tile[4], ((0xCD >> 3 & 1) << 1) | (0xAB >> 3 & 1));
+		EXPECT_EQ(tile[5], ((0xCD >> 2 & 1) << 1) | (0xAB >> 2 & 1));
+		EXPECT_EQ(tile[6], ((0xCD >> 1 & 1) << 1) | (0xAB >> 1 & 1));
+		EXPECT_EQ(tile[7], ((0xCD >> 0 & 1) << 1) | (0xAB >> 0 & 1));
+	}
+	
+	// Test for invalid table index
+	TEST_F(PPUPatternTableTest, GetPatternTile_InvalidTableIndex) {
+		EXPECT_THROW(ppu.getPatternTile(2, 0), std::out_of_range);
+	}
+	
+	// Test for invalid tile index
+	TEST_F(PPUPatternTableTest, GetPatternTile_InvalidTileIndex) {
+		EXPECT_THROW(ppu.getPatternTile(0, 300), std::out_of_range);  // Tile index exceeds 256
+	}
+	
 }

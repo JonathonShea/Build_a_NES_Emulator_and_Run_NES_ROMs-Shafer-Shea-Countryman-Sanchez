@@ -49,11 +49,51 @@ void PPU::loadPatternTable(const std::vector<uint8_t>& chrROM) {
 
 }
 
+void PPU::writePatternTable(uint16_t address, uint8_t data) {
+    if (address >= chrRam.size()) {
+        std::cerr << "CHR-RAM write is out of bounds at address: " << std::hex << address << std::endl;
+        return;
+    }
+    chrRam[address] = data;
+    
+    int tableIndex = address / 0x1000; // 0 -> Left Table : 1 -> Right Table
+    uint16_t localAddr = address % 0x1000;
+
+    int tileIndex = localAddr / 16; //
+    int tileByte = localAddr % 16; //Where in the tile does the byte fall
+
+    if (tileIndex >= 256) {
+        std::cerr << "Tile index out of range. Index: " << tileIndex << std::endl;
+        return;
+    }
+
+    bool isLowplane = tileByte < 8;
+    int row = tileByte % 8;
+
+    if (isLowplane) { //Stage for imcomplete tiles
+        tilePlaneLow[tableIndex][tileIndex][row] = data;
+    }
+    else {
+        tilePlaneHigh[tableIndex][tileIndex][row] = data;
+    }
+
+    uint8_t low = tilePlaneLow[tableIndex][tileIndex][row]; //Pull staged tile data
+    uint8_t high = tilePlaneHigh[tableIndex][tileIndex][row];
+
+    for (int col = 0; col < 8; ++col) {
+        uint8_t bit1 = (low >> (7 - col)) & 1;
+        uint8_t bit2 = (high >> (7 - col)) & 1;
+        uint8_t pixelVal = (bit2 << 1) | bit1;
+        patternTables[tableIndex][tileIndex * 64 + row * 8 + col] = pixelVal;
+    }
+    
+}
+
 std::array<uint8_t, 64> PPU::getPatternTile(int tableIndex, int tileIndex) const {
     std::array<uint8_t, 64> tile{};
 
     if (tableIndex < 0 || tableIndex >= 2 || tileIndex < 0 || tileIndex >= 256) {
-        throw std::out_of_range("Invalide Pattern Table or index");
+        throw std::out_of_range("Invalid Pattern Table or index");
     }
 
     const int offset = tileIndex * 64;
@@ -251,6 +291,7 @@ uint8_t PPU::readNameTable(uint16_t address) const {
 void PPU::write(uint16_t address, uint8_t data) {
     if (address < 0x2000) {
         //Possible overhaul of current PatternTable write logic
+        writePatternTable(address, data);
     }
     else if (address >= 2000 && address <= 0x3EFF){
         writeNameTable(address,data);
@@ -259,7 +300,7 @@ void PPU::write(uint16_t address, uint8_t data) {
         writePaletteMemory(address, data);
     }
     else {
-        std::cerr << "Invalid PPU Write to address: $" << address << std::endl;
+        std::cerr << "Invalid PPU Write to address: $" << std::hex << address << std::endl;
     }
 }
 
@@ -277,45 +318,3 @@ void PPU::cpuWrite(uint16_t address, uint8_t data) {
         default: std::cerr << "Unknown PPU MMIO write $" << address << std::endl;
     }
 }
-
-
-/* USED FOR LOCALIZED DEBUGGING / UTILITY
- static constexpr std::array<uint8_t, 4> magicNumbers = { 0x4E, 0x45, 0x53, 0x1A }; // NES<EOF> magic numbers to identify a NES ROM file
-
-int main(){
-    
-    
-    std::ifstream romFile;
-    std::vector<uint8_t> romData;
-    std::string filePath = /INSERT PATH TO ROM
-    std::cout << "ATTEMPTING TO OPEN\t" << filePath << std::endl;
-    //filePath = Utilities::OpenFileDialog();
-
-    romFile.open(filePath, std::ios::binary);
-    if (romFile.is_open()) {
-        std::cout << "Opened file: " << filePath << std::endl;
-        romData = std::vector<uint8_t>(std::istreambuf_iterator<char>(romFile), std::istreambuf_iterator<char>());
-        romFile.close();
-    }
-    else {
-        std::cout << "Failed to open file: " << filePath << std::endl;
-        return(0);
-    }
-    for (int i = 0; i < magicNumbers.size(); i++) {
-        if (romData[i] != magicNumbers[i]) {
-            std::cout << "Invalid NES ROM file" << std::endl;
-            return(0);
-        }
-    }
-
-    ///auto path = Utilities::OpenFileDialog();
-    PPU testPPU;
-    Cartridge cartridge(romData);
-    createHexDump(cartridge.chrRom, "chrrom_hexdump.txt");
-
-    testPPU.loadPatternTable(cartridge.chrRom);
-    
-    return 0;
-    
-}
-*/
