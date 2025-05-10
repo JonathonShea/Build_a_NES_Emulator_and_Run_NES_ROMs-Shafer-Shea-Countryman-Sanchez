@@ -48,6 +48,12 @@ public:
 	std::vector<uint8_t> paletteMemory; // Palette Memory
 	NameTable nameTables[2]; //2 Physical NameTable + Attribute Tables
 
+	uint8_t tilePlaneLow[2][256][8] = {}; //Storage for incomplete Pattern Table tiles
+	uint8_t tilePlaneHigh[2][256][8] = {};
+
+	std::vector<uint8_t> chrRam = std::vector<uint8_t>(0x2000, 0);
+
+
 	PPU();
 
 	void cpuWrite(uint16_t address, uint8_t data);
@@ -80,16 +86,10 @@ public:
 	uint8_t readNameTable(uint16_t address) const;
 	int getTableIndex(uint16_t address) const;
 
-	// For PPUSCROLL
-	bool scroll_latch = false; // *
-	uint8_t scroll_x = 0; // *
-	uint8_t scroll_y = 0; // *
+	//Pattern Table Functions
+	void writePatternTable(uint16_t address, uint8_t data);
 
-	// For PPUADDR
-	bool addr_latch = false; // *
-	uint8_t addr_high = 0; // *
-	uint8_t addr_low = 0; // *
-	uint16_t vram_address = 0; // *
+
 };
 
 #endif
