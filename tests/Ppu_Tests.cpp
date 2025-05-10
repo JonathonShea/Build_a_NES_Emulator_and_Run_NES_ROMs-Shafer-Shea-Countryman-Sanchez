@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 #include <PPU.h>
+#include <OAM.h>
 #include <ostream> 
 
 namespace PPUTests {
@@ -286,5 +287,155 @@ namespace PPUTests {
 	TEST_F(PPUNameTableTest, InvalidAddressReturnsDefault) {
 		uint16_t addr = 0x3FFF; // Not in NameTable space
 		EXPECT_NO_THROW(ppu.readNameTable(addr));
+	}
+
+
+	// CPUWrite Tests
+	class PPURegisterTest : public ::testing::Test {
+	protected:
+		void SetUp() override {
+			ppu = std::make_unique<PPU>();
+			oam = std::make_shared<OAM>();
+			ppu->SetOam(oam);
+		}
+
+		std::unique_ptr<PPU> ppu;
+		std::shared_ptr<OAM> oam;
+	};
+
+	// Test PPUCTRL register (0x2000)
+	TEST_F(PPURegisterTest, PPUCTRLRegister) {
+		// Write to PPUCTRL
+		ppu->cpuWrite(0x2000, 0x8A);
+		EXPECT_EQ(ppu->PPUCTRL, 0x8A);
+	}
+
+	// Test PPUMASK register (0x2001)
+	TEST_F(PPURegisterTest, PPUMASKRegister) {
+		// Write to PPUMASK
+		ppu->cpuWrite(0x2001, 0x1E);
+		EXPECT_EQ(ppu->PPUMASK, 0x1E);
+	}
+
+	// Test OAMADDR register (0x2003)
+	TEST_F(PPURegisterTest, OAMADDRRegister) {
+		// Write to OAMADDR
+		ppu->cpuWrite(0x2003, 0x42);
+		EXPECT_EQ(ppu->OAMADDR, 0x42);
+	}
+
+	// Test OAMDATA register (0x2004)
+	TEST_F(PPURegisterTest, OAMDATARegister) {
+		ppu->cpuWrite(0x2003, 0x00);
+
+		// Write values to the first sprite via OAMDATA
+		ppu->cpuWrite(0x2004, 0x40);  // Update Y
+		ppu->cpuWrite(0x2004, 0x05);  // Update tile INdex
+		ppu->cpuWrite(0x2004, 0x01);  // Update attributes
+		ppu->cpuWrite(0x2004, 0x80);  // Update X
+
+		// Verify the sprite data was written correctly
+		EXPECT_EQ(static_cast<int8_t>(0x40), oam->sprites[0].y_pos);
+		EXPECT_EQ(static_cast<int8_t>(0x05), oam->sprites[0].tile_index);
+		EXPECT_EQ(static_cast<int8_t>(0x01), oam->sprites[0].attributes);
+		EXPECT_EQ(static_cast<int8_t>(0x80), oam->sprites[0].x_pos);
+	}
+
+	// Test OAMDATA register address wrapping
+	TEST_F(PPURegisterTest, OAMDATAAddressWrapping) {
+		ppu->cpuWrite(0x2003, 0xFC);
+
+		// Write values across the boundary
+		ppu->cpuWrite(0x2004, 0xA0);  // Byte 0xFC
+		ppu->cpuWrite(0x2004, 0xA1);  // Byte 0xFD
+		ppu->cpuWrite(0x2004, 0xA2);  // Byte 0xFE
+		ppu->cpuWrite(0x2004, 0xA3);  // Byte 0xFF
+		ppu->cpuWrite(0x2004, 0xA4);  // Should wrap to 0x00
+
+		// Check values at the end of OAM
+		int lastIndex = oamSize - 1;
+
+		// Compare as int8_t (signed comparison)
+		EXPECT_EQ(static_cast<int8_t>(0xA0), oam->sprites[lastIndex].y_pos);
+		EXPECT_EQ(static_cast<int8_t>(0xA1), oam->sprites[lastIndex].tile_index);
+		EXPECT_EQ(static_cast<int8_t>(0xA2), oam->sprites[lastIndex].attributes);
+		EXPECT_EQ(static_cast<int8_t>(0xA3), oam->sprites[lastIndex].x_pos);
+
+		// Compare unsigned values (cast to uint8_t)
+		EXPECT_EQ(0xA0, static_cast<uint8_t>(oam->sprites[lastIndex].y_pos));
+
+		// Check the value that wrapped to 0x00 overwrote the first byte of sprites[0]
+		EXPECT_EQ(static_cast<int8_t>(0xA4), oam->sprites[0].y_pos);
+
+		// Verify OAMADDR has wrapped around to 0x01
+		EXPECT_EQ(0x01, ppu->OAMADDR);
+	}
+
+	// Test PPUSCROLL register (0x2005)
+	TEST_F(PPURegisterTest, PPUSCROLLRegister) {
+		ppu->cpuWrite(0x2005, 0x42);  // First write (X scroll)
+		ppu->cpuWrite(0x2005, 0x37);  // Second write (Y scroll)
+		ppu->cpuWrite(0x2005, 0x42);  // First write (X scroll)
+		ppu->cpuWrite(0x2005, 0x37);  // Second write (Y scroll)
+		EXPECT_EQ(ppu->scroll_x, 0x42);
+		EXPECT_EQ(ppu->scroll_y, 0x37);
+		ppu->cpuWrite(0x2005, 0x55);  // Third write should set X scroll again
+		ppu->cpuWrite(0x2005, 0x66);  // Fourth write should set Y scroll again
+		EXPECT_EQ(ppu->scroll_x, 0x55);
+		EXPECT_EQ(ppu->scroll_y, 0x66);
+	}
+
+	// Test PPUADDR and PPUDATA registers (0x2006, 0x2007)
+	TEST_F(PPURegisterTest, PPUADDRAndPPUDATARegisters) {
+		// Write to the palette memory using PPUADDR/PPUDATA
+
+		// Set the PPUADDR to 0x3F01 (first palette color)
+		ppu->cpuWrite(0x2006, 0x3F);  // High byte
+		ppu->cpuWrite(0x2006, 0x01);  // Low byte
+
+		// Write some palette colors
+		ppu->cpuWrite(0x2007, 0x30);  // White
+		ppu->cpuWrite(0x2007, 0x16);  // Red
+		ppu->cpuWrite(0x2007, 0x2A);  // Green
+		ppu->cpuWrite(0x2007, 0x12);  // Blue
+
+		// Verify the palette memory was updated
+		EXPECT_EQ(ppu->readPaletteMemory(0x3F01), 0x30);
+		EXPECT_EQ(ppu->readPaletteMemory(0x3F02), 0x16);
+		EXPECT_EQ(ppu->readPaletteMemory(0x3F03), 0x2A);
+		EXPECT_EQ(ppu->readPaletteMemory(0x3F04), 0x12);
+
+		// Test VRAM address increments by testing writing to nametable
+
+		// Set the PPUADDR to 0x2000 (start of nametable 0)
+		ppu->cpuWrite(0x2006, 0x20);  // High byte
+		ppu->cpuWrite(0x2006, 0x00);  // Low byte
+
+		// Write some tile indices
+		ppu->cpuWrite(0x2007, 0x01);
+		ppu->cpuWrite(0x2007, 0x02);
+		ppu->cpuWrite(0x2007, 0x03);
+
+		// Verify the nametable memory was updated
+		EXPECT_EQ(ppu->readNameTable(0x2000), 0x01);
+		EXPECT_EQ(ppu->readNameTable(0x2001), 0x02);
+		EXPECT_EQ(ppu->readNameTable(0x2002), 0x03);
+
+		// Test VRAM address increment mode (PPUCTRL bit 2)
+
+		// Set increment mode to 32 (PPUCTRL bit 2 = 1)
+		ppu->cpuWrite(0x2000, 0x04);
+
+		// Set the PPUADDR to 0x2000 again
+		ppu->cpuWrite(0x2006, 0x20);  // High byte
+		ppu->cpuWrite(0x2006, 0x00);  // Low byte
+
+		// Write with 32-byte increment
+		ppu->cpuWrite(0x2007, 0x10);
+		ppu->cpuWrite(0x2007, 0x20);
+
+		// Verify the nametable memory was updated with 32-byte increments
+		EXPECT_EQ(ppu->readNameTable(0x2000), 0x10);
+		EXPECT_EQ(ppu->readNameTable(0x2020), 0x20);
 	}
 }

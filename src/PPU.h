@@ -79,6 +79,17 @@ public:
 	void writeNameTable(uint16_t address, uint8_t data);
 	uint8_t readNameTable(uint16_t address) const;
 	int getTableIndex(uint16_t address) const;
+
+	// For PPUSCROLL
+	bool scroll_latch = false; // *
+	uint8_t scroll_x = 0; // *
+	uint8_t scroll_y = 0; // *
+
+	// For PPUADDR
+	bool addr_latch = false; // *
+	uint8_t addr_high = 0; // *
+	uint8_t addr_low = 0; // *
+	uint16_t vram_address = 0; // *
 };
 
 #endif
