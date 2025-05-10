@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 #include <PPU.h>
+#include <OAM.h>
 #include <ostream> 
 
 namespace PPUTests {
@@ -341,4 +342,5 @@ namespace PPUTests {
 		EXPECT_THROW(ppu.getPatternTile(0, 300), std::out_of_range);  // Tile index exceeds 256
 	}
 	
+
 }

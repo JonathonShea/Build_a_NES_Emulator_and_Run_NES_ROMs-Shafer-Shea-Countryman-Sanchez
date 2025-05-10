@@ -13,6 +13,13 @@
 PPU::PPU(){
     patternTables.resize(2, std::vector<uint8_t>(256 * 8 * 8, 0)); //Left and Right Pattern Tables initialized with tile map
     paletteMemory.resize(32, 0x0F); // Initialize with black (0x0F)
+    scroll_latch = false;
+    scroll_x = 0;
+    scroll_y = 0;
+    addr_latch = false;
+    addr_high = 0;
+    addr_low = 0;
+    vram_address = 0;
 }
 
 void PPU::setPixel(std::vector<uint8_t>& pixelBuffer, int x, int y, const RGB& color, int imageWidth, int imageHeight) {
@@ -534,14 +541,83 @@ void PPU::write(uint16_t address, uint8_t data) {
 //PPU MMIO Registers - - https://www.nesdev.org/wiki/PPU_registers -- For ref
 void PPU::cpuWrite(uint16_t address, uint8_t data) {
     switch (address & 0x2007) {
-        case 0x2000: PPUCTRL = data; break;
-        case 0x2001: PPUMASK = data; break;
-        case 0x2002: break; //PPUSTATUS Read only from CPU
-        case 0x2003: OAMADDR = data; break;
-        case 0x2004: break; //OAMDATA Read/Write to OAM Data
-        case 0x2005: break; //PPUSCROLL Write
-        case 0x2006: break; // PPUADDR Need to set up High Bit stash awaiting lowbit for full address
-        case 0x2007: break; //PPUDATA write(PPUADDR,data) Get 0x2006 working for the lower and higher 8bits of address
-        default: std::cerr << "Unknown PPU MMIO write $" << address << std::endl;
+    case 0x2000: // PPUCTRL
+        PPUCTRL = data;
+        break;
+
+    case 0x2001: // PPUMASK
+        PPUMASK = data;
+        break;
+
+    case 0x2002: // PPUSTATUS - READ ONLY
+        break;
+
+    case 0x2003: // OAMADDR
+        OAMADDR = data;
+        break;
+
+    case 0x2004: // OAMDATA - Write to OAM
+        OAMDATA = data;
+        if (m_oam) {
+            uint8_t spriteIndex = OAMADDR / 4;  // calculate sprite (0 - 63)
+            uint8_t byteOffset = OAMADDR % 4;  // calculate sprite attribute (0 - 3)
+
+            if (spriteIndex < oamSize) {
+                switch (byteOffset) {
+                case 0: // Update Y position
+                    m_oam->sprites[spriteIndex].y_pos = static_cast<int8_t>(data);
+                    break;
+                case 1: // Update tile index
+                    m_oam->sprites[spriteIndex].tile_index = static_cast<int8_t>(data);
+                    break;
+                case 2: // Update attributes
+                    m_oam->sprites[spriteIndex].attributes = static_cast<int8_t>(data);
+                    break;
+                case 3: // X position
+                    m_oam->sprites[spriteIndex].x_pos = static_cast<int8_t>(data);
+                    break;
+                }
+            }
+        }
+        OAMADDR++;
+        break;
+
+    case 0x2005: // PPUSCROLL
+        if (!scroll_latch) {
+            // First write (false = x)
+            scroll_x = data;
+            scroll_latch = true;  // Ensures next write is y scroll
+        }
+        else {
+            // Second write (true = y)
+            scroll_y = data;
+            scroll_latch = false;  // Ensures next write is x scroll
+        }
+        break;
+
+    case 0x2006: // PPUADDR 
+        if (!addr_latch) {
+            // First write (false = addr_high)
+            addr_high = data & 0x3F; // Only 6 bits are valid for high byte
+            addr_latch = true;
+        }
+        else {
+            // Second write (true = addr_low)
+            addr_low = data;
+            vram_address = (addr_high << 8) | addr_low;  // 
+            addr_latch = false;
+        }
+        break;
+
+    case 0x2007: // PPUDATA - Write to current VRAM address
+        // Write to PPU memory at the current VRAM address
+        write(vram_address, data);
+
+        // Increment VRAM address based on PPUCTRL bit 2
+        vram_address += (PPUCTRL & 0x04) ? 32 : 1;
+        break;
+
+    default:
+        std::cerr << "Unknown PPU MMIO write $" << std::hex << address << std::endl;
     }
 }

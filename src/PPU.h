@@ -89,6 +89,7 @@ public:
 	//Pattern Table Functions
 	void writePatternTable(uint16_t address, uint8_t data);
 
+
 };
 
 #endif
