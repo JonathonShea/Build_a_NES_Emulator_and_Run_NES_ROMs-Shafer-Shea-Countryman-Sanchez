@@ -570,10 +570,10 @@ int PPU::Read(uint16_t addr) const
         return m_cart->ReadChrRom(addr); // Read from CHR ROM
     }
     else if(addr >= 0x2000 && addr < 0x2FFF){
-        return 0 // vram read for nametables
+        return 0; // vram read for nametables
     }
     else if(addr >= 0x3000 && addr < 0x3EFF){
-        return 0 // mirror
+        return 0; // mirror
     }
     else{
     }
@@ -585,7 +585,6 @@ void PPU::setNMI(){
 
 }
     
-}
 
 //Access Proper NameTable/AttributeTable
 int PPU::getTableIndex(uint16_t address) const{

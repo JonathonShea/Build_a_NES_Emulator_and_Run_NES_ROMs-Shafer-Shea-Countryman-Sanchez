@@ -15,6 +15,7 @@
 #include "Utilities.h"
 #include "OAM.h"
 #include <memory>
+#include <array>
 
 struct RGB {
 	uint8_t r, g, b;
@@ -22,13 +23,13 @@ struct RGB {
 
 
 struct ShiftRegister{
-	std::array<bool,16> register;
+	std::array<bool,16> reg;
 	int index = 0;
 	void Insert(bool val){
-		register[index] = val;
+		reg[index] = val;
 		index++ % 16;
 	}
-}
+};
 
 struct InternalRegister{
 	uint16_t v; // current VRAM address
@@ -48,11 +49,11 @@ struct InternalRegister{
 	else if (y == 31)
 		y = 0;                         // coarse Y = 0, nametable not switched
 	else
-		y += 1                         // increment coarse Y
-	v = (v & ~0x03E0) | (y << 5)     // put coarse Y back into v
+		y += 1;                         // increment coarse Y
+	v = (v & ~0x03E0) | (y << 5);     // put coarse Y back into v
 	}
 
-}
+};
 
 struct NameTable {
 	std::vector<uint8_t> tiles;
