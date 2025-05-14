@@ -69,13 +69,7 @@ void runAnimationTests(CPU& cpu, PPU& ppu, int& scanline) {
 
 int main(int argc, const char* argv[]) {
 	Clock clock(1, "CPU Clock");
-	CPU cpu;
-	PPU ppu; // Create PPU instance
-	auto oam = std::make_shared<OAM>();
-	cpu.SetOAM(oam); // Set OAM for the CPU
-	ppu.SetOam(oam); // Set OAM for the PPU
-	Bus bus(std::make_shared<CPU>(cpu), std::make_shared<PPU>(ppu));
-	std::ifstream romFile;
+		std::ifstream romFile;
 	std::vector<uint8_t> romData;
 	std::string filePath;
 	if (argc > 1) {
@@ -102,10 +96,12 @@ int main(int argc, const char* argv[]) {
 		}
 	}
 	auto cart = std::make_shared<Cartridge>(romData);
-	cpu.SetCartridge(cart);
+	auto bus = std::make_shared<Bus>();
+	auto oam = std::make_shared<OAM>();
+	CPU cpu(bus, cart, oam); // Create CPU instance
+	PPU ppu(bus, cart, oam); // Create PPU instance
 	ppu.loadPatternTable(cart->getCHRROM()); // load the CHR ROM into PPU's pattern tables
 	ppu.dumpPatternTablesToBitmap("output.bmp"); // dump the pattern tables to BMP
-	ppu.SetCartridge(cart); // Set the cartridge for the PPU
 	InputHandler inputHandler; // Create an InputHandler instance
 
 	if (!inputHandler.initialize()) {
