@@ -51,9 +51,15 @@ void CPU::respTest()
     std::cout << "Expected value after ROR: " << std::hex << static_cast<int>(0x2A) << std::endl;
 }
 
-CPU::CPU() : stack_pointer(0xFF), memory(65536, 0), program_counter(reset_vector) // Initialize 64KB of memory
+CPU::CPU(std::shared_ptr<Bus> bus, std::shared_ptr<Cartridge> cart, std::shared_ptr<OAM> oam) : stack_pointer(0xFF), memory(65536, 0), program_counter(reset_vector),
+m_oam(oam), m_cart(cart), m_bus(bus) // Initialize 64KB of memory
 {
-
+    uint16_t temp = read(program_counter++);
+  
+    temp = temp << 8;
+    temp |= read(program_counter);
+    program_counter = Utilities::ByteSwap(temp); // Now we jump!!!!
+    bus->memory = memory; // Initialize the bus memory with the CPU memory (hacky copies for now)
 }
 
 uint8_t CPU::read(uint16_t addr)
@@ -75,7 +81,7 @@ uint8_t CPU::read(uint16_t addr)
         return value | 0x40;
     }
     else if (addr >= 0x8000) {
-        return cart->ReadPrgRom(addr - 0x8000);
+        return m_cart->ReadPrgRom(addr - 0x8000);
     }
     else {
         return memory[addr];
@@ -376,6 +382,7 @@ void CPU::setRESET(bool state)
         // Reset signal flags
         irq_signal = false;
         nmi_signal = false;
+        m_bus->nmi = false; // Clear NMI signal on the bus
         reset_signal = false;
     }
 }
@@ -402,7 +409,7 @@ void CPU::handleInterrupts()
         setInterruptDisableFlag(true);
         program_counter = read(0xFFFA) | (read(0xFFFB) << 8); // NMI vector
         nmi_signal = false;
-
+        m_bus->nmi = false; // Clear NMI signal on the bus
         return;
     }
 
@@ -480,14 +487,21 @@ void CPU::ADC(uint16_t addr) {
     {
         setOverflowFlag(true);
     }
+    else{
+        setOverflowFlag(false);
+    }
     if (sum > 0xFF) {
         setCarryFlag(true);
     }
-    if (sum == 0) {
-        setZeroFlag(0);
+    else{
+        setCarryFlag(false);
     }
+    setZeroFlag(sum == 0);
     if (sum & negative_mask) {
         setNegativeFlag(true);
+    }
+    else{
+        setNegativeFlag(false);
     }
     
 }
@@ -501,14 +515,21 @@ void CPU::SBC(uint16_t addr) {
     {
         setOverflowFlag(true);
     }
+    else{
+        setOverflowFlag(false);
+    }
     if (sum > 0xFF) {
         setCarryFlag(true);
     }
-    if (sum == 0) {
-        setZeroFlag(0);
+    else{
+        setCarryFlag(false);
     }
+    setZeroFlag(sum == 0);
     if (sum & negative_mask) {
         setNegativeFlag(true);
+    }
+    else{
+        setNegativeFlag(false);
     }
     
 }
@@ -519,9 +540,10 @@ void CPU::INC(uint16_t addr)
     if (sum & negative_mask) {
         setNegativeFlag(true);
     }
-    if ((sum & 0xFF) == 0) {
-        setZeroFlag(true);
+    else{
+        setNegativeFlag(false);
     }
+    setZeroFlag(sum == 0);
 }
 
 void CPU::DEC(uint16_t addr)
@@ -530,9 +552,10 @@ void CPU::DEC(uint16_t addr)
     if (sum & negative_mask) {
         setNegativeFlag(true);
     }
-    if ((sum & 0xFF) == 0) {
-        setZeroFlag(true);
+    else{
+        setNegativeFlag(false);
     }
+    setZeroFlag(sum == 0);
 }
 
 void CPU::INX()
@@ -541,9 +564,10 @@ void CPU::INX()
     if (sum & negative_mask) {
         setNegativeFlag(true);
     }
-    if ((sum && 0) == 0) {
-        setZeroFlag(true);
+    else{
+        setNegativeFlag(false);
     }
+    setZeroFlag(sum == 0);
 }
 
 void CPU::DEX()
@@ -552,9 +576,10 @@ void CPU::DEX()
     if (sum & negative_mask) {
         setNegativeFlag(true);
     }
-    if ((sum && 0) == 0) {
-        setZeroFlag(true);
+    else{
+        setNegativeFlag(false);
     }
+    setZeroFlag(sum == 0);
 }
 
 void CPU::INY()
@@ -563,9 +588,10 @@ void CPU::INY()
     if (sum & negative_mask) {
         setNegativeFlag(true);
     }
-    if ((sum && 0) == 0) {
-        setZeroFlag(true);
+    else{
+        setNegativeFlag(false);
     }
+    setZeroFlag(sum == 0);
 }
 
 void CPU::DEY()
@@ -574,9 +600,10 @@ void CPU::DEY()
     if (sum & negative_mask) {
         setNegativeFlag(true);
     }
-    if ((sum && 0) == 0) {
-        setZeroFlag(true);
+    else{
+        setNegativeFlag(false);
     }
+    setZeroFlag(sum == 0);
 }
 
 // Flag Opcodes
@@ -932,6 +959,7 @@ void CPU::BEQ(uint16_t addr)
         int8_t offset = static_cast<int8_t>(read(addr));
         program_counter += offset;
     }
+
 }
 
 // NOP - No Operation
@@ -946,13 +974,16 @@ void CPU::NOP() {
 uint8_t CPU::execute() {
     // Handle interrupts prior to executing instructions
     handleInterrupts();
-
+    std::copy(m_bus->memory.begin(), m_bus->memory.end(), memory.begin()); // Copy bus to memory
     // Fetch the next instruction
     uint8_t opcode = read(program_counter++);
-    std::cout << opcodeMap[opcode] << std::endl;;
+    std::cout << opcodeMap[opcode] << '\n';
     uint16_t addr = 0;
     uint16_t addr_abs = 0;
     uint8_t cycles = 0;
+    if(m_bus->nmi) {
+        setNMI(true);
+    }
 
     switch (opcode) {
         // ADC 
@@ -2049,12 +2080,13 @@ uint8_t CPU::execute() {
         //     std::cout << "Sprite: " << val << std::endl;
         // }
     }
+    std::copy(memory.begin(), memory.end(), m_bus->memory.begin()); // Copy memory to bus
     return cycles;
 }
 
 void CPU::SetCartridge(std::shared_ptr<Cartridge> cartridge)
 {
-    this->cart = cartridge;
+    this->m_cart = cartridge;
     uint16_t temp = read(program_counter++);
   
     temp = temp << 8;

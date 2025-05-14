@@ -14,10 +14,26 @@
 #include "Cartridge.h"
 #include "Utilities.h"
 #include "OAM.h"
+#include <memory>
+#include <array>
+#include "Bus.h"
 
 struct RGB {
 	uint8_t r, g, b;
 };
+
+
+struct ShiftRegister{
+	std::array<bool,16> reg;
+	int index = 0;
+	void Insert(uint8_t val){
+		for (int i = 0; i < 8; ++i) {
+			reg[index] = (val >> (7 - i)) & 1;
+			index = index++ % 16;
+		}
+	}
+};
+
 
 struct NameTable {
 	std::vector<uint8_t> tiles;
@@ -42,19 +58,39 @@ public:
 	uint8_t PPUADDR = 0x00; //VRAM Address (Write) Communication with CPU
 	uint8_t PPUDATA = 0x00; //VRAM Data (Read / Write) 
 	uint8_t OAMDMA = 0x00; //Sprite DMA (Write) Suspend CPU to begin DMA
-
+	uint32_t dot; // These are the "pixels" in the scanline. Goes up to 340 then wraps around
 	static const RGB nes_color_palette[64]; //Global NES palette
 	std::vector<std::vector<uint8_t>> patternTables; //Vector chosen over arrray for modern adapation of PatternTables
 	std::vector<uint8_t> paletteMemory; // Palette Memory
 	NameTable nameTables[2]; //2 Physical NameTable + Attribute Tables
-
+	bool toggle = false;
+	bool toggle2 = false;
 	uint8_t tilePlaneLow[2][256][8] = {}; //Storage for incomplete Pattern Table tiles
 	uint8_t tilePlaneHigh[2][256][8] = {};
 
 	std::vector<uint8_t> chrRam = std::vector<uint8_t>(0x2000, 0);
 
+	// For PPUSCROLL
+	bool scroll_latch = false; // *
+	uint8_t scroll_x = 0; // *
+	uint8_t scroll_y = 0; // *
 
-	PPU();
+	// For PPUADDR
+	bool addr_latch = false; // *
+	uint8_t addr_high = 0; // *
+	uint8_t addr_low = 0; // *
+	uint16_t vram_address = 0; // *
+
+	ShiftRegister shift1;
+	ShiftRegister shift2;
+	static constexpr uint8_t vBlankMask = 0x80;
+	static constexpr uint16_t maxCycles = 341; // Maximum cycles per scanline
+	std::shared_ptr<OAM> m_oam;
+	std::shared_ptr<Cartridge> m_cart; // Pointer to the cartridge
+	std::shared_ptr<Bus> m_bus; // Pointer to the bus
+
+	PPU(std::shared_ptr<Bus> bus, std::shared_ptr<Cartridge> cart, std::shared_ptr<OAM> oam);
+	PPU() = default;
 
 	void cpuWrite(uint16_t address, uint8_t data);
 	void write(uint16_t address, uint8_t data);
@@ -65,14 +101,26 @@ public:
 	void dumpPatternTablesToBitmap(const std::string& filename);
 	void writePixel(int x, int y, const RGB& color, const std::string& filename);
 	void writeScanline(int scanline, const std::vector<RGB>& colors, const std::string& filename);
+	void initializeFrameBuffer(int width, int height, const std::string& filename);
   
 	std::array<uint8_t, 64> getPatternTile(int tableIndex, int tileIndex) const;
 
 	// Local + Test Functions
 	void printPatternTables();
+	void SetCartridge(std::shared_ptr<Cartridge> cart) { m_cart = cart; } 
 
 //private:
-	std::shared_ptr<OAM> m_oam;
+
+	int Read(uint16_t addr) const; // Read from the PPU memory
+	void RenderScanline();
+	void stepScanline();
+	void setNMI();
+	uint16_t scanline = 0; // Current scanline. Goes up to 261 then wraps around
+	void setVBlank() {PPUSTATUS |= vBlankMask;}
+	void clearVBlank() {PPUSTATUS &= ~vBlankMask; vram_address = 0;}
+	bool RenderingEnabled() { return PPUMASK &  0x0008;} // Background rendering
+
+	const char* framebufferFilename = "output.bmp"; // Filename for the BMP file
 
 	// Palette memory functions
 	uint8_t readPaletteMemory(uint16_t address);
