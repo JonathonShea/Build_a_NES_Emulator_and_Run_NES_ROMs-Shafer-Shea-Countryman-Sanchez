@@ -10,7 +10,9 @@
 //#include <SDL2/SDL.h>
 #include <iomanip>
 
-PPU::PPU(){
+
+PPU::PPU(std::shared_ptr<Bus> bus, std::shared_ptr<Cartridge> cart, std::shared_ptr<OAM> oam) : dot(0),
+    m_cart(cart), m_bus(bus), m_oam(oam) {
     patternTables.resize(2, std::vector<uint8_t>(256 * 8 * 8, 0)); //Left and Right Pattern Tables initialized with tile map
     paletteMemory.resize(32, 0x0F); // Initialize with black (0x0F)
     scroll_latch = false;
@@ -21,6 +23,7 @@ PPU::PPU(){
     addr_low = 0;
     vram_address = 0;
 }
+
 
 void PPU::setPixel(std::vector<uint8_t>& pixelBuffer, int x, int y, const RGB& color, int imageWidth, int imageHeight) {
     // BMP stores pixels bottom-up, so we invert y
@@ -464,9 +467,150 @@ void PPU::writePaletteMemory(uint16_t address, uint8_t data) {
     paletteMemory[address] = data & 0x3F;
 }
 
-void PPU::step(){
-    
+/**
+ * This is the function that performs each "tick" of the PPU. Certain actions are performed based on the current cycle.
+ * stepScanLine() is also called which performs additional operations based on a different set of cycle values.
+ * Cycle wraps around at the end.
+ */
+void PPU::step() {
+    // Visible scanlines: 0-239. Checking this in the other function
+    // VBlank: scanline 241-260 CPU do thing
+    // Pre-render: scanline 261
+    PPUCTRL = m_bus->read(0x2000); //update this guy
+    // Reset here! CPU does stuff or something
+    if (scanline == 241 && dot == 1) {
+        setVBlank();
+        cpuWrite(0x2002, 0);
+        setNMI(); // CUrrently breaking stuff?
+    }
+    if (scanline == 261)
+    {
+        toggle2 = !toggle2;
+        clearVBlank(); // useless
+        // I think just zeroing this out works
+        // All three used bits here get cleared
+        PPUSTATUS = 0; 
+    }
+    stepScanline();
 }
+
+
+// Might bake into step, this is just breaking up the PPU step function. THis is where each pixel (dot) is handled
+// Should this be called step dot? Maybe
+void PPU::stepScanline()
+{
+    // Only render visible scanlines (0-239)
+    if(scanline < 240){ 
+        if (dot < 256) { // Visible pixels. Do stuff here!!!!
+            int timing = dot % 8; // Using this to determine what value we are pulling on the cycle (nametable, attribute, etc.)
+            if(timing == 1){ 
+                // TODO: fetch nametable byte here
+                uint16_t nametable_addr =  0x2000 | (vram_address & 0x0FFF);
+                uint8_t nametable_byte = Read(nametable_addr);
+                writeNameTable(nametable_addr, nametable_byte);
+            }
+            else if (timing == 3) {
+                // TODO: fetch attribute byte here
+            }
+            else if (timing == 5) {
+                // TODO: fetch low byte of pattern table here
+            }
+
+            else if (timing == 7) {
+                // TODO: fetch high byte of pattern table here
+            }
+            else if (timing == 0) {
+                // TODO: switch nametable used here. Think this just flip a bit
+                // TODO: scroll_x gets incremented here I think too
+            }
+            else{
+                // Not doing anything else for the other values.
+                // Most of these are taking up two PPU clock cycles so we just do them on the first cycle
+            }
+
+
+            // Write the scanline to the BMP file (filename should be set elsewhere)
+            if(RenderingEnabled()){
+
+                RenderScanline(); // This is really just generating the scanline that gets pumped into the following function. Shift registers get updated here?
+                
+            }
+        }
+    }
+    if(dot >= 257 && dot <= 320) { // 257-320
+        // TODO: Some sort of OAM/Sprite eval happens here. This is for the next scanline
+    }
+    dot++;
+    if (dot == 340){
+        // This is just a test for now.
+        // Settings some BS value.
+        std::vector<RGB> frame;
+        for(int i = 0; i < 256; i++){
+            RGB val(1,1,1);
+            if(scanline % 2 == 0){
+                toggle2? val.b = 200: val.b = 0;
+                toggle? val.g = 200: val.g = 0;
+            }
+            else{
+                toggle2? val.r = 200: val.r = 0;
+            }
+            toggle = !toggle;
+            frame.push_back(val);
+        }
+        // Should be done. Let er rip
+        writeScanline(scanline, frame, framebufferFilename); // Gwyn's output to SDL drawing
+    }
+    if (dot > 340) {
+        dot = 0;
+        scanline++;
+        if (scanline > 261) {
+            scanline = 0;
+        }
+    }
+}
+
+void PPU::setNMI()
+{
+    if((PPUSTATUS & vBlankMask) && (PPUCTRL & 0x80)){
+         m_bus->nmi = true;
+         
+    }
+}
+
+// Gonna create the actual scanline here. Should this be render pixel? Probably
+void PPU::RenderScanline() {
+// TODO: stuff gets muxed into the shift registers and then that is evaluated as the color???
+// Think sprites come in last through a priority mux.
+}
+
+int PPU::Read(uint16_t addr) const
+{
+    /**
+     * 0000-0FFF: Pattern table 0
+     * 1000-1FFF: Pattern table 1
+     * 2000-23FF: Nametable 0
+     * 2400-27FF: Nametable 1
+     * 2800-2BFF: Nametable 2
+     * 2C00-2FFF: Nametable 3
+     * 3000-3EFF: Unused
+     * 3F00-3F1F: Palette RAM indexes
+     * 3F20-3FFF: Mirrors of 3F00-3F1F
+     */
+    if(addr < 0x1FFF){
+        return m_cart->ReadChrRom(addr); // Read from CHR ROM
+    }
+    else if(addr >= 0x2000 && addr < 0x2FFF){
+        return 0; // vram read for nametables
+    }
+    else if(addr >= 0x3000 && addr < 0x3EFF){
+        return 0; // mirror
+    }
+    else{
+    }
+    return 0; // Invalid address
+}
+
+    
 
 //Access Proper NameTable/AttributeTable
 int PPU::getTableIndex(uint16_t address) const{
@@ -543,17 +687,21 @@ void PPU::cpuWrite(uint16_t address, uint8_t data) {
     switch (address & 0x2007) {
     case 0x2000: // PPUCTRL
         PPUCTRL = data;
+        m_bus->write(0x2000, data); // Write to bus
         break;
 
     case 0x2001: // PPUMASK
         PPUMASK = data;
+        m_bus->write(0x2001, data); // Write to bus
         break;
 
     case 0x2002: // PPUSTATUS - READ ONLY
+        m_bus->write(0x2002, PPUSTATUS); // Read PPU status
         break;
 
     case 0x2003: // OAMADDR
         OAMADDR = data;
+        
         break;
 
     case 0x2004: // OAMDATA - Write to OAM
@@ -593,6 +741,7 @@ void PPU::cpuWrite(uint16_t address, uint8_t data) {
             scroll_y = data;
             scroll_latch = false;  // Ensures next write is x scroll
         }
+        m_bus->write(0x2005, data); // Write to bus
         break;
 
     case 0x2006: // PPUADDR 
@@ -607,6 +756,7 @@ void PPU::cpuWrite(uint16_t address, uint8_t data) {
             vram_address = (addr_high << 8) | addr_low;  // 
             addr_latch = false;
         }
+        m_bus->write(0x2006, data); // Write to bus
         break;
 
     case 0x2007: // PPUDATA - Write to current VRAM address
@@ -615,6 +765,7 @@ void PPU::cpuWrite(uint16_t address, uint8_t data) {
 
         // Increment VRAM address based on PPUCTRL bit 2
         vram_address += (PPUCTRL & 0x04) ? 32 : 1;
+        m_bus->write(0x2007, data); // Write to bus
         break;
 
     default:

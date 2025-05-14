@@ -8,6 +8,7 @@
 #include "Utilities.h"
 #include <unordered_map>
 #include "OAM.h"
+#include "Bus.h"
 
 class CPU
 {
@@ -32,8 +33,9 @@ public:
 	bool nmi_signal = false;
 	bool reset_signal = false;
 
-	CPU();
-
+	CPU(std::shared_ptr<Bus> bus, std::shared_ptr<Cartridge> cart, std::shared_ptr<OAM> oam);
+  CPU() = default;
+  ~CPU() = default;
 	void respTest();
 	uint8_t read(uint16_t addr);
 	void write(uint16_t addr, uint8_t data);
@@ -69,8 +71,9 @@ private:
   static constexpr int oamEnd = oamAddr + (oamSize * sizeof(Sprite)); // OAM size is 64 sprites, each sprite is 4 bytes
   std::vector<uint8_t> memory;
 	std::vector<uint8_t> stack;
-	std::shared_ptr<Cartridge> cart;
+	std::shared_ptr<Cartridge> m_cart;
   std::shared_ptr<OAM> m_oam;
+  std::shared_ptr<Bus> m_bus; // Pointer to the bus
 
 public: // Flag Operations - Sets, unsets, or clears status flags
 	bool getOverFlowFlag() const;

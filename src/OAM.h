@@ -19,7 +19,6 @@ struct Sprite {
   }
 };
 
-
 struct OAM{
   std::array<Sprite, oamSize> sprites;
 };
