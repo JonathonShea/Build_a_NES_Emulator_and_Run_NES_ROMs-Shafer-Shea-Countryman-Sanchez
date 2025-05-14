@@ -24,6 +24,16 @@ PPU::PPU(std::shared_ptr<Bus> bus, std::shared_ptr<Cartridge> cart, std::shared_
     vram_address = 0;
 }
 
+void PPU::initializeFrameBuffer(int width, int height, const std::string& filename) {
+    // Step 1: Create a pixel buffer filled with black pixels
+    std::vector<uint8_t> pixelBuffer(width * height * 3, 0); // 3 bytes per pixel (RGB), initialized to 0 (black)
+
+    // Step 2: Write the pixel buffer to a BMP file
+    writeBMP(pixelBuffer, width, height, filename);
+
+    std::cout << "Initialized frame buffer with dimensions " << width << "x" << height
+              << " and saved to " << filename << std::endl;
+}
 
 void PPU::setPixel(std::vector<uint8_t>& pixelBuffer, int x, int y, const RGB& color, int imageWidth, int imageHeight) {
     // BMP stores pixels bottom-up, so we invert y

@@ -1,4 +1,4 @@
-#define SDL_MAIN_HANDLED
+﻿#define SDL_MAIN_HANDLED
 #include <iostream>
 #include <SDL2/SDL.h>
 #include "NesRam.h"
@@ -101,7 +101,9 @@ int main(int argc, const char* argv[]) {
 	CPU cpu(bus, cart, oam); // Create CPU instance
 	PPU ppu(bus, cart, oam); // Create PPU instance
 	ppu.loadPatternTable(cart->getCHRROM()); // load the CHR ROM into PPU's pattern tables
-	ppu.dumpPatternTablesToBitmap("output.bmp"); // dump the pattern tables to BMP
+	ppu.initializeFrameBuffer(256, 240, "output.bmp"); // Initialize the frame buffer
+	
+	// ppu.dumpPatternTablesToBitmap("output.bmp"); // dump the pattern tables to BMP
 	InputHandler inputHandler; // Create an InputHandler instance
 
 	if (!inputHandler.initialize()) {
