@@ -321,6 +321,9 @@ void PPU::stepScanline()
                 uint8_t fine_y = (vram_address >> 12) & 0x7;
                 int table = (PPUCTRL & 0x10) ? 1 : 0;
                 fetched_pattern_low = patternTables[table][tile_index * 16 + fine_y];
+
+                // Load into shift register
+                shift1.Insert(fetched_pattern_low);
             }
 
             else if (timing == 7) {
@@ -328,12 +331,28 @@ void PPU::stepScanline()
                 uint8_t tile_index = fetched_nametable_byte;
                 uint8_t fine_y = (vram_address >> 12) & 0x7;
                 int table = (PPUCTRL & 0x10) ? 1 : 0;
-                fetched_pattern_low = patternTables[table][tile_index * 16 + fine_y + 8];
-                //std::cout << fetched_pattern_low << std::endl;
+                fetched_pattern_high = patternTables[table][tile_index * 16 + fine_y + 8];
+
+                // Load into shift register
+                shift2.Insert(fetched_pattern_high);
+                //std::cout << fetched_pattern_high << std::endl;
             }
             else if (timing == 0) {
                 // TODO: switch nametable used here. Think this just flip a bit
                 // TODO: scroll_x gets incremented here I think too
+                // Switch nametable and increment horizontal position
+                if ((vram_address & 0x001F) == 31) { // If we're at the end of a nametable row
+                    vram_address &= ~0x001F;         // Clear the horizontal position
+                    vram_address ^= 0x0400;          // Switch horizontal nametable
+                }
+                else {
+                    vram_address++;                  // Increment horizontal position
+                }
+
+                // Increment scroll_x
+                scroll_x = (scroll_x + 1) % 256;
+            }
+
             }
             else{
                 // Not doing anything else for the other values.
@@ -347,11 +366,12 @@ void PPU::stepScanline()
                 RenderScanline(); // This is really just generating the scanline that gets pumped into the following function. Shift registers get updated here?
                 
             }
-        }
     }
+
     if(dot >= 257 && dot <= 320) { // 257-320
         // TODO: Some sort of OAM/Sprite eval happens here. This is for the next scanline
     }
+
     dot++;
     if (dot == 340){
         // This is just a test for now.
@@ -387,8 +407,7 @@ void PPU::stepScanline()
 void PPU::setNMI()
 {
     if((PPUSTATUS & vBlankMask) && (PPUCTRL & 0x80)){
-         m_bus->nmi = true;
-         
+         m_bus->nmi = true;      
     }
 }
 
