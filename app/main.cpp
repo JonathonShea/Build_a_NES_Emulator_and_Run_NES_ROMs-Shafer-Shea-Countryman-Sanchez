@@ -14,6 +14,9 @@
 #include "event/EventDispatcher.h"
 #include "input.h"
 #include <OAM.h>
+#include <random>
+
+#define CPU_CYCLES_PER_FRAME 29780
 
 static constexpr std::array<uint8_t, 4> magicNumbers = { 0x4E, 0x45, 0x53, 0x1A }; // NES<EOF> magic numbers to identify a NES ROM file
 
@@ -34,37 +37,23 @@ SDL_Texture* LoadBMP(const std::string& filePath, SDL_Renderer* renderer) {
 	return texture;
 }
 
-void runAnimationTests(CPU& cpu, PPU& ppu, int& scanline) {
-    bool redpixels = true;
-    if (cpu.controller1_state & 0x01) {
-        redpixels = false;
-    }
+void runAnimationTests(CPU& cpu, PPU& ppu, int& scanlineOffset, int frameCount) {
 
-    if (cpu.controller1_state & 0x2) {
-        ppu.dumpPatternTablesToBitmap("output.bmp");
-    }
 
-    if (redpixels) {
-        int randomX = std::rand() % 256;  // Random X coordinate
-        int randomY = std::rand() % 128; // Random Y coordinate
-        ppu.writePixel(randomX, randomY, { 255, 0, 0 }, "output.bmp");
-    } else {
-        static int rainbowIndex = 0;
-        std::array<std::array<uint8_t, 3>, 7> rainbowColors = {{
-            {255, 0, 0},   // Red
-            {255, 127, 0}, // Orange
-            {255, 255, 0}, // Yellow
-            {0, 255, 0},   // Green
-            {0, 0, 255},   // Blue
-            {75, 0, 130},  // Indigo
-            {148, 0, 211}  // Violet
-        }};
+    std::vector<RGB> colors(PPU_WIDTH, RGB{ 1, 1, 0 }); // Initialize colors to black
+    ppu.writeToFrameBuffer(1, colors);
+}
 
-        std::vector<RGB> scanlineColors(256, { rainbowColors[rainbowIndex][0], rainbowColors[rainbowIndex][1], rainbowColors[rainbowIndex][2] });
-        ppu.writeScanline(scanline, scanlineColors, "output.bmp");
-        rainbowIndex = (rainbowIndex + 1) % rainbowColors.size();
-        scanline = (scanline + 1) % 128;
-    }
+void present_frame(SDL_Texture* texture, SDL_Renderer* renderer, const uint32_t* framebuffer, int width, int height) {
+    void* pixels;
+    int pitch;
+    SDL_LockTexture(texture, NULL, &pixels, &pitch);
+    memcpy(pixels, framebuffer, width * height * sizeof(uint32_t));
+    SDL_UnlockTexture(texture);
+
+    SDL_RenderClear(renderer);
+    SDL_RenderCopy(renderer, texture, NULL, NULL);
+    SDL_RenderPresent(renderer);
 }
 
 int main(int argc, const char* argv[]) {
@@ -101,8 +90,7 @@ int main(int argc, const char* argv[]) {
 	CPU cpu(bus, cart, oam); // Create CPU instance
 	PPU ppu(bus, cart, oam); // Create PPU instance
 	ppu.loadPatternTable(cart->getCHRROM()); // load the CHR ROM into PPU's pattern tables
-	ppu.initializeFrameBuffer(256, 240, "output.bmp"); // Initialize the frame buffer
-	
+
 	// ppu.dumpPatternTablesToBitmap("output.bmp"); // dump the pattern tables to BMP
 	InputHandler inputHandler; // Create an InputHandler instance
 
@@ -131,7 +119,21 @@ int main(int argc, const char* argv[]) {
 	SDL_Event event;
 	int scanline = 0;
 
+	SDL_Texture* texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, 256, 240);
+
+	if (!texture) {
+		std::cerr << "Failed to create texture! SDL_Error: " << SDL_GetError() << std::endl;
+		SDL_DestroyWindow(window);
+		SDL_Quit();
+		return -1;
+	}
+
+	int frame = 0;
+
 	while (running) {
+		Uint32 frameStart = SDL_GetTicks(); // Start time
+		Uint32 curTime;
+
 		while (SDL_PollEvent(&event)) {
 			if (event.type == SDL_QUIT) {
 				running = false;
@@ -139,32 +141,41 @@ int main(int argc, const char* argv[]) {
 			inputHandler.processEvent(event); // Use the InputHandler class
 		}
 
+		//print time elapsed
+		curTime = SDL_GetTicks();
+		std::cout << "Time elapsed for input handling: " << (curTime - frameStart) << " ms" << std::endl;
+
 		cpu.controller1_state = inputHandler.getControllerState();
 
-		// anim tests (disabled for now)
-		// runAnimationTests(cpu, ppu, scanline);
+		// print time elapsed
+		curTime = SDL_GetTicks();
+		std::cout << "Time elapsed for controller state: " << (curTime - frameStart) << " ms" << std::endl;
 
-		SDL_Texture* texture = LoadBMP("output.bmp", renderer);
-		if (!texture) {
-			std::cerr << "Failed to load texture from BMP!" << std::endl;
-			continue;
+		int framecycles = 0;
+		while (framecycles < CPU_CYCLES_PER_FRAME) {
+			int cycles = cpu.execute(); // Executes one instruction
+			framecycles += cycles;
+
+			// Step the PPU for each CPU cycle (3 PPU steps per CPU cycle)
+			for (int i = 0; i < cycles * 3; ++i) {
+				ppu.step();
+			}
 		}
+		//print time elapsed
+		curTime = SDL_GetTicks();
+		std::cout << "Time elapsed for CPU execution: " << (curTime - frameStart) << " ms" << std::endl;
 
-		SDL_RenderClear(renderer);
-		SDL_RenderCopy(renderer, texture, nullptr, nullptr);
-		SDL_RenderPresent(renderer);
-		SDL_DestroyTexture(texture);
+		frame++;
 
-		int cycles = cpu.execute();
-		while (cycles > 0) {
-			clock.tick();
-			cycles--;
-			ppu.step(); // Step the PPU
-			ppu.step(); // There are 3 PPU steps per cycle
-			ppu.step(); // Calling this three times as a "catch-up" method of keeping them in sync
-		}
+		present_frame(texture, renderer, ppu.getFrameBuffer(), 256, 240);
+
+		curTime = SDL_GetTicks();
+		std::cout << "Time elapsed for render: " << (curTime - frameStart) << " ms" << std::endl;
+
+		std::cout << "Frame: " << frame << " Framecycles: " << framecycles << std::endl;
 	}
 
+	SDL_DestroyTexture(texture);
 	SDL_DestroyWindow(window);
 	SDL_Quit();
 	return 0;
