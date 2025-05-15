@@ -10,6 +10,7 @@
 //#include <SDL2/SDL.h>
 #include <iomanip>
 
+static uint32_t framebuffer[PPU_WIDTH * PPU_HEIGHT];
 
 PPU::PPU(std::shared_ptr<Bus> bus, std::shared_ptr<Cartridge> cart, std::shared_ptr<OAM> oam) : dot(0),
     m_cart(cart), m_bus(bus), m_oam(oam) {
@@ -24,243 +25,26 @@ PPU::PPU(std::shared_ptr<Bus> bus, std::shared_ptr<Cartridge> cart, std::shared_
     vram_address = 0;
 }
 
-void PPU::initializeFrameBuffer(int width, int height, const std::string& filename) {
-    // Step 1: Create a pixel buffer filled with black pixels
-    std::vector<uint8_t> pixelBuffer(width * height * 3, 0); // 3 bytes per pixel (RGB), initialized to 0 (black)
-
-    // Step 2: Write the pixel buffer to a BMP file
-    writeBMP(pixelBuffer, width, height, filename);
-
-    std::cout << "Initialized frame buffer with dimensions " << width << "x" << height
-              << " and saved to " << filename << std::endl;
+const uint32_t* PPU::getFrameBuffer() {
+    return framebuffer;
 }
 
-void PPU::setPixel(std::vector<uint8_t>& pixelBuffer, int x, int y, const RGB& color, int imageWidth, int imageHeight) {
-    // BMP stores pixels bottom-up, so we invert y
-    int flippedY = (imageHeight - 1) - y;
-
-    int bytesPerPixel = 3; // RGB
-    int index = (flippedY * imageWidth + x) * bytesPerPixel;
-
-    if (index + 2 < pixelBuffer.size()) { // Bounds check
-        pixelBuffer[index + 0] = color.b; // BMP uses BGR format
-        pixelBuffer[index + 1] = color.g;
-        pixelBuffer[index + 2] = color.r;
-    }
-}
-
-void PPU::writePixel(int x, int y, const RGB& color, const std::string& filename) {
-    std::vector<uint8_t> pixelBuffer;
-    int imageWidth, imageHeight;
-
-    // Step 1: Read the existing BMP image into the pixel buffer
-    if (!readBMP(filename, pixelBuffer, imageWidth, imageHeight)) {
-        std::cerr << "Failed to read BMP file!" << std::endl;
+void PPU::writeToFrameBuffer(int scanline, const std::vector<RGB>& colors) {
+    if (scanline < 0 || scanline >= PPU_HEIGHT) {
+        std::cerr << "Invalid scanline: " << scanline << " (must be between 0 and " << PPU_HEIGHT - 1 << ")" << std::endl;
         return;
     }
 
-    // Step 2: Ensure that (x, y) is within bounds
-    if (x < 0 || x >= imageWidth || y < 0 || y >= imageHeight) {
-        std::cerr << "Invalid coordinates: (" << x << ", " << y
-            << ") out of bounds (width: " << imageWidth
-            << ", height: " << imageHeight << ")" << std::endl;
+    if (colors.size() != PPU_WIDTH) {
+        std::cerr << "Color list size (" << colors.size() << ") does not match frame buffer width (" << PPU_WIDTH << ")" << std::endl;
         return;
     }
 
-    // Step 3: Calculate the index in the pixel buffer for the given (x, y)
-    int paddingSize = (4 - (imageWidth * 3) % 4) % 4;
-    int rowSize = (imageWidth * 3) + paddingSize;
-    int index = (y * rowSize) + (x * 3);
-
-    // Step 4: Update the pixel at the given position (x, y)
-    pixelBuffer[index + 0] = color.b; // Blue
-    pixelBuffer[index + 1] = color.g; // Green
-    pixelBuffer[index + 2] = color.r; // Red
-
-    // Step 5: Write the updated pixel buffer back to the BMP file
-    writeBMP(pixelBuffer, imageWidth, imageHeight, filename);
+    for (int x = 0; x < PPU_WIDTH; ++x) {
+        int index = (scanline * PPU_WIDTH) + x;
+        framebuffer[index] = (colors[x].r << 16) | (colors[x].g << 8) | colors[x].b; // Pack RGB into a 32-bit value
+    }
 }
-
-/*
-Function to write a scanline to the BMP file
-To create the colors vector:
-
-std::vector<RGB> colors;
-colors.reserve(256); // Nes scanline is 256 pixels wide
-
-to add a color to the vector:
-colors.emplace_back(RGB{r, g, b}); // where r, g, b are the RGB values for the color
-
-Then call the function:
-writeScanline(scanline, colors, filename);
-where scanline is the y-coordinate of the scanline to write (0-239 for a 240p image) and filename is the path to the BMP file.
-*/
-
-void PPU::writeScanline(int scanline, const std::vector<RGB>& colors, const std::string& filename) {
-    std::vector<uint8_t> pixelBuffer;
-    int imageWidth, imageHeight;
-
-    // Step 1: Read the existing BMP image into the pixel buffer
-    if (!readBMP(filename, pixelBuffer, imageWidth, imageHeight)) {
-        std::cerr << "Failed to read BMP file!" << std::endl;
-        return;
-    }
-
-    // Step 2: Validate scanline number
-    if (scanline < 0 || scanline >= imageHeight) {
-        std::cerr << "Invalid scanline: " << scanline
-                  << " out of bounds (height: " << imageHeight << ")" << std::endl;
-        return;
-    }
-
-    // Step 3: Validate color list length
-    if (colors.size() != static_cast<size_t>(imageWidth)) {
-        std::cerr << "Color list size (" << colors.size()
-                  << ") does not match image width (" << imageWidth << ")" << std::endl;
-        return;
-    }
-
-    // Step 4: Calculate padding and row size
-    int paddingSize = (4 - (imageWidth * 3) % 4) % 4;
-    int rowSize = (imageWidth * 3) + paddingSize;
-    int rowStartIndex = scanline * rowSize;
-
-    // Step 5: Update each pixel in the scanline
-    for (int x = 0; x < imageWidth; ++x) {
-        int index = rowStartIndex + (x * 3);
-        pixelBuffer[index + 0] = colors[x].b; // Blue
-        pixelBuffer[index + 1] = colors[x].g; // Green
-        pixelBuffer[index + 2] = colors[x].r; // Red
-    }
-
-    // Step 6: Write the updated pixel buffer back to the BMP file
-    writeBMP(pixelBuffer, imageWidth, imageHeight, filename);
-}
-
-void PPU::writeBMP(const std::vector<uint8_t>& pixelBuffer, int imageWidth, int imageHeight, const std::string& filename) {
-    std::ofstream out(filename, std::ios::binary);
-    if (!out.is_open()) {
-        std::cerr << "Failed to open " << filename << " for writing.\n";
-        return;
-    }
-
-    // Calculate padding for row alignment
-    int paddingSize = (4 - (imageWidth * 3) % 4) % 4;
-    int rowSize = (imageWidth * 3) + paddingSize;
-    int pixelDataSize = rowSize * imageHeight;
-    int fileSize = 54 + pixelDataSize;
-
-    // BMP Header
-    out.put('B').put('M');
-    out.write(reinterpret_cast<const char*>(&fileSize), 4);
-    int reserved = 0;
-    out.write(reinterpret_cast<const char*>(&reserved), 4);
-    int dataOffset = 54;
-    out.write(reinterpret_cast<const char*>(&dataOffset), 4);
-
-    // DIB Header
-    int headerSize = 40;
-    out.write(reinterpret_cast<const char*>(&headerSize), 4);
-    out.write(reinterpret_cast<const char*>(&imageWidth), 4);
-    out.write(reinterpret_cast<const char*>(&imageHeight), 4);
-    uint16_t planes = 1;
-    out.write(reinterpret_cast<const char*>(&planes), 2);
-    uint16_t bitsPerPixel = 24;
-    out.write(reinterpret_cast<const char*>(&bitsPerPixel), 2);
-    int compression = 0;
-    out.write(reinterpret_cast<const char*>(&compression), 4);
-    out.write(reinterpret_cast<const char*>(&pixelDataSize), 4);
-    int ppm = 2835; // 72 DPI
-    out.write(reinterpret_cast<const char*>(&ppm), 4);
-    out.write(reinterpret_cast<const char*>(&ppm), 4);
-    int colorsUsed = 0;
-    int importantColors = 0;
-    out.write(reinterpret_cast<const char*>(&colorsUsed), 4);
-    out.write(reinterpret_cast<const char*>(&importantColors), 4);
-
-    // Pixel Data
-    for (int y = 0; y < imageHeight; ++y) {
-        out.write(reinterpret_cast<const char*>(&pixelBuffer[y * imageWidth * 3]), imageWidth * 3);
-        // Write padding
-        for (int p = 0; p < paddingSize; ++p)
-            out.put(0);
-    }
-
-    out.close();
-}
-
-bool PPU::readBMP(const std::string& filename, std::vector<uint8_t>& pixelBuffer, int& imageWidth, int& imageHeight) {
-    std::ifstream in(filename, std::ios::binary);
-    if (!in.is_open()) {
-        std::cerr << "Failed to open " << filename << " for reading.\n";
-        return false;
-    }
-
-    // Read BMP Header
-    char header[54];
-    in.read(header, 54);
-
-    // Get image dimensions
-    imageWidth = *reinterpret_cast<int*>(&header[18]);
-    imageHeight = *reinterpret_cast<int*>(&header[22]);
-
-    // Calculate padding for row alignment
-    int paddingSize = (4 - (imageWidth * 3) % 4) % 4;
-
-    // Prepare the pixel buffer
-    int rowSize = (imageWidth * 3) + paddingSize;
-    int pixelDataSize = rowSize * imageHeight;
-    pixelBuffer.resize(pixelDataSize);
-
-    // Read pixel data into the buffer
-    in.read(reinterpret_cast<char*>(pixelBuffer.data()), pixelDataSize);
-    in.close();
-
-    return true;
-}
-
-void PPU::dumpPatternTablesToBitmap(const std::string& filename) {
-    const int tileSize = 8;         // 8x8 tiles
-    const int tilesPerRow = 16;     // 16 tiles per row
-    const int tableWidth = tileSize * tilesPerRow; // 128 pixels
-    const int tableHeight = tileSize * tilesPerRow; // 128 pixels
-    const int imageWidth = tableWidth * 2;  // Two tables side by side
-    const int imageHeight = tableHeight;
-
-    // Fill the pixel buffer with black (initial value)
-    std::vector<uint8_t> pixelBuffer(imageWidth * imageHeight * 3, 0);
-
-    for (int table = 0; table < 2; ++table) {
-        for (int tile = 0; tile < 256; ++tile) {
-            int tileX = tile % 16;
-            int tileY = tile / 16;
-
-            for (int row = 0; row < 8; ++row) {
-                for (int col = 0; col < 8; ++col) {
-                    int index = (tile * 64) + (row * 8) + col;
-                    uint8_t pixelVal = patternTables[table][index];
-
-                    RGB color;
-                    switch (pixelVal) {
-                    case 0: color = { 0, 0, 0 }; break; // Black (transparent)
-                    case 1: color = { 85, 85, 85 }; break; // Dark gray
-                    case 2: color = { 170, 170, 170 }; break; // Light gray
-                    case 3: color = { 255, 255, 255 }; break; // White
-                    }
-
-                    int x = (table * tableWidth) + (tileX * tileSize) + col;
-                    int y = (tileY * tileSize) + row;
-                    setPixel(pixelBuffer, x, y, color, imageWidth, imageHeight);
-                }
-            }
-        }
-    }
-
-    // Write the pixel buffer to BMP file
-    writeBMP(pixelBuffer, imageWidth, imageHeight, filename);
-}
-
-
 
 void PPU::loadPatternTable(const std::vector<uint8_t>& chrROM) {
     if (chrROM.size() < 8192) { // Ensure pattern table is correct size
@@ -554,7 +338,7 @@ void PPU::stepScanline()
     if (dot == 340){
         // This is just a test for now.
         // Settings some BS value.
-        std::vector<RGB> frame;
+        std::vector<RGB> scanlineBuffer;
         for(int i = 0; i < 256; i++){
             RGB val(1,1,1);
             if(scanline % 2 == 0){
@@ -565,10 +349,13 @@ void PPU::stepScanline()
                 toggle2? val.r = 200: val.r = 0;
             }
             toggle = !toggle;
-            frame.push_back(val);
+            scanlineBuffer.push_back(val);
         }
         // Should be done. Let er rip
-        writeScanline(scanline, frame, framebufferFilename); // Gwyn's output to SDL drawing
+        if(scanline < 240){
+            writeToFrameBuffer(scanline, scanlineBuffer); // Gwyn's output to SDL drawing
+        }
+        
     }
     if (dot > 340) {
         dot = 0;
