@@ -84,7 +84,8 @@ uint8_t CPU::read(uint16_t addr)
         return m_cart->ReadPrgRom(addr - 0x8000);
     }
     else {
-        return memory[addr];
+        //return memory[addr];
+        return m_bus->read(addr);
     }
 }
 
@@ -99,7 +100,9 @@ void CPU::write(uint16_t addr, uint8_t data)
         }
     }
     else {
-        memory[addr] = data;
+        //memory[addr] = data;
+        //std::cout << "Sending to BusWrite from CPU: " << addr << " Data: " << data << std::endl;
+		m_bus->write(addr, data); // Write to the bus
     }
 }
 ///////////////////////////////////////////////////////////////////
@@ -713,7 +716,9 @@ void CPU::LDA(uint16_t addr) {
     setNegativeFlag(value & 0x80);
 }
 
-void CPU::STA(uint16_t addr) {
+void CPU::STA(uint16_t addr) {//TODO REMOVE COUT AFTER TESTING
+    //std::cout << "RAM Write: $" << std::hex << addr 
+       // << " = $" << (int)accumulator << std::endl;
     write(addr, accumulator);
 }
 
@@ -974,10 +979,16 @@ void CPU::NOP() {
 uint8_t CPU::execute() {
     // Handle interrupts prior to executing instructions
     handleInterrupts();
-    std::copy(m_bus->memory.begin(), m_bus->memory.end(), memory.begin()); // Copy bus to memory
+    //std::copy(m_bus->memory.begin(), m_bus->memory.end(), memory.begin()); // Copy bus to memory
     // Fetch the next instruction
     uint8_t opcode = read(program_counter++);
-    //std::cout << opcodeMap[opcode] << '\n';
+    //std::cout << opcodeMap[opcode] << " at PC: $" << std::hex << program_counter - 1 << std::endl;
+    /*//std::cout << opcodeMap[opcode] << '\n';
+    static int instr_count = 0;
+    if (instr_count++ % 100 == 0) {
+        std::cout << opcodeMap[opcode] << '\n';
+    }
+    */
     uint16_t addr = 0;
     uint16_t addr_abs = 0;
     uint8_t cycles = 0;
@@ -2080,7 +2091,7 @@ uint8_t CPU::execute() {
         //     std::cout << "Sprite: " << val << std::endl;
         // }
     }
-    std::copy(memory.begin(), memory.end(), m_bus->memory.begin()); // Copy memory to bus
+    //std::copy(memory.begin(), memory.end(), m_bus->memory.begin()); // Copy memory to bus
     return cycles;
 }
 

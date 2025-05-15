@@ -89,6 +89,7 @@ int main(int argc, const char* argv[]) {
 	auto oam = std::make_shared<OAM>();
 	CPU cpu(bus, cart, oam); // Create CPU instance
 	PPU ppu(bus, cart, oam); // Create PPU instance
+	bus->ppu = &ppu; // PPU Pointer For cpuWrite functionality within BUS
 	ppu.loadPatternTable(cart->getCHRROM()); // load the CHR ROM into PPU's pattern tables
 
 	// ppu.dumpPatternTablesToBitmap("output.bmp"); // dump the pattern tables to BMP

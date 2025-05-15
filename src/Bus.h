@@ -7,6 +7,8 @@
 #include <memory>
 #include <vector>
 
+class PPU;
+
 class Bus
 {
 public:
@@ -18,6 +20,8 @@ public:
 	uint8_t read(uint16_t address);
     std::vector<uint8_t> memory;
 	bool nmi = false; // CPU and PPU set this.
+
+	PPU *ppu;
 private:
 	
 

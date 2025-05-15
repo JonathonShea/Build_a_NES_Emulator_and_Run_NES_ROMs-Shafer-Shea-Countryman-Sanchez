@@ -16,10 +16,12 @@
 #include "OAM.h"
 #include <memory>
 #include <array>
-#include "Bus.h"
+//#include "Bus.h"
 
 #define PPU_WIDTH 256
 #define PPU_HEIGHT 240
+
+class Bus;
 
 struct RGB {
 	uint8_t r, g, b;
@@ -95,12 +97,13 @@ public:
 	static constexpr uint16_t maxCycles = 341; // Maximum cycles per scanline
 	std::shared_ptr<OAM> m_oam;
 	std::shared_ptr<Cartridge> m_cart; // Pointer to the cartridge
-	std::shared_ptr<Bus> m_bus; // Pointer to the bus
-
+	//std::shared_ptr<Bus> m_bus; // Pointer to the bus
+	std::weak_ptr<Bus> m_bus;
 	PPU(std::shared_ptr<Bus> bus, std::shared_ptr<Cartridge> cart, std::shared_ptr<OAM> oam);
 	PPU() = default;
 
 	void cpuWrite(uint16_t address, uint8_t data);
+	uint8_t cpuRead(uint16_t address);
 	void write(uint16_t address, uint8_t data);
 	void loadPatternTable(const std::vector<uint8_t>& chrROM);
 	void step();
@@ -124,6 +127,7 @@ public:
 	void setVBlank() {PPUSTATUS |= vBlankMask;}
 	void clearVBlank() {PPUSTATUS &= ~vBlankMask; vram_address = 0;}
 	bool RenderingEnabled() { return PPUMASK &  0x0008;} // Background rendering
+	std::vector<RGB> currentScanlinePixels;
 
 	const char* framebufferFilename = "output.bmp"; // Filename for the BMP file
 

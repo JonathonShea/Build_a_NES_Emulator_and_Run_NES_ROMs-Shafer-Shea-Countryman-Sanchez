@@ -9,6 +9,7 @@
 #include <array>
 //#include <SDL2/SDL.h>
 #include <iomanip>
+#include "Bus.h"
 
 static uint32_t framebuffer[PPU_WIDTH * PPU_HEIGHT];
 
@@ -253,6 +254,7 @@ uint8_t PPU::readPaletteMemory(uint16_t address) {
 
 // Write to palette memory
 void PPU::writePaletteMemory(uint16_t address, uint8_t data) {
+    std::cout << "HELLO FROM writePaletteMEM" << std::endl;
     address &= 0x1F;
 
     // Handle palette mirroring
@@ -272,20 +274,19 @@ void PPU::step() {
     // Visible scanlines: 0-239. Checking this in the other function
     // VBlank: scanline 241-260 CPU do thing
     // Pre-render: scanline 261
-    PPUCTRL = m_bus->read(0x2000); //update this guy
+    //PPUCTRL = m_bus->read(0x2000); //update this guy
     // Reset here! CPU does stuff or something
     if (scanline == 241 && dot == 1) {
         setVBlank();
-        cpuWrite(0x2002, 0);
-        setNMI(); // CUrrently breaking stuff?
+        //cpuWrite(0x2002, 0);
+        setNMI(); // Currently breaking stuff?
     }
-    if (scanline == 261)
+    if (scanline == 261 && dot == 1)
     {
         toggle2 = !toggle2;
         clearVBlank(); // useless
         // I think just zeroing this out works
-        // All three used bits here get cleared
-        PPUSTATUS = 0; 
+        // All three used bits here get cleared 
     }
     stepScanline();
 }
@@ -328,8 +329,7 @@ void PPU::stepScanline()
                 uint8_t tile_index = fetched_nametable_byte;
                 uint8_t fine_y = (vram_address >> 12) & 0x7;
                 int table = (PPUCTRL & 0x10) ? 1 : 0;
-                fetched_pattern_low = patternTables[table][tile_index * 16 + fine_y + 8];
-                //std::cout << fetched_pattern_low << std::endl;
+                fetched_pattern_high = patternTables[table][tile_index * 16 + fine_y + 8];
             }
             else if (timing == 0) {
                 // TODO: switch nametable used here. Think this just flip a bit
@@ -339,12 +339,11 @@ void PPU::stepScanline()
                 // Not doing anything else for the other values.
                 // Most of these are taking up two PPU clock cycles so we just do them on the first cycle
             }
-
-            
+            RenderScanline();
             // Write the scanline to the BMP file (filename should be set elsewhere)
             if(RenderingEnabled()){
-     
-                RenderScanline(); // This is really just generating the scanline that gets pumped into the following function. Shift registers get updated here?
+                //TODO KEEP OR REMOVE CONDITIONAL
+                //RenderScanline(); // This is really just generating the scanline that gets pumped into the following function. Shift registers get updated here?
                 
             }
         }
@@ -353,6 +352,7 @@ void PPU::stepScanline()
         // TODO: Some sort of OAM/Sprite eval happens here. This is for the next scanline
     }
     dot++;
+    /*
     if (dot == 340){
         // This is just a test for now.
         // Settings some BS value.
@@ -375,6 +375,13 @@ void PPU::stepScanline()
         }
         
     }
+    */
+    if (dot == 256) {
+        if (scanline < 240) {
+            writeToFrameBuffer(scanline, currentScanlinePixels);
+            currentScanlinePixels.clear();
+        }
+    }
     if (dot > 340) {
         dot = 0;
         scanline++;
@@ -386,17 +393,38 @@ void PPU::stepScanline()
 
 void PPU::setNMI()
 {
-    if((PPUSTATUS & vBlankMask) && (PPUCTRL & 0x80)){
-         m_bus->nmi = true;
-         
+    if((PPUCTRL & 0x80)){
+        if (auto b = m_bus.lock()) {
+            b->nmi = true;
+        }
     }
 }
 
 // Gonna create the actual scanline here. Should this be render pixel? Probably
+/*
 void PPU::RenderScanline() {
 // TODO: stuff gets muxed into the shift registers and then that is evaluated as the color???
 // Think sprites come in last through a priority mux.
+    
 }
+*/
+
+void PPU::RenderScanline() {
+    // TESTING
+    RGB color(1, 1, 1);
+
+    if (scanline % 2 == 0) {
+        color.b = toggle2 ? 200 : 0;
+        color.g = toggle ? 200 : 0;
+    }
+    else {
+        color.r = toggle2 ? 200 : 0;
+    }
+
+    toggle = !toggle;
+    currentScanlinePixels.push_back(color);
+}
+
 
 int PPU::Read(uint16_t addr) const
 {
@@ -453,6 +481,7 @@ int PPU::getTableIndex(uint16_t address) const{
 
 //Write to NameTable and AttributeTable
 void PPU::writeNameTable(uint16_t address, uint8_t data) {
+    std::cout << "HELLO FROM writeNAMETABLE" << std::endl; //TODO NOT GETTING HIT
     int tableIndex = getTableIndex(address);
     if (tableIndex == -1) return; //Non-valid Index
 
@@ -482,11 +511,11 @@ uint8_t PPU::readNameTable(uint16_t address) const {
 }
 
 void PPU::write(uint16_t address, uint8_t data) {
+    std::cout << "Hello From PPU WRITE" << std::endl;
     if (address < 0x2000) {
-        //Possible overhaul of current PatternTable write logic
         writePatternTable(address, data);
     }
-    else if (address >= 2000 && address <= 0x3EFF){
+    else if (address >= 0x2000 && address <= 0x3EFF){
         writeNameTable(address,data);
     }
     else if (address >= 0x3F00 && address <= 0x3FFF) {
@@ -499,27 +528,32 @@ void PPU::write(uint16_t address, uint8_t data) {
 
 //PPU MMIO Registers - - https://www.nesdev.org/wiki/PPU_registers -- For ref
 void PPU::cpuWrite(uint16_t address, uint8_t data) {
-    switch (address & 0x2007) {
-    case 0x2000: // PPUCTRL
+    switch (address & 0x0007) {
+    case 0x0: // PPUCTRL
+        std::cout << "Hello From PPU CPUWRITE0x2000" << std::endl;
         PPUCTRL = data;
-        m_bus->write(0x2000, data); // Write to bus
+       // m_bus->write(0x2000, data); // Write to bus
         break;
 
-    case 0x2001: // PPUMASK
+    case 0x1: // PPUMASK
+        std::cout << "Hello From PPU CPUWRITE0x2001" << std::endl;
         PPUMASK = data;
-        m_bus->write(0x2001, data); // Write to bus
+        //m_bus->write(0x2001, data); // Write to bus
         break;
 
-    case 0x2002: // PPUSTATUS - READ ONLY
-        m_bus->write(0x2002, PPUSTATUS); // Read PPU status
+    case 0x2: // PPUSTATUS - READ ONLY
+        //m_bus->write(0x2002, PPUSTATUS); // Read PPU status
+        std::cout << "Hello From PPU CPUWRITE0x2002" << std::endl;
         break;
 
-    case 0x2003: // OAMADDR
+    case 0x3: // OAMADDR
+        std::cout << "Hello From PPU CPUWRITE 0x2003" << std::endl;
         OAMADDR = data;
         
         break;
 
-    case 0x2004: // OAMDATA - Write to OAM
+    case 0x4: // OAMDATA - Write to OAM
+        std::cout << "Hello From PPU CPUWRITE0x2004" << std::endl;
         OAMDATA = data;
         if (m_oam) {
             uint8_t spriteIndex = OAMADDR / 4;  // calculate sprite (0 - 63)
@@ -545,7 +579,8 @@ void PPU::cpuWrite(uint16_t address, uint8_t data) {
         OAMADDR++;
         break;
 
-    case 0x2005: // PPUSCROLL
+    case 0x5: // PPUSCROLL
+        std::cout << "Hello From PPU CPUWRITE0x2005" << std::endl;
         if (!scroll_latch) {
             // First write (false = x)
             scroll_x = data;
@@ -556,10 +591,11 @@ void PPU::cpuWrite(uint16_t address, uint8_t data) {
             scroll_y = data;
             scroll_latch = false;  // Ensures next write is x scroll
         }
-        m_bus->write(0x2005, data); // Write to bus
+        //m_bus->write(0x2005, data); // Write to bus
         break;
 
-    case 0x2006: // PPUADDR 
+    case 0x6: // PPUADDR 
+        std::cout << "Hello From PPU CPUWRITE0x2006" << std::endl;
         if (!addr_latch) {
             // First write (false = addr_high)
             addr_high = data & 0x3F; // Only 6 bits are valid for high byte
@@ -571,19 +607,42 @@ void PPU::cpuWrite(uint16_t address, uint8_t data) {
             vram_address = (addr_high << 8) | addr_low;  // 
             addr_latch = false;
         }
-        m_bus->write(0x2006, data); // Write to bus
+        //m_bus->write(0x2006, data); // Write to bus
         break;
 
-    case 0x2007: // PPUDATA - Write to current VRAM address
+    case 0x7: // PPUDATA - Write to current VRAM address
         // Write to PPU memory at the current VRAM address
+        std::cout << "Hello From PPU CPUWRITE0x2007" << std::endl;
         write(vram_address, data);
 
         // Increment VRAM address based on PPUCTRL bit 2
         vram_address += (PPUCTRL & 0x04) ? 32 : 1;
-        m_bus->write(0x2007, data); // Write to bus
+        //m_bus->write(0x2007, data); // Write to bus
         break;
 
     default:
         std::cerr << "Unknown PPU MMIO write $" << std::hex << address << std::endl;
     }
+}
+
+uint8_t PPU::cpuRead(uint16_t address) {
+    uint8_t data = 0;
+
+    switch (address & 0x7) { // Registers are mirrored every 8 bytes
+    case 0x2: // PPUSTATUS
+        data = PPUSTATUS;  // read current status (including VBlank bit)
+        PPUSTATUS &= 0x7F; // clear VBlank bit on read (bit 7)
+        scroll_latch = false;
+        addr_latch = false;
+
+        break;
+
+        // Add other registers with read values
+
+    default:
+        // For now just return 0 or last read value
+        break;
+    }
+    std::cout << "Hello From PPU READ 0x" << std::hex << address << std::endl;
+    return data;
 }
