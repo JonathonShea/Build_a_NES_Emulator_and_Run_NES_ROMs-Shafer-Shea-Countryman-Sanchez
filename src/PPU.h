@@ -84,6 +84,11 @@ public:
 	uint8_t addr_low = 0; // *
 	uint16_t vram_address = 0; // *
 
+	uint8_t fetched_nametable_byte = 0;
+	uint8_t fetched_attribute_byte = 0;
+	uint8_t fetched_pattern_low = 0;
+	uint8_t fetched_pattern_high = 0;
+
 	ShiftRegister shift1;
 	ShiftRegister shift2;
 	static constexpr uint8_t vBlankMask = 0x80;

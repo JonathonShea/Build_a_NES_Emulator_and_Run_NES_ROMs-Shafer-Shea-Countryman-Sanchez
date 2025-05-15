@@ -107,17 +107,19 @@ void PPU::writePatternTable(uint16_t address, uint8_t data) {
     else {
         tilePlaneHigh[tableIndex][tileIndex][row] = data;
     }
-
-    uint8_t low = tilePlaneLow[tableIndex][tileIndex][row]; //Pull staged tile data
-    uint8_t high = tilePlaneHigh[tableIndex][tileIndex][row];
-
-    for (int col = 0; col < 8; ++col) {
-        uint8_t bit1 = (low >> (7 - col)) & 1;
-        uint8_t bit2 = (high >> (7 - col)) & 1;
-        uint8_t pixelVal = (bit2 << 1) | bit1;
-        patternTables[tableIndex][tileIndex * 64 + row * 8 + col] = pixelVal;
-    }
     
+    if (!isLowplane) {
+        uint8_t low = tilePlaneLow[tableIndex][tileIndex][row]; //Pull staged tile data
+        uint8_t high = tilePlaneHigh[tableIndex][tileIndex][row];
+
+        for (int col = 0; col < 8; ++col) {
+            uint8_t bit1 = (low >> (7 - col)) & 1;
+            uint8_t bit2 = (high >> (7 - col)) & 1;
+            uint8_t pixelVal = (bit2 << 1) | bit1;
+            patternTables[tableIndex][tileIndex * 64 + row * 8 + col] = pixelVal;
+        }
+
+    }
 }
 
 std::array<uint8_t, 64> PPU::getPatternTile(int tableIndex, int tileIndex) const {
@@ -300,18 +302,34 @@ void PPU::stepScanline()
             if(timing == 1){ 
                 // TODO: fetch nametable byte here
                 uint16_t nametable_addr =  0x2000 | (vram_address & 0x0FFF);
-                uint8_t nametable_byte = Read(nametable_addr);
-                writeNameTable(nametable_addr, nametable_byte);
+                fetched_nametable_byte = readNameTable(nametable_addr);
             }
             else if (timing == 3) {
                 // TODO: fetch attribute byte here
+                uint8_t coarse_x = vram_address & 0x1F;
+                uint8_t coarse_y = (vram_address >> 5) & 0x1F;
+
+                uint16_t attribute_addr = 0x23C0
+                                        | (vram_address & 0x0C00)
+                                        | ((coarse_y >> 2) << 3)
+                                        | (coarse_x >> 2);
+                fetched_attribute_byte = readNameTable(attribute_addr);
             }
             else if (timing == 5) {
                 // TODO: fetch low byte of pattern table here
+                uint8_t tile_index = fetched_nametable_byte;
+                uint8_t fine_y = (vram_address >> 12) & 0x7;
+                int table = (PPUCTRL & 0x10) ? 1 : 0;
+                fetched_pattern_low = patternTables[table][tile_index * 16 + fine_y];
             }
 
             else if (timing == 7) {
                 // TODO: fetch high byte of pattern table here
+                uint8_t tile_index = fetched_nametable_byte;
+                uint8_t fine_y = (vram_address >> 12) & 0x7;
+                int table = (PPUCTRL & 0x10) ? 1 : 0;
+                fetched_pattern_low = patternTables[table][tile_index * 16 + fine_y + 8];
+                //std::cout << fetched_pattern_low << std::endl;
             }
             else if (timing == 0) {
                 // TODO: switch nametable used here. Think this just flip a bit
@@ -322,10 +340,10 @@ void PPU::stepScanline()
                 // Most of these are taking up two PPU clock cycles so we just do them on the first cycle
             }
 
-
+            
             // Write the scanline to the BMP file (filename should be set elsewhere)
             if(RenderingEnabled()){
-
+     
                 RenderScanline(); // This is really just generating the scanline that gets pumped into the following function. Shift registers get updated here?
                 
             }
