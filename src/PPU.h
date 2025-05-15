@@ -18,6 +18,9 @@
 #include <array>
 #include "Bus.h"
 
+#define PPU_WIDTH 256
+#define PPU_HEIGHT 240
+
 struct RGB {
 	uint8_t r, g, b;
 };
@@ -102,11 +105,8 @@ public:
 	void loadPatternTable(const std::vector<uint8_t>& chrROM);
 	void step();
 	void SetOam(std::shared_ptr<OAM> oam) { m_oam = oam; }
-	void setPixel(std::vector<uint8_t>& pixelBuffer, int x, int y, const RGB& color, int imageWidth, int imageHeight);
-	void dumpPatternTablesToBitmap(const std::string& filename);
-	void writePixel(int x, int y, const RGB& color, const std::string& filename);
-	void writeScanline(int scanline, const std::vector<RGB>& colors, const std::string& filename);
-	void initializeFrameBuffer(int width, int height, const std::string& filename);
+	const uint32_t* getFrameBuffer();
+	void writeToFrameBuffer(int scanline, const std::vector<RGB>& colors);
   
 	std::array<uint8_t, 64> getPatternTile(int tableIndex, int tileIndex) const;
 
@@ -131,8 +131,6 @@ public:
 	uint8_t readPaletteMemory(uint16_t address);
 	void writePaletteMemory(uint16_t address, uint8_t data);
 	RGB getColor(uint8_t paletteIndex) const;
-	void writeBMP(const std::vector<uint8_t>& pixelBuffer, int imageWidth, int imageHeight, const std::string& filename);
-	bool readBMP(const std::string& filename, std::vector<uint8_t>& pixelBuffer, int& imageWidth, int& imageHeight);
 
 	//NameTable Functions
 	void writeNameTable(uint16_t address, uint8_t data);

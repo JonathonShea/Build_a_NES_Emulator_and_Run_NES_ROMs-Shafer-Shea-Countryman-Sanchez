@@ -977,7 +977,7 @@ uint8_t CPU::execute() {
     std::copy(m_bus->memory.begin(), m_bus->memory.end(), memory.begin()); // Copy bus to memory
     // Fetch the next instruction
     uint8_t opcode = read(program_counter++);
-    std::cout << opcodeMap[opcode] << '\n';
+    //std::cout << opcodeMap[opcode] << '\n';
     uint16_t addr = 0;
     uint16_t addr_abs = 0;
     uint8_t cycles = 0;
