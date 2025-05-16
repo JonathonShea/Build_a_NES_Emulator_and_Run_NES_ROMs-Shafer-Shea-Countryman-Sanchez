@@ -296,12 +296,12 @@ void PPU::step() {
 void PPU::stepScanline()
 {
     // Only render visible scanlines (0-239)
-    if(scanline < 240){ 
+    if (scanline < 240) {
         if (dot < 256) { // Visible pixels. Do stuff here!!!!
             int timing = dot % 8; // Using this to determine what value we are pulling on the cycle (nametable, attribute, etc.)
-            if(timing == 1){ 
+            if (timing == 1) {
                 // TODO: fetch nametable byte here
-                uint16_t nametable_addr =  0x2000 | (vram_address & 0x0FFF);
+                uint16_t nametable_addr = 0x2000 | (vram_address & 0x0FFF);
                 fetched_nametable_byte = readNameTable(nametable_addr);
             }
             else if (timing == 3) {
@@ -310,9 +310,9 @@ void PPU::stepScanline()
                 uint8_t coarse_y = (vram_address >> 5) & 0x1F;
 
                 uint16_t attribute_addr = 0x23C0
-                                        | (vram_address & 0x0C00)
-                                        | ((coarse_y >> 2) << 3)
-                                        | (coarse_x >> 2);
+                    | (vram_address & 0x0C00)
+                    | ((coarse_y >> 2) << 3)
+                    | (coarse_x >> 2);
                 fetched_attribute_byte = readNameTable(attribute_addr);
             }
             else if (timing == 5) {
@@ -353,23 +353,145 @@ void PPU::stepScanline()
                 scroll_x = (scroll_x + 1) % 256;
             }
 
-            }
-            else{
-                // Not doing anything else for the other values.
-                // Most of these are taking up two PPU clock cycles so we just do them on the first cycle
-            }
+        }
+        else {
+            // Not doing anything else for the other values.
+            // Most of these are taking up two PPU clock cycles so we just do them on the first cycle
+        }
 
-            
-            // Write the scanline to the BMP file (filename should be set elsewhere)
-            if(RenderingEnabled()){
-     
-                RenderScanline(); // This is really just generating the scanline that gets pumped into the following function. Shift registers get updated here?
-                
-            }
+
+        // Write the scanline to the BMP file (filename should be set elsewhere)
+        if (RenderingEnabled()) {
+
+            RenderScanline(); // This is really just generating the scanline that gets pumped into the following function. Shift registers get updated here?
+
+        }
+  
     }
 
-    if(dot >= 257 && dot <= 320) { // 257-320
-        // TODO: Some sort of OAM/Sprite eval happens here. This is for the next scanline
+    if (dot >= 257 && dot <= 320) { // 257-320
+        if (dot == 257) {
+            // Clear secondary OAM 
+            for (int i = 0; i < 8; i++) {
+                sprite_data[i].y_pos = -1;     
+                sprite_data[i].tile_index = -1;
+                sprite_data[i].attributes = -1;
+                sprite_data[i].x_pos = -1;
+            }
+
+            // Initialize sprite count and overflow flag
+            int activeSprites = 0;  // number of active sprites
+            bool spriteOverflow = false;  // is true if number of sprites < 8
+
+            // Check if sprite rendering is enabled
+            if (PPUMASK & 0x10) {  // check bit 4 of PPUMASK
+                // Pixel height is 16 if the fifth bit of PPUCTRL is set, else 8
+                int spriteHeight;
+                if (PPUCTRL & 0x20) {
+                    spriteHeight = 16;
+                }
+                else {
+                    spriteHeight = 8;
+                }
+
+                // cycle through OAM to find sprites for the next scanline
+                for (int i = 0; i < oamSize; i++) {
+                    Sprite& sprite = m_oam->sprites[i];
+                    int y = sprite.y_pos;
+
+                    // calculate the next scanline
+                    int next_scanline = (scanline + 1) % 262;
+
+                    // Check if this sprite will be visible on the next scanline
+                    if (y <= next_scanline && next_scanline < y + spriteHeight) {
+                        // If we've already found 8 sprites, set overflow flag
+                        if (activeSprites >= 8) {
+                            PPUSTATUS |= 0x20; 
+                            spriteOverflow = true;
+                            break;  // Stop adding sprites
+                        }
+
+                        // Copy sprite to secondary OAM 
+                        sprite_data[activeSprites] = sprite;
+                        activeSprites++;  // increment the number of sprites
+                    }
+                }
+            }
+
+            // Clear sprite overflow flag
+            if (!spriteOverflow) {
+                PPUSTATUS &= ~0x20;
+            }
+        }
+
+        // fetch sprite data for sprites found in eval
+        int spriteIndex = (dot - 257) / 8;
+        // ensure sprite is valid
+        if (spriteIndex < 8 && sprite_data[spriteIndex].y_pos != -1) {
+            // Get sprite data for current sprite
+            Sprite& sprite = sprite_data[spriteIndex];
+
+            // calculate which tile and row to fetch based on sprite attributes
+            uint8_t tileIndex = sprite.tile_index;
+            bool tall = (PPUCTRL & 0x20) != 0; // set to true if sprite has a height of 16
+            uint8_t spritePatternTable;
+            if (tall) {
+                spritePatternTable = tileIndex & 1;  // use bit 0 of tile index
+            }
+            else {
+                spritePatternTable = (PPUCTRL & 0x08) >> 3;  // use bit 3 of PPUCTRL
+            }
+
+            // Calculate Y offset within the sprite
+            int next_scanline = (scanline + 1) % 262;
+            uint8_t spriteY = next_scanline - sprite.y_pos;
+
+            // Handle vertical flipping
+            if (sprite.attributes & 0x80) {
+                if (tall) {
+                    spriteY = 15 - spriteY;  // For 8x16 sprites
+                }
+                else {
+                    spriteY = 7 - spriteY;   // For 8x8 sprites
+                }
+            }
+
+            // Calculate pattern table address
+            uint16_t patternAddr;
+            if (tall) {
+                // 8x16 sprites
+                tileIndex &= ~1; // Clear bottom bit for 8x16 sprites
+                if (spriteY < 8) {
+                    patternAddr = (spritePatternTable * 0x1000) + (tileIndex * 16) + spriteY;
+                }
+                else {
+                    patternAddr = (spritePatternTable * 0x1000) + (tileIndex * 16) + 16 + (spriteY - 8);
+                }
+            }
+            else {
+                // 8x8 sprites
+                patternAddr = (spritePatternTable * 0x1000) + (tileIndex * 16) + spriteY;
+            }
+
+            uint8_t spriteLow = Read(patternAddr);
+            uint8_t spriteHigh = Read(patternAddr + 8);
+            // Handle horizontal flipping
+            if (sprite.attributes & 0x40) {
+                // Bit reversal for horizontal flip
+                uint8_t flippedLow = 0;
+                uint8_t flippedHigh = 0;
+                for (int b = 0; b < 8; b++) {
+                    flippedLow |= ((spriteLow >> b) & 1) << (7 - b);
+                    flippedHigh |= ((spriteHigh >> b) & 1) << (7 - b);
+                }
+                spriteLow = flippedLow;
+                spriteHigh = flippedHigh;
+            }
+
+            // Store sprite data for rendering
+            sprite_pattern_low[spriteIndex] = spriteLow;
+            sprite_pattern_high[spriteIndex] = spriteHigh; 
+        }
     }
 
     dot++;
@@ -393,8 +515,8 @@ void PPU::stepScanline()
         if(scanline < 240){
             writeToFrameBuffer(scanline, scanlineBuffer); // Gwyn's output to SDL drawing
         }
-        
     }
+
     if (dot > 340) {
         dot = 0;
         scanline++;

@@ -114,8 +114,6 @@ public:
 	void printPatternTables();
 	void SetCartridge(std::shared_ptr<Cartridge> cart) { m_cart = cart; } 
 
-//private:
-
 	int Read(uint16_t addr) const; // Read from the PPU memory
 	void RenderScanline();
 	void stepScanline();
@@ -140,7 +138,16 @@ public:
 	//Pattern Table Functions
 	void writePatternTable(uint16_t address, uint8_t data);
 
+	// Secondary OAM for the current scanline (8 sprites max)
+	Sprite sprite_data[8];
 
+	// Pattern data for sprites on current scanline
+	uint8_t sprite_pattern_low[8] = { 0 };
+	uint8_t sprite_pattern_high[8] = { 0 };
+
+	// Sprite flags for current scanline
+	bool sprite_priority[8] = { false };
+	bool sprite_is_zero[8] = { false };
 };
 
 #endif
