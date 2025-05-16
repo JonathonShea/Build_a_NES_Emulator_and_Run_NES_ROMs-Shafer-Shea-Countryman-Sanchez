@@ -456,12 +456,6 @@ void CPU::LSR(uint16_t addr) // Logical Shift Right
     setNegativeFlag(0);        
 }
 
-void CPU::LSR_ACCU(uint16_t addr){
-    accumulator = accumulator >> 1;
-    setCarryFlag(accumulator & 0x01); 
-    setZeroFlag(accumulator == 0); 
-    setNegativeFlag(accumulator &0x07);   
-}
 
 void CPU::ROL(uint16_t addr) // Rotate Left
 {
@@ -984,11 +978,7 @@ uint8_t CPU::execute() {
     std::copy(m_bus->memory.begin(), m_bus->memory.end(), memory.begin()); // Copy bus to memory
     // Fetch the next instruction
     uint8_t opcode = read(program_counter++);
-    #ifdef __DEBUG_PRINT
-    std::cout << opcodeMap[opcode] << ' ' << instructionCount++  << ' ' << program_counter << std::endl;
-    std::cout << "Y: " << int(y) << std::endl;
-    std::cout << "X: " << int(x) << std::endl;
-    #endif
+    //std::cout << opcodeMap[opcode] << '\n';
     uint16_t addr = 0;
     uint16_t addr_abs = 0;
     uint8_t cycles = 0;
@@ -1697,7 +1687,7 @@ uint8_t CPU::execute() {
 
         // LSR
         case 0x4A: // Accumulator
-            LSR_ACCU(0); // Call with 0 to indicate accumulator mode
+            LSR(0); // Call with 0 to indicate accumulator mode
             cycles = 2;
             break;
 
