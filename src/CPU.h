@@ -10,6 +10,8 @@
 #include "OAM.h"
 #include "Bus.h"
 
+#undef __DEBUG_PRINT
+
 class CPU
 {
 public:

@@ -842,8 +842,9 @@ void CPU::JMP_IND(uint16_t addr)
 
 void CPU::JSR(uint16_t addr)
 {
-    stack.push_back(program_counter >> 1); // MSB
-    stack.push_back(program_counter & 0xFF); // LSB
+    program_counter--;
+    stack.push_back((program_counter >> 8)); // MSB
+    stack.push_back(program_counter & 0x00FF); // LSB
     stack_pointer -= 2;
     program_counter = addr;
 }
@@ -852,9 +853,9 @@ void CPU::RTS(uint16_t addr)
 {
     // Pop program counter bytes into program counter
     program_counter = 0;
-    program_counter = stack.back() << 1;
+    program_counter = stack.back();
     stack.pop_back();
-    program_counter |= stack.back();
+    program_counter |= stack.back() << 8;
     stack.pop_back();
     stack_pointer += 2;
 
