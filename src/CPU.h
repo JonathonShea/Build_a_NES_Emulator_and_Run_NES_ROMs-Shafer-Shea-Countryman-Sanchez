@@ -40,6 +40,7 @@ public:
 	uint8_t read(uint16_t addr);
 	void write(uint16_t addr, uint8_t data);
 
+	uint64_t instructionCount = 0;
 	std::vector<uint8_t> getStackTESTING() const;
 	void setStackBackTESTING(uint8_t value);
 
@@ -110,8 +111,9 @@ public: // 6502 Opcodes - Base implementation of each opcode
 	// Shift Opcodes
 	void ASL(uint16_t addr);
 	void LSR(uint16_t addr);
-	void ROL(uint16_t addr);
-	void ROR(uint16_t addr);
+    void LSR_ACCU(uint16_t addr);
+    void ROL(uint16_t addr);
+    void ROR(uint16_t addr);
 
 	// Arithmetic OP codes.
 	void ADC(uint16_t addr);
