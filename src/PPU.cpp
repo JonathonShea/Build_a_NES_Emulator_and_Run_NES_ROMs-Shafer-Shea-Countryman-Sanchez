@@ -23,6 +23,8 @@ PPU::PPU(std::shared_ptr<Bus> bus, std::shared_ptr<Cartridge> cart, std::shared_
     addr_high = 0;
     addr_low = 0;
     vram_address = 0;
+    scanlineBuffer = std::vector<RGB>();
+    setVBlank();
 }
 
 const uint32_t* PPU::getFrameBuffer() {
@@ -272,7 +274,10 @@ void PPU::step() {
     // Visible scanlines: 0-239. Checking this in the other function
     // VBlank: scanline 241-260 CPU do thing
     // Pre-render: scanline 261
-    PPUCTRL = m_bus->read(0x2000); //update this guy
+    cpuWrite(0x2000, m_bus->read(0x2000));
+    cpuWrite(0x2005, m_bus->read(0x2005));
+    cpuWrite(0x2001, m_bus->read(0x2001));
+    cpuWrite(0x2006, m_bus->read(0x2006));
     // Reset here! CPU does stuff or something
     if (scanline == 241 && dot == 1) {
         setVBlank();
@@ -301,11 +306,13 @@ void PPU::stepScanline()
             int timing = dot % 8; // Using this to determine what value we are pulling on the cycle (nametable, attribute, etc.)
             if(timing == 1){ 
                 // TODO: fetch nametable byte here
+                vram_address = PPUADDR & 0x0F00;
+                vram_address = vram_address >> 8;
                 uint16_t nametable_addr =  0x2000 | (vram_address & 0x0FFF);
                 fetched_nametable_byte = readNameTable(nametable_addr);
             }
             else if (timing == 3) {
-                // TODO: fetch attribute byte here
+                // fetch attribute byte here
                 uint8_t coarse_x = vram_address & 0x1F;
                 uint8_t coarse_y = (vram_address >> 5) & 0x1F;
 
@@ -323,7 +330,7 @@ void PPU::stepScanline()
                 fetched_pattern_low = patternTables[table][tile_index * 16 + fine_y];
 
                 // Load into shift register
-                shift1.Insert(fetched_pattern_low);
+                tile_low_shift.Insert(fetched_pattern_low);
             }
 
             else if (timing == 7) {
@@ -334,7 +341,7 @@ void PPU::stepScanline()
                 fetched_pattern_high = patternTables[table][tile_index * 16 + fine_y + 8];
 
                 // Load into shift register
-                shift2.Insert(fetched_pattern_high);
+                tile_high_shift.Insert(fetched_pattern_high);
                 //std::cout << fetched_pattern_high << std::endl;
             }
             else if (timing == 0) {
@@ -352,7 +359,8 @@ void PPU::stepScanline()
                 // Increment scroll_x
                 scroll_x = (scroll_x + 1) % 256;
             }
-
+            // if(RenderingEnabled())
+                scanlineBuffer.push_back(RenderScanline()); // This is really just generating the scanline that gets pumped into the following function. Shift registers get updated here?
             }
             else{
                 // Not doing anything else for the other values.
@@ -361,37 +369,38 @@ void PPU::stepScanline()
 
             
             // Write the scanline to the BMP file (filename should be set elsewhere)
-            if(RenderingEnabled()){
+            // if(RenderingEnabled()){
      
-                RenderScanline(); // This is really just generating the scanline that gets pumped into the following function. Shift registers get updated here?
+
                 
-            }
+            // }
     }
 
     if(dot >= 257 && dot <= 320) { // 257-320
         // TODO: Some sort of OAM/Sprite eval happens here. This is for the next scanline
-    }
+    }  
 
     dot++;
     if (dot == 340){
         // This is just a test for now.
         // Settings some BS value.
-        std::vector<RGB> scanlineBuffer;
-        for(int i = 0; i < 256; i++){
-            RGB val(1,1,1);
-            if(scanline % 2 == 0){
-                toggle2? val.b = 200: val.b = 0;
-                toggle? val.g = 200: val.g = 0;
-            }
-            else{
-                toggle2? val.r = 200: val.r = 0;
-            }
-            toggle = !toggle;
-            scanlineBuffer.push_back(val);
-        }
+        // std::vector<RGB> scanlineBuffer;
+        // for(int i = 0; i < 256; i++){
+        //     RGB val(1,1,1);
+        //     if(scanline % 2 == 0){
+        //         toggle2? val.b = 200: val.b = 0;
+        //         toggle? val.g = 200: val.g = 0;
+        //     }
+        //     else{
+        //         toggle2? val.r = 200: val.r = 0;
+        //     }
+        //     toggle = !toggle;
+        //     scanlineBuffer.push_back(val);
+        // }
         // Should be done. Let er rip
         if(scanline < 240){
             writeToFrameBuffer(scanline, scanlineBuffer); // Gwyn's output to SDL drawing
+            scanlineBuffer = std::vector<RGB>();
         }
         
     }
@@ -412,9 +421,15 @@ void PPU::setNMI()
 }
 
 // Gonna create the actual scanline here. Should this be render pixel? Probably
-void PPU::RenderScanline() {
+RGB PPU::RenderScanline() {
 // TODO: stuff gets muxed into the shift registers and then that is evaluated as the color???
 // Think sprites come in last through a priority mux.
+    uint8_t pixel = tile_low_shift[15 - GetFineX()] << 3;
+    pixel |= tile_high_shift[15 - GetFineX()] << 2;
+    pixel |= attr_low_shift[7 - GetFineX()] << 1;
+    pixel |= attr_low_shift[7 - GetFineX()];
+    pixel &= 0xF0;
+    return getColor(pixel);
 }
 
 int PPU::Read(uint16_t addr) const
