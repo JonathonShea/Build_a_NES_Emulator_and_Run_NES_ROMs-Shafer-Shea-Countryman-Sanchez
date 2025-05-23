@@ -9,8 +9,10 @@
 #include <unordered_map>
 #include "OAM.h"
 #include "Bus.h"
+#include <fstream>
+#include <iostream>
 
-#undef __DEBUG_PRINT
+#define __DEBUG_PRINT
 
 class CPU
 {
@@ -22,7 +24,7 @@ public:
 	uint8_t stack_pointer;					// 8-bit register that contains lower 8 bits of stack
 	uint16_t program_counter;				// 16-bit register that contains a pointer to the next instruction
 	uint8_t status = 0x00;					// 8-bit register that contains status flags
-
+  std::ofstream file;
     // controller info
     uint8_t controller1_state = 0;   // Latest button input (from InputHandler)
     uint8_t controller1_shift = 0;   // Shifting register for serial reads
@@ -108,6 +110,7 @@ public: // Addressing Modes - Returns the effective address for each addressing 
 	uint16_t addr_indexed_indirect_x();    // Indexed Indirect (X)
 	uint16_t addr_indirect_indexed_y();    // Indirect Indexed (Y) 
 	uint16_t addr_relative();              // Relative 
+  void ASL_ACCU(uint16_t addr);
 
 public: // 6502 Opcodes - Base implementation of each opcode
 	// Shift Opcodes

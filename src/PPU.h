@@ -27,13 +27,16 @@ struct RGB {
 
 
 struct ShiftRegister{
-	std::array<bool,16> reg;
+	std::array<uint8_t, 16> reg;
 	int index = 0;
 	void Insert(uint8_t val){
 		for (int i = 0; i < 8; ++i) {
 			reg[index] = (val >> (7 - i)) & 1;
 			index = index++ % 16;
 		}
+	}
+	uint8_t operator [](int i) const{
+		return reg[i % 16];
 	}
 };
 
@@ -58,7 +61,7 @@ public:
 	uint8_t OAMADDR = 0x00; //Sprite RAM Address (Write)
 	uint8_t OAMDATA = 0x00; //Sprite Data(Read / Write)
 	uint8_t PPUSCROLL = 0x00; //X-Y Coords for Scroll (Write) WRITE AFTER PPUADDR
-	uint8_t PPUADDR = 0x00; //VRAM Address (Write) Communication with CPU
+	uint16_t PPUADDR = 0x00; //VRAM Address (Write) Communication with CPU
 	uint8_t PPUDATA = 0x00; //VRAM Data (Read / Write) 
 	uint8_t OAMDMA = 0x00; //Sprite DMA (Write) Suspend CPU to begin DMA
 	uint32_t dot; // These are the "pixels" in the scanline. Goes up to 340 then wraps around
@@ -72,6 +75,7 @@ public:
 	uint8_t tilePlaneHigh[2][256][8] = {};
 
 	std::vector<uint8_t> chrRam = std::vector<uint8_t>(0x2000, 0);
+	std::vector<RGB> scanlineBuffer;
 
 	// For PPUSCROLL
 	bool scroll_latch = false; // *
@@ -89,8 +93,11 @@ public:
 	uint8_t fetched_pattern_low = 0;
 	uint8_t fetched_pattern_high = 0;
 
-	ShiftRegister shift1;
-	ShiftRegister shift2;
+	ShiftRegister tile_low_shift;
+	ShiftRegister tile_high_shift;
+	ShiftRegister attr_low_shift;
+	ShiftRegister attr_high_shift;
+
 	static constexpr uint8_t vBlankMask = 0x80;
 	static constexpr uint16_t maxCycles = 341; // Maximum cycles per scanline
 	std::shared_ptr<OAM> m_oam;
@@ -99,7 +106,6 @@ public:
 
 	PPU(std::shared_ptr<Bus> bus, std::shared_ptr<Cartridge> cart, std::shared_ptr<OAM> oam);
 	PPU() = default;
-
 	void cpuWrite(uint16_t address, uint8_t data);
 	void write(uint16_t address, uint8_t data);
 	void loadPatternTable(const std::vector<uint8_t>& chrROM);
@@ -117,7 +123,7 @@ public:
 //private:
 
 	int Read(uint16_t addr) const; // Read from the PPU memory
-	void RenderScanline();
+	RGB RenderScanline();
 	void stepScanline();
 	void setNMI();
 	uint16_t scanline = 0; // Current scanline. Goes up to 261 then wraps around
@@ -139,6 +145,8 @@ public:
 
 	//Pattern Table Functions
 	void writePatternTable(uint16_t address, uint8_t data);
+
+	uint8_t GetFineX() {return PPUSCROLL & 0x70;}
 
 
 };
