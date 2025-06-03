@@ -508,7 +508,6 @@ void PPU::stepScanline()
             sprite_pattern_low[spriteIndex] = spriteLow;
             sprite_pattern_high[spriteIndex] = spriteHigh;
         }
-    }
 
 
     dot++;
