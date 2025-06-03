@@ -55,13 +55,18 @@ CPU::CPU(std::shared_ptr<Bus> bus, std::shared_ptr<Cartridge> cart, std::shared_
 m_oam(oam), m_cart(cart), m_bus(bus) // Initialize 64KB of memory
 {
     uint16_t temp = read(program_counter++);
-  
     temp = temp << 8;
     temp |= read(program_counter);
     program_counter = Utilities::ByteSwap(temp); // Now we jump!!!!
     bus->memory = memory; // Initialize the bus memory with the CPU memory (hacky copies for now)
 }
-
+CPU::CPU(){
+	// m_cart = std::make_shared<Cartridge>();
+	m_bus = std::make_shared<Bus>();
+	m_oam = std::make_shared<OAM>();
+    memory = std::vector<uint8_t>(0xFFFF);
+    m_bus->memory = memory; // Initialize the bus memory with the CPU memory (hacky copies for now)
+}
 uint8_t CPU::read(uint16_t addr)
 {
     if (addr == 0x4016) {
@@ -71,6 +76,11 @@ uint8_t CPU::read(uint16_t addr)
             controller1_shift >>= 1;
         }
         return value | 0x40; // Often returns high bits set to 1 or open bus
+    }
+    else if (addr == 8194){
+        auto val = memory[addr];
+        memory[addr] &= 0x7F;
+        return val;
     }
     else if (addr == 0x4017) {
         // (Optional) Controller 2 serial read (if you have a second controller)
@@ -444,6 +454,13 @@ void CPU::ASL(uint16_t addr) // Arithmetic Shift Left
     write(addr, value);
     setZeroFlag(value == 0);
     setNegativeFlag(value & 0x80);
+}
+
+void CPU::ASL_ACCU(uint16_t addr){
+    setCarryFlag(accumulator & 0x80);
+    accumulator <<= 1;
+    setZeroFlag(accumulator == 0);
+    setNegativeFlag(accumulator & 0x80);
 }
 
 void CPU::LSR(uint16_t addr) // Logical Shift Right
@@ -905,6 +922,7 @@ void CPU::BCS(uint16_t addr)
 {
     if (getCarryFlag())
     {
+        program_counter--;
         // Signed value, need to cast
         int8_t offset = static_cast<int8_t>(read(addr));
         program_counter += offset;
@@ -986,9 +1004,14 @@ uint8_t CPU::execute() {
     // Fetch the next instruction
     uint8_t opcode = read(program_counter++);
     #ifdef __DEBUG_PRINT
-    std::cout << opcodeMap[opcode] << ' ' << instructionCount++  << ' ' << program_counter << std::endl;
-    std::cout << "Y: " << int(y) << std::endl;
-    std::cout << "X: " << int(x) << std::endl;
+    file.open("out.txt", std::ios::app);
+    file << opcodeMap[opcode] << '\n';
+    file << "Instruction: count" << instructionCount++ << '\n';
+    file << "PC " << program_counter << '\n';
+    file << "Y: " << int(y) << '\n';
+    file << "X: " << int(x) << '\n';
+    file << "A: " << int(accumulator) << '\n';
+    file.close();
     #endif
     uint16_t addr = 0;
     uint16_t addr_abs = 0;
@@ -1119,7 +1142,7 @@ uint8_t CPU::execute() {
 
         // ASL
         case 0x0A: // Accumulator
-            ASL(0); // Call with 0 to indicate accumulator mode
+            ASL_ACCU(0); // Call with 0 to indicate accumulator mode
             cycles = 2;
             break;
         
