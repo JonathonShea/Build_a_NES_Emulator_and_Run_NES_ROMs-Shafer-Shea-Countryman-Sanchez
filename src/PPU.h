@@ -146,7 +146,16 @@ public:
 	//Pattern Table Functions
 	void writePatternTable(uint16_t address, uint8_t data);
 
+
 	uint8_t GetFineX() {return PPUSCROLL & 0x70;}
+
+
+	// Secondary OAM buffer for sprite evaluation
+	Sprite sprite_data[8];
+
+	// Pattern data for sprites on the current scanline
+	uint8_t sprite_pattern_low[8] = { 0 };
+	uint8_t sprite_pattern_high[8] = { 0 };
 
 
 };
