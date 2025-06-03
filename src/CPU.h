@@ -38,7 +38,7 @@ public:
 	bool reset_signal = false;
 
 	CPU(std::shared_ptr<Bus> bus, std::shared_ptr<Cartridge> cart, std::shared_ptr<OAM> oam);
-  CPU() = default;
+  CPU();
   ~CPU() = default;
 	void respTest();
 	uint8_t read(uint16_t addr);

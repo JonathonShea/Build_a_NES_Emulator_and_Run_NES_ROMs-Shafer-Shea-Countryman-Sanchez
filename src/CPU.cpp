@@ -60,7 +60,13 @@ m_oam(oam), m_cart(cart), m_bus(bus) // Initialize 64KB of memory
     program_counter = Utilities::ByteSwap(temp); // Now we jump!!!!
     bus->memory = memory; // Initialize the bus memory with the CPU memory (hacky copies for now)
 }
-
+CPU::CPU(){
+	// m_cart = std::make_shared<Cartridge>();
+	m_bus = std::make_shared<Bus>();
+	m_oam = std::make_shared<OAM>();
+    memory = std::vector<uint8_t>(0xFFFF);
+    m_bus->memory = memory; // Initialize the bus memory with the CPU memory (hacky copies for now)
+}
 uint8_t CPU::read(uint16_t addr)
 {
     if (addr == 0x4016) {
@@ -998,9 +1004,6 @@ uint8_t CPU::execute() {
     // Fetch the next instruction
     uint8_t opcode = read(program_counter++);
     #ifdef __DEBUG_PRINT
-    // std::cout << opcodeMap[opcode] << ' ' << instructionCount++  << ' ' << program_counter << '\n
-    // std::cout << "Y: " << int(y) << '\n';
-    // std::cout << "X: " << int(x) << std::endl;
     file.open("out.txt", std::ios::app);
     file << opcodeMap[opcode] << '\n';
     file << "Instruction: count" << instructionCount++ << '\n';

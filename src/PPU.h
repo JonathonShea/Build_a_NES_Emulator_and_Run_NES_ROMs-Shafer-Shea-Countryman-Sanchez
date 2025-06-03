@@ -105,7 +105,7 @@ public:
 	std::shared_ptr<Bus> m_bus; // Pointer to the bus
 
 	PPU(std::shared_ptr<Bus> bus, std::shared_ptr<Cartridge> cart, std::shared_ptr<OAM> oam);
-	PPU() = default;
+	PPU();
 	void cpuWrite(uint16_t address, uint8_t data);
 	void write(uint16_t address, uint8_t data);
 	void loadPatternTable(const std::vector<uint8_t>& chrROM);
