@@ -27,6 +27,11 @@ PPU::PPU(std::shared_ptr<Bus> bus, std::shared_ptr<Cartridge> cart, std::shared_
     setVBlank();
 }
 
+PPU::PPU(){
+    paletteMemory = std::vector<uint8_t>(0xFFFF); // for testing
+    patternTables.resize(2, std::vector<uint8_t>(256 * 8 * 8, 0));
+}
+
 const uint32_t* PPU::getFrameBuffer() {
     return framebuffer;
 }
